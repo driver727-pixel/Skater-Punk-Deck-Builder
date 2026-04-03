@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { CardPayload, Archetype, Rarity, Style, Vibe, District, CardPrompts } from "../lib/types";
 import { generateCard, STORAGE_PACK_LABELS } from "../lib/generator";
+import { buildImagePrompt } from "../lib/promptBuilder";
+import { generateImage } from "../services/imageGen";
 import { CardDisplay } from "../components/CardDisplay";
 import { useCollection } from "../hooks/useCollection";
 import { useTier } from "../context/TierContext";
@@ -35,12 +37,67 @@ export function CardForge() {
   });
 
   const [generated, setGenerated] = useState<CardPayload | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+
+  // Tracks whether the user has clicked "Forge Card" at least once so that
+  // prompt changes can auto-refresh the image without an explicit button click.
+  const hasGeneratedRef = useRef(false);
+  // Holds the pending debounce timer so it can be cancelled on each keystroke.
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Image generation helper ──────────────────────────────────────────────────
+  const fetchImage = async (card: CardPayload, latestPrompts: CardPrompts) => {
+    setImageLoading(true);
+    setImageError(null);
+    try {
+      const prompt = buildImagePrompt(latestPrompts);
+      const result = await generateImage(prompt, card.seed);
+      setImageUrl(result.imageUrl);
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : "Image generation failed.");
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  // ── Auto-refresh image when prompts change (after first forge) ───────────────
+  // The stamina slider fires on every tick, so we debounce by 700 ms to avoid
+  // triggering an API call on each incremental slider movement.
+  useEffect(() => {
+    if (!hasGeneratedRef.current) return;
+
+    const newCard = generateCard(prompts);
+    setGenerated(newCard);
+    setImageUrl(null);
+    setImageLoading(true);
+    setImageError(null);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchImage(newCard, prompts);
+    }, 700);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [prompts]);
 
   const set = <K extends keyof CardPrompts>(key: K, val: CardPrompts[K]) =>
     setPrompts((p) => ({ ...p, [key]: val }));
 
   const handleGenerate = () => {
-    setGenerated(generateCard(prompts));
+    // Cancel any pending debounced image fetch
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    const card = generateCard(prompts);
+    setGenerated(card);
+    setImageUrl(null);
+    hasGeneratedRef.current = true;
+
+    // Trigger image generation immediately (no debounce for explicit forge click)
+    fetchImage(card, prompts);
   };
 
   const canSave = tierData.canSave;
@@ -56,7 +113,7 @@ export function CardForge() {
       openUpgradeModal();
       return;
     }
-    if (generated) addCard(generated);
+    if (generated) addCard(imageUrl ? { ...generated, imageUrl } : generated);
   };
 
   const saveLabel = () => {
@@ -217,13 +274,20 @@ export function CardForge() {
 
         <div className="forge-preview">
           {generated ? (
-            <CardDisplay
-              card={generated}
-              onSave={handleSave}
-              isSaved={saveBtnDisabled || (!canSave) || atLimit}
-              saveLabel={saveLabel()}
-              showShare={true}
-            />
+            <>
+              {imageError && (
+                <p className="forge-image-error">⚠️ {imageError}</p>
+              )}
+              <CardDisplay
+                card={generated}
+                onSave={handleSave}
+                isSaved={saveBtnDisabled || (!canSave) || atLimit}
+                saveLabel={saveLabel()}
+                showShare={true}
+                imageUrl={imageUrl ?? undefined}
+                imageLoading={imageLoading}
+              />
+            </>
           ) : (
             <div className="empty-preview">
               <span className="empty-icon">🛹</span>

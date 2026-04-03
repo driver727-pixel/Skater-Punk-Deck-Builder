@@ -48,6 +48,8 @@ export interface CardPayload {
   };
   tags: string[];
   createdAt: string;
+  /** AI-generated illustration URL produced by the image generation service. */
+  imageUrl?: string;
 }
 
 export interface DeckPayload {

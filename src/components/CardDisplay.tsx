@@ -12,6 +12,10 @@ interface CardDisplayProps {
   isSaved?: boolean;
   showShare?: boolean;
   saveLabel?: string;
+  /** URL of the AI-generated illustration (overrides card.imageUrl when provided). */
+  imageUrl?: string;
+  /** When true, shows a loading skeleton while the AI image is being fetched. */
+  imageLoading?: boolean;
 }
 
 const RARITY_COLORS: Record<string, string> = {
@@ -22,15 +26,28 @@ const RARITY_COLORS: Record<string, string> = {
   Legendary:      "#ffaa00",
 };
 
-export function CardDisplay({ card, compact = false, onSave, onRemove, isSaved, showShare = false, saveLabel }: CardDisplayProps) {
+export function CardDisplay({ card, compact = false, onSave, onRemove, isSaved, showShare = false, saveLabel, imageUrl, imageLoading }: CardDisplayProps) {
   const [sharing, setSharing] = useState(false);
   const rarityColor = RARITY_COLORS[card.prompts.rarity] || "#aaaaaa";
   const accent = card.visuals.accentColor || "#00ff88";
 
+  // Resolve the illustration to display: prop > card field > SVG fallback
+  const resolvedImageUrl = imageUrl ?? card.imageUrl;
+
   if (compact) {
     return (
       <div className="card-compact" style={{ borderColor: rarityColor }}>
-        <CardArt card={card} width={160} height={112} />
+        {imageLoading ? (
+          <div className="card-art-skeleton" />
+        ) : resolvedImageUrl ? (
+          <img
+            src={resolvedImageUrl}
+            alt={`${card.identity.name} illustration`}
+            className="card-art-image"
+          />
+        ) : (
+          <CardArt card={card} width={160} height={112} />
+        )}
         <div className="card-compact-info">
           <span className="card-name">{card.identity.name}</span>
           <span className="card-rarity" style={{ color: rarityColor }}>{card.prompts.rarity}</span>
@@ -47,7 +64,19 @@ export function CardDisplay({ card, compact = false, onSave, onRemove, isSaved, 
         <span className="card-rarity" style={{ color: rarityColor }}>{card.prompts.rarity.toUpperCase()}</span>
       </div>
 
-      <CardArt card={card} width={200} height={140} />
+      {imageLoading ? (
+        <div className="card-art-skeleton card-art-skeleton--full">
+          <span className="card-art-skeleton__label">✨ Generating image…</span>
+        </div>
+      ) : resolvedImageUrl ? (
+        <img
+          src={resolvedImageUrl}
+          alt={`${card.identity.name} illustration`}
+          className="card-art-image card-art-image--full"
+        />
+      ) : (
+        <CardArt card={card} width={200} height={140} />
+      )}
 
       <div className="card-identity">
         <h2 className="card-name">{card.identity.name}</h2>

@@ -595,3 +595,48 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.15s; }
   margin: 0;
 }
 .share-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ===== AI Image Art ===== */
+.card-art-image { display: block; width: 160px; height: 112px; object-fit: cover; border-radius: 4px; }
+.card-art-image--full { width: 200px; height: 140px; border-radius: 6px; }
+
+/* Skeleton loader shown while AI image is being fetched */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+.card-art-skeleton {
+  width: 160px;
+  height: 112px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--bg2) 25%, var(--bg3) 50%, var(--bg2) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card-art-skeleton--full {
+  width: 200px;
+  height: 140px;
+  border-radius: 6px;
+  flex-direction: column;
+  gap: 6px;
+}
+.card-art-skeleton__label {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  animation: none;
+}
+
+/* Error message shown below the card when image gen fails */
+.forge-image-error {
+  font-size: 11px;
+  color: var(--danger);
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--danger);
+  border-radius: 4px;
+  background: rgba(255,68,68,0.08);
+}

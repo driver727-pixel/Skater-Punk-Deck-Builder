@@ -1,13 +1,13 @@
-const express = require('express');
-const cors = require('cors');
-const { route } = require('@fal-ai/server-proxy/express');
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
+import { route } from '@fal-ai/server-proxy/express';
+import 'dotenv/config';
 
 const app = express();
 
-// Allow your GitHub Pages URL or localhost to call this server
+// Allow the production site, GitHub Pages, and localhost to call this server
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://driver727-pixel.github.io'] 
+  origin: ['https://punchskater.com', 'https://driver727-pixel.github.io', 'http://localhost:5173'],
 }));
 
 // This automatically handles all /api/fal/* requests and attaches your key

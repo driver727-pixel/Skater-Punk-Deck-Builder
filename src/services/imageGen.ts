@@ -7,9 +7,13 @@ import { hashSeedToInt } from "../utils/hash";
 //   VITE_FAL_KEY=your_fal_ai_key_here
 //
 // To route through the backend proxy instead (recommended for production),
-// point VITE_IMAGE_API_URL at your proxy endpoint, e.g.:
+// point VITE_IMAGE_API_URL at the full proxy endpoint, e.g.:
 //
-//   VITE_IMAGE_API_URL=http://localhost:3001/api/generate-image
+//   server/index.js  (@fal-ai/server-proxy):
+//     VITE_IMAGE_API_URL=https://your-server.onrender.com/api/fal/fal-ai/flux/dev
+//
+//   server/proxy.ts  (manual proxy):
+//     VITE_IMAGE_API_URL=https://your-server.onrender.com/api/generate-image
 //
 // When VITE_IMAGE_API_URL is set the Authorization header is omitted because
 // the proxy adds it server-side.

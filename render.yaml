@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: skater-punk-proxy
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: FAL_KEY
+        sync: false   # REQUIRED: set this secret in the Render dashboard

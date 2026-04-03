@@ -11,8 +11,8 @@ app.use(cors({
 }));
 
 // Restrict the proxy to only the Fal.ai endpoint this app actually uses.
-// allowUnauthorizedRequests is true because the app has no user login system;
-// access is already limited by the CORS allowlist above.
+// allowUnauthorizedRequests is true because image generation does not require
+// user authentication; access is already limited by the CORS allowlist above.
 const falHandler = createExpressHandler({
   allowedEndpoints: ['fal-ai/flux/dev'],
   allowUnauthorizedRequests: true,

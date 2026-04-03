@@ -316,10 +316,9 @@ interface FigureProps {
   jacketStyle: string;
   boardStyle: string;
   helmetStyle: string;
-  seed: string;
 }
 
-function CourierFigure({ cx, cy, accentColor, jacketStyle, boardStyle, helmetStyle, seed }: FigureProps) {
+function CourierFigure({ cx, cy, accentColor, jacketStyle, boardStyle, helmetStyle }: FigureProps) {
   const torsoColor  = JACKET_COLORS[jacketStyle]  || "#1e1e3a";
   const boardColor  = BOARD_COLORS[boardStyle]    || "#1a1a2e";
   const hasNeonStripe = boardStyle === "NeonCruiser";
@@ -435,10 +434,32 @@ interface RarityFrameProps {
   height: number;
   rarity: string;
   uid: string;
+  seed: string;
 }
 
-function RarityFrame({ width, height, rarity, uid }: RarityFrameProps) {
+function RarityFrame({ width, height, rarity, uid, seed }: RarityFrameProps) {
   if (rarity === "Legendary") {
+    // Deterministic particle sparks distributed near the four edges
+    const particles = Array.from({ length: 18 }, (_, i) => {
+      const side = Math.floor(seededVal(seed, 2000 + i * 3) * 4);
+      const pos  = seededVal(seed, 2001 + i * 3);
+      const off  = seededVal(seed, 2002 + i * 3) * 6 + 1;
+      let px: number, py: number;
+      if (side === 0)      { px = pos * width;        py = off; }
+      else if (side === 1) { px = width - off;         py = pos * height; }
+      else if (side === 2) { px = pos * width;         py = height - off; }
+      else                 { px = off;                 py = pos * height; }
+      return { x: px, y: py, r: 0.8 + seededVal(seed, 2050 + i) * 1.6, op: 0.45 + seededVal(seed, 2100 + i) * 0.55 };
+    });
+
+    // Corner ornament positions
+    const corners = [
+      { x: 2,          y: 2 },
+      { x: width - 10, y: 2 },
+      { x: 2,          y: height - 10 },
+      { x: width - 10, y: height - 10 },
+    ];
+
     return (
       <>
         <defs>
@@ -446,12 +467,32 @@ function RarityFrame({ width, height, rarity, uid }: RarityFrameProps) {
             <feGaussianBlur stdDeviation="3" result="blur" />
             <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
+          <filter id={`${uid}_sparkGlow`} x="-150%" y="-150%" width="400%" height="400%">
+            <feGaussianBlur stdDeviation="1.5" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
         </defs>
+
+        {/* Outer glow border */}
         <rect x={2} y={2} width={width - 4} height={height - 4} rx={4}
           fill="none" stroke="#ffaa00" strokeWidth="1.5" strokeOpacity="0.6"
           filter={`url(#${uid}_goldGlow)`} />
+        {/* Inner accent border */}
         <rect x={4} y={4} width={width - 8} height={height - 8} rx={3}
           fill="none" stroke="#ffaa00" strokeWidth="0.5" strokeOpacity="0.35" />
+
+        {/* Corner ornaments */}
+        {corners.map((c, i) => (
+          <rect key={i} x={c.x} y={c.y} width={8} height={8} rx={1}
+            fill="#ffaa00" fillOpacity="0.15" stroke="#ffaa00" strokeWidth="0.6" strokeOpacity="0.55" />
+        ))}
+
+        {/* Particle sparks */}
+        {particles.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r={p.r}
+            fill="#ffaa00" fillOpacity={p.op}
+            filter={`url(#${uid}_sparkGlow)`} />
+        ))}
       </>
     );
   }
@@ -470,6 +511,135 @@ function RarityFrame({ width, height, rarity, uid }: RarityFrameProps) {
       </>
     );
   }
+  return null;
+}
+
+interface StyleVibeOverlayProps {
+  width: number;
+  height: number;
+  styleVibe: string;
+  seed: string;
+  uid: string;
+}
+
+function StyleVibeOverlay({ width, height, styleVibe, seed, uid }: StyleVibeOverlayProps) {
+  if (styleVibe === "Chrome") {
+    // Thin horizontal and vertical chrome grid lines
+    const hLines = Array.from({ length: 9 }, (_, i) => (i + 1) / 10);
+    const vLines = Array.from({ length: 6 }, (_, i) => (i + 1) / 7);
+
+    // Specular highlight bands (deterministic placement)
+    const bands = Array.from({ length: 3 }, (_, i) => ({
+      x: (0.15 + seededVal(seed, 3000 + i) * 0.7) * width - 8,
+      op: 0.04 + seededVal(seed, 3010 + i) * 0.05,
+    }));
+
+    return (
+      <>
+        <defs>
+          <linearGradient id={`${uid}_chromeSheen`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%"   stopColor="#aaddff" stopOpacity="0" />
+            <stop offset="50%"  stopColor="#aaddff" stopOpacity="0.09" />
+            <stop offset="100%" stopColor="#aaddff" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id={`${uid}_chromeBand`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"   stopColor="#cceeFF" stopOpacity="0" />
+            <stop offset="50%"  stopColor="#cceeff" stopOpacity="1" />
+            <stop offset="100%" stopColor="#cceeFF" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
+        {/* Metallic grid */}
+        {hLines.map((t, i) => (
+          <line key={`ch-h${i}`}
+            x1={0} y1={t * height} x2={width} y2={t * height}
+            stroke="#88ccff" strokeWidth="0.3" strokeOpacity="0.1" />
+        ))}
+        {vLines.map((t, i) => (
+          <line key={`ch-v${i}`}
+            x1={t * width} y1={0} x2={t * width} y2={height}
+            stroke="#88ccff" strokeWidth="0.3" strokeOpacity="0.08" />
+        ))}
+
+        {/* Diagonal accent lines (chrome "brushed metal" look) */}
+        {Array.from({ length: 5 }, (_, i) => {
+          const ox = seededVal(seed, 3020 + i) * width;
+          return (
+            <line key={`ch-d${i}`}
+              x1={ox} y1={0} x2={ox - height * 0.4} y2={height}
+              stroke="#88ccff" strokeWidth="0.4"
+              strokeOpacity={0.06 + seededVal(seed, 3030 + i) * 0.06} />
+          );
+        })}
+
+        {/* Specular highlight bands */}
+        {bands.map((b, i) => (
+          <rect key={i} x={b.x} y={0} width={16} height={height}
+            fill={`url(#${uid}_chromeBand)`} opacity={b.op} />
+        ))}
+
+        {/* Full-card chrome sheen */}
+        <rect width={width} height={height} fill={`url(#${uid}_chromeSheen)`} />
+      </>
+    );
+  }
+
+  if (styleVibe === "Underground") {
+    // Scratch marks — thin white lines at random angles
+    const scratches = Array.from({ length: 14 }, (_, i) => ({
+      x1:  seededVal(seed, 4000 + i * 4)     * width,
+      y1:  seededVal(seed, 4001 + i * 4)     * height,
+      dx: (seededVal(seed, 4002 + i * 4) - 0.5) * 50,
+      dy: (seededVal(seed, 4003 + i * 4) - 0.5) * 25,
+      op:  0.07 + seededVal(seed, 4100 + i) * 0.09,
+    }));
+
+    // Spray-paint splatter dots
+    const splatters = Array.from({ length: 8 }, (_, i) => ({
+      cx: seededVal(seed, 4200 + i * 3)     * width,
+      cy: seededVal(seed, 4201 + i * 3)     * height,
+      r:  2 + seededVal(seed, 4202 + i * 3) * 7,
+      op: 0.04 + seededVal(seed, 4300 + i) * 0.07,
+    }));
+
+    // Crosshatch cluster (concentrated in one corner)
+    const hatchOriginX = seededVal(seed, 4400) * width  * 0.5;
+    const hatchOriginY = seededVal(seed, 4401) * height * 0.5;
+    const hatches = Array.from({ length: 8 }, (_, i) => ({
+      x1: hatchOriginX + i * 4,
+      y1: hatchOriginY,
+      x2: hatchOriginX + i * 4 - 12,
+      y2: hatchOriginY + 20,
+      op: 0.08 + seededVal(seed, 4410 + i) * 0.07,
+    }));
+
+    return (
+      <>
+        {/* Scratch marks */}
+        {scratches.map((s, i) => (
+          <line key={`ug-s${i}`}
+            x1={s.x1} y1={s.y1} x2={s.x1 + s.dx} y2={s.y1 + s.dy}
+            stroke="white" strokeWidth="0.5" strokeOpacity={s.op}
+            strokeLinecap="round" />
+        ))}
+
+        {/* Spray splatters */}
+        {splatters.map((s, i) => (
+          <circle key={`ug-sp${i}`}
+            cx={s.cx} cy={s.cy} r={s.r}
+            fill="white" fillOpacity={s.op} />
+        ))}
+
+        {/* Crosshatch cluster */}
+        {hatches.map((h, i) => (
+          <line key={`ug-hx${i}`}
+            x1={h.x1} y1={h.y1} x2={h.x2} y2={h.y2}
+            stroke="white" strokeWidth="0.5" strokeOpacity={h.op} />
+        ))}
+      </>
+    );
+  }
+
   return null;
 }
 
@@ -498,6 +668,13 @@ export function CardArt({ card, width = 200, height = 140 }: CardArtProps) {
         seed={card.seed}
         uid={uid}
       />
+      <StyleVibeOverlay
+        width={width}
+        height={height}
+        styleVibe={card.prompts.styleVibe}
+        seed={card.seed}
+        uid={uid}
+      />
       <CourierFigure
         cx={width / 2}
         cy={height * 0.55}
@@ -505,9 +682,8 @@ export function CardArt({ card, width = 200, height = 140 }: CardArtProps) {
         jacketStyle={card.visuals.jacketStyle}
         boardStyle={card.visuals.boardStyle}
         helmetStyle={card.visuals.helmetStyle}
-        seed={card.seed}
       />
-      <RarityFrame width={width} height={height} rarity={card.prompts.rarity} uid={uid} />
+      <RarityFrame width={width} height={height} rarity={card.prompts.rarity} uid={uid} seed={card.seed} />
       {/* Rarity stars */}
       {Array.from({ length: stars }).map((_, i) => (
         <polygon

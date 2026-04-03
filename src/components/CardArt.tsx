@@ -949,7 +949,7 @@ function StoragePack({ cx, cy, accentColor, packStyle }: {
   );
 }
 
-function CardCharacter({ cx, cy, accentColor, archetype, style, vibe, storagePackStyle }: CharacterProps) {
+function CardCharacter({ cx, cy, accentColor, archetype, style, vibe, storagePackStyle, characterSeed }: CharacterProps) {
   return (
     <g>
       <rect x={cx - 10} y={cy + 18} width={8} height={14} rx={2} fill="#14142a" />

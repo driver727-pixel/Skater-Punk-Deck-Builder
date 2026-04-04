@@ -139,7 +139,8 @@ export function buildBackgroundPrompt(district: District): string {
     `Environment scene: ${bg}. ` +
     `Wide establishing shot, cinematic composition, absolutely no people, no characters, no text. ` +
     `Minimal Trading card art in the style of 1995 Fleer Ultra X-Men, fantastic realism, airbrushed gouache texture, ` +
-    `vibrant and saturated 90s digital colors, dramatic rim lighting. Hyper-Realistic sci-fi setting.`
+    `vibrant and saturated 90s digital colors, dramatic rim lighting. Hyper-Realistic sci-fi setting. ` +
+    `SFW, family friendly, PG rated, LGBTQIA+.`
   );
 }
 
@@ -169,7 +170,8 @@ export function buildCharacterPrompt(prompts: CardPrompts): string {
     `Isolated on a plain white background, full figure visible from head to toe, centred. ` +
     `Minimal Trading card art in the style of 1995 Fleer Ultra X-Men, fantastic realism, airbrushed gouache texture, ` +
     `vibrant and saturated 90s digital colors, dramatic rim lighting, realistic anatomy, chromium finish, ` +
-    `epic action pose, 90s Marvel aesthetic. No kids. No teens. Adults aged 18-99 only.`
+    `epic action pose, 90s Marvel aesthetic. No kids. No teens. Adults aged 18-99 only. ` +
+    `SFW, family friendly, PG rated, LGBTQIA+.`
   );
 }
 
@@ -190,7 +192,8 @@ export function buildFramePrompt(rarity: Rarity): string {
     `Gold, silver, titanium foil, decorative, accents. ` +
     `The interior of the frame is completely flat black — only the border decoration is coloured. ` +
     `Symmetrical layout, top-down flat graphic illustration style, isolated on black background, no characters, no text. ` +
-    `Clean vector-art look, high contrast, 4K.`
+    `Clean vector-art look, high contrast, 4K. ` +
+    `SFW, family friendly, PG rated, LGBTQIA+.`
   );
 }
 

@@ -31,7 +31,22 @@ const INFERENCE_STEPS    = 28;
 const GUIDANCE_SCALE     = 3.5;
 const NUM_IMAGES         = 1;
 const SAFETY_CHECKER     = true;
-const NEGATIVE_PROMPT    = "NSFW, Child, Children, kids, nudity, naked, undressed, xxx, porn, gore";
+
+/**
+ * MANDATORY negative prompt — automatically appended to every request inside
+ * generateImage(). These terms can never be removed by editing prompt builders.
+ */
+const NEGATIVE_PROMPT =
+  "nsfw, child, children, under age, underage, x rated, r rated, unclothed, undressed, " +
+  "nudity, naked, exposed, gore, sexually explicit, porn, pornographic, rape, sexual assault, " +
+  "death, killing, kill, murder, violence, decapitation, mutilation, kids, minors";
+
+/**
+ * MANDATORY positive suffix — automatically appended to every prompt inside
+ * generateImage(). These terms can never be removed by editing prompt builders.
+ */
+const MANDATORY_POSITIVE_SUFFIX =
+  "SFW, family friendly, PG rated, LGBTQIA+.";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -64,8 +79,12 @@ export async function generateImage(
     );
   }
 
+  // Always append the mandatory safety suffix so it cannot be omitted regardless
+  // of which prompt builder was used or how the prompt was constructed.
+  const safePrompt = `${prompt} ${MANDATORY_POSITIVE_SUFFIX}`;
+
   const body = JSON.stringify({
-    prompt,
+    prompt: safePrompt,
     negative_prompt: NEGATIVE_PROMPT,
     seed,
     image_size: IMAGE_SIZE,

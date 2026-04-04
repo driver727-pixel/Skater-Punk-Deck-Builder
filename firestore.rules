@@ -18,6 +18,20 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == uid;
     }
 
+    // ── Image cache ──────────────────────────────────────────────────────────
+    // Stores fal.ai-generated image URLs keyed by layer seed so repeated
+    // requests for the same parameters never hit fal.ai again.
+    // Anyone may read or create a cache entry; updates and deletes are blocked
+    // so entries are effectively immutable once written.
+    // The create rule validates document shape to prevent cache poisoning.
+    match /imageCache/{cacheKey} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['imageUrl', 'createdAt'])
+        && request.resource.data.imageUrl is string
+        && request.resource.data.imageUrl.matches('https?://.+');
+      allow update, delete: if false;
+    }
+
     // ── Trades ───────────────────────────────────────────────────────────────
     // Both parties can read; only the offerer can create;
     // only the recipient can update status (accept/decline),

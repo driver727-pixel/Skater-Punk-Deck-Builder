@@ -3,6 +3,7 @@ import type { CardPayload, Archetype, Rarity, Style, Vibe, District, CardPrompts
 import { generateCard, buildSeed, STORAGE_PACK_LABELS } from "../lib/generator";
 import { buildBackgroundPrompt, buildCharacterPrompt, buildFramePrompt } from "../lib/promptBuilder";
 import { generateImage, isImageGenConfigured } from "../services/imageGen";
+import { getCachedImage, setCachedImage } from "../services/imageCache";
 import { CardDisplay } from "../components/CardDisplay";
 import { useCollection } from "../hooks/useCollection";
 import { useTier } from "../context/TierContext";
@@ -119,11 +120,30 @@ export function CardForge() {
 
     const promises: Promise<void>[] = [];
 
+    /**
+     * Resolve an image URL for a layer:
+     * 1. Check the Firestore image cache (free — no fal.ai credits used).
+     * 2. On a miss, call fal.ai and write the result back to the cache.
+     */
+    const resolveLayer = async (
+      storeCacheKey: string,
+      prompt: string,
+      seed: string,
+    ): Promise<string> => {
+      const cached = await getCachedImage(storeCacheKey);
+      if (cached) return cached;
+
+      const result = await generateImage(prompt, seed);
+      // Fire-and-forget the cache write; errors are already swallowed inside.
+      void setCachedImage(storeCacheKey, result.imageUrl);
+      return result.imageUrl;
+    };
+
     if (needsBackground) {
       promises.push(
-        generateImage(buildBackgroundPrompt(latestPrompts.district), backgroundSeed)
-          .then((result) => {
-            setLayerUrls((prev) => ({ ...prev, background: result.imageUrl }));
+        resolveLayer(`bg::${backgroundSeed}`, buildBackgroundPrompt(latestPrompts.district), backgroundSeed)
+          .then((imageUrl) => {
+            setLayerUrls((prev) => ({ ...prev, background: imageUrl }));
             lastSeedsRef.current.background = backgroundSeed;
           })
           .catch((err: unknown) => {
@@ -138,9 +158,9 @@ export function CardForge() {
 
     if (needsCharacter) {
       promises.push(
-        generateImage(buildCharacterPrompt(latestPrompts), charCacheKey)
-          .then((result) => {
-            setLayerUrls((prev) => ({ ...prev, character: result.imageUrl }));
+        resolveLayer(`char::${charCacheKey}`, buildCharacterPrompt(latestPrompts), charCacheKey)
+          .then((imageUrl) => {
+            setLayerUrls((prev) => ({ ...prev, character: imageUrl }));
             lastSeedsRef.current.character = charCacheKey;
           })
           .catch((err: unknown) => {
@@ -155,9 +175,9 @@ export function CardForge() {
 
     if (needsFrame) {
       promises.push(
-        generateImage(buildFramePrompt(latestPrompts.rarity), frameSeed)
-          .then((result) => {
-            setLayerUrls((prev) => ({ ...prev, frame: result.imageUrl }));
+        resolveLayer(`frame::${frameSeed}`, buildFramePrompt(latestPrompts.rarity), frameSeed)
+          .then((imageUrl) => {
+            setLayerUrls((prev) => ({ ...prev, frame: imageUrl }));
             lastSeedsRef.current.frame = frameSeed;
           })
           .catch((err: unknown) => {

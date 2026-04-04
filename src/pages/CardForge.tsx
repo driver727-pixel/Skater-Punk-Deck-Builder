@@ -277,7 +277,7 @@ export function CardForge() {
           {!isImageGenConfigured && (
             <p className="forge-image-notice">
               ℹ️ AI image generation is not configured — cards display SVG art.
-              Set <code>VITE_FAL_KEY</code> or <code>VITE_IMAGE_API_URL</code> in your <code>.env</code> to enable it.
+              Set <code>VITE_IMAGE_API_URL</code> in your <code>.env</code> to enable it.
             </p>
           )}
           {generated ? (

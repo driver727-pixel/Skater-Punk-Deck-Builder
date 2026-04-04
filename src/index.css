@@ -605,6 +605,15 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.15s; }
   0%   { background-position: -400px 0; }
   100% { background-position:  400px 0; }
 }
+.page-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  color: var(--text-dim);
+  font-size: 14px;
+  letter-spacing: 1px;
+}
 .card-art-skeleton {
   width: 160px;
   height: 112px;

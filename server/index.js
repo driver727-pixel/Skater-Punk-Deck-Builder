@@ -1,7 +1,9 @@
 import express from 'express';
 import cors from 'cors';
-import { createExpressHandler } from '@fal-ai/server-proxy/express';
+import falExpressProxy from '@fal-ai/server-proxy/express';
 import 'dotenv/config';
+
+const { createHandler } = falExpressProxy;
 
 const app = express();
 
@@ -13,7 +15,7 @@ app.use(cors({
 // Restrict the proxy to only the Fal.ai endpoint this app actually uses.
 // allowUnauthorizedRequests is true because image generation does not require
 // user authentication; access is already limited by the CORS allowlist above.
-const falHandler = createExpressHandler({
+const falHandler = createHandler({
   allowedEndpoints: ['fal-ai/flux/dev'],
   allowUnauthorizedRequests: true,
 });

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import type { CardPayload, Archetype, Rarity, Style, Vibe, District, CardPrompts } from "../lib/types";
 import { generateCard, STORAGE_PACK_LABELS } from "../lib/generator";
 import { buildImagePrompt } from "../lib/promptBuilder";
-import { generateImage } from "../services/imageGen";
+import { generateImage, isImageGenConfigured } from "../services/imageGen";
 import { CardDisplay } from "../components/CardDisplay";
 import { useCollection } from "../hooks/useCollection";
 import { useTier } from "../context/TierContext";
@@ -49,6 +49,7 @@ export function CardForge() {
 
   // ── Image generation helper ──────────────────────────────────────────────────
   const fetchImage = async (card: CardPayload, latestPrompts: CardPrompts) => {
+    if (!isImageGenConfigured) return;
     setImageLoading(true);
     setImageError(null);
     try {
@@ -273,6 +274,12 @@ export function CardForge() {
         </div>
 
         <div className="forge-preview">
+          {!isImageGenConfigured && (
+            <p className="forge-image-notice">
+              ℹ️ AI image generation is not configured — cards display SVG art.
+              Set <code>VITE_FAL_KEY</code> or <code>VITE_IMAGE_API_URL</code> in your <code>.env</code> to enable it.
+            </p>
+          )}
           {generated ? (
             <>
               {imageError && (

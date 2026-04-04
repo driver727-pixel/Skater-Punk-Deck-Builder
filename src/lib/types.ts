@@ -48,8 +48,14 @@ export interface CardPayload {
   };
   tags: string[];
   createdAt: string;
-  /** AI-generated illustration URL produced by the image generation service. */
+  /** AI-generated illustration URL (single combined image — backward-compatible). */
   imageUrl?: string;
+  /** AI-generated background layer URL (district scene, no characters). */
+  backgroundImageUrl?: string;
+  /** AI-generated character layer URL (courier portrait on white background). */
+  characterImageUrl?: string;
+  /** AI-generated frame layer URL (ornate playing-card border based on rarity). */
+  frameImageUrl?: string;
 }
 
 export interface DeckPayload {

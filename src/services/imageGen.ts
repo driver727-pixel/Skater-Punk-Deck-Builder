@@ -22,6 +22,12 @@ const PROXY_API_URL = (import.meta.env.VITE_IMAGE_API_URL as string | undefined)
 const API_URL = PROXY_API_URL || "https://fal.run/fal-ai/flux/dev";
 const FAL_KEY = (import.meta.env.VITE_FAL_KEY as string | undefined)?.trim();
 
+/**
+ * True when at least one of VITE_FAL_KEY or VITE_IMAGE_API_URL is configured,
+ * so callers can gate image generation UI without attempting a doomed request.
+ */
+export const isImageGenConfigured = Boolean(PROXY_API_URL || FAL_KEY);
+
 // ── Generation parameters ──────────────────────────────────────────────────────
 // Adjust these to trade off quality vs. generation speed.
 

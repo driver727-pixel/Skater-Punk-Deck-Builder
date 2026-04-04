@@ -641,6 +641,24 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.15s; }
   background: rgba(255,68,68,0.08);
 }
 
+/* Informational notice shown when image generation is not configured */
+.forge-image-notice {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin: 0 0 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.04);
+  line-height: 1.5;
+}
+.forge-image-notice code {
+  font-family: monospace;
+  background: rgba(255,255,255,0.08);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
 /* ===== Nav Badge & User Menu ===== */
 .nav-badge {
   display: inline-flex;

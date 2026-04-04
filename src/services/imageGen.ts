@@ -2,32 +2,26 @@ import { hashSeedToInt } from "../utils/hash";
 
 // ── Configuration ──────────────────────────────────────────────────────────────
 //
-// OPTION A — Direct access (simplest for local dev, exposes key to browser):
-//   VITE_FAL_KEY=your_fal_ai_key_here
+// Image generation uses the backend proxy (Option B).
 //
-// OPTION B — Backend proxy (recommended for production):
-//   1. Deploy server/index.js to any Node.js host (Render, Railway, etc.)
-//      and set the FAL_KEY env var on that host.
-//   2. Point VITE_IMAGE_API_URL at the deployed proxy endpoint, e.g.:
-//        VITE_IMAGE_API_URL=https://your-server.onrender.com/api/generate-image
+// Set VITE_IMAGE_API_URL in your .env:
+//   Local dev:    VITE_IMAGE_API_URL=/api/generate-image
+//                 (Vite proxies /api/* to the local server on port 3001)
+//   Production:   VITE_IMAGE_API_URL=https://your-server.onrender.com/api/generate-image
 //
-//   For local development, start the proxy with `npm start` (port 3001) and
-//   set:  VITE_IMAGE_API_URL=/api/generate-image
-//   The Vite dev server proxy (configured in vite.config.ts) will forward
-//   /api/* requests to localhost:3001.
+// Start the proxy with:  FAL_KEY=your_fal_ai_key_here npm start
 //
-// When VITE_IMAGE_API_URL is set the Authorization header is omitted because
-// the proxy adds it server-side.
+// The Authorization header is intentionally omitted from the browser request;
+// the proxy adds the FAL_KEY server-side so the key never reaches the client.
 
 const PROXY_API_URL = (import.meta.env.VITE_IMAGE_API_URL as string | undefined)?.trim();
 const API_URL = PROXY_API_URL || "https://fal.run/fal-ai/flux/dev";
-const FAL_KEY = (import.meta.env.VITE_FAL_KEY as string | undefined)?.trim();
 
 /**
- * True when at least one of VITE_FAL_KEY or VITE_IMAGE_API_URL is configured,
+ * True when VITE_IMAGE_API_URL is configured,
  * so callers can gate image generation UI without attempting a doomed request.
  */
-export const isImageGenConfigured = Boolean(PROXY_API_URL || FAL_KEY);
+export const isImageGenConfigured = Boolean(PROXY_API_URL);
 
 // ── Generation parameters ──────────────────────────────────────────────────────
 // Adjust these to trade off quality vs. generation speed.
@@ -61,18 +55,12 @@ export async function generateImage(
 ): Promise<ImageGenResult> {
   const seed = hashSeedToInt(masterSeed);
 
-  // Build headers — omit Authorization when routing through the backend proxy
-  // (the proxy adds the key server-side to keep it off the client).
+  // Build headers — Authorization is omitted because the proxy adds it server-side.
   const headers: HeadersInit = { "Content-Type": "application/json" };
-  const usingProxy = Boolean(PROXY_API_URL);
-  if (!usingProxy && !FAL_KEY) {
+  if (!PROXY_API_URL) {
     throw new Error(
-      "Image generation is not configured. Set VITE_FAL_KEY for direct Fal.ai access or VITE_IMAGE_API_URL to route requests through a proxy.",
+      "Image generation is not configured. Set VITE_IMAGE_API_URL in your .env to route requests through the proxy.",
     );
-  }
-
-  if (!usingProxy && FAL_KEY) {
-    headers["Authorization"] = `Key ${FAL_KEY}`;
   }
 
   const body = JSON.stringify({
@@ -97,9 +85,7 @@ export async function generateImage(
     }
     const authHint =
       response.status === 401
-        ? usingProxy
-          ? " Check that the proxy server has a valid FAL_KEY configured."
-          : " Check that VITE_FAL_KEY is set, or configure VITE_IMAGE_API_URL to use an authenticated proxy."
+        ? " Check that the proxy server has a valid FAL_KEY configured."
         : "";
     throw new Error(
       `Image generation failed: ${response.status} ${response.statusText}${detail ? ` — ${detail}` : ""}${authHint}`,

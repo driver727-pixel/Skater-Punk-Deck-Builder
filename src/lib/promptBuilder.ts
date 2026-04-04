@@ -66,6 +66,7 @@ export function buildImagePrompt(prompts: CardPrompts): string {
       : prompts.stamina >= 8
         ? "fully loaded, carrying bulky cargo."
         : "alert and ready, mid-weight gear.") +
-    " Rendered in Unreal Engine, vibrant colours, octane render, cinematic lighting, 4K."
+    " Rendered in Unreal Engine, vibrant colours, octane render, cinematic lighting, 4K." +
+    " SFW, Family Friendly, PG rated, LGBTQIA+."
   );
 }

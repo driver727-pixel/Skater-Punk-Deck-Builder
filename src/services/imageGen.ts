@@ -31,6 +31,7 @@ const INFERENCE_STEPS    = 28;
 const GUIDANCE_SCALE     = 3.5;
 const NUM_IMAGES         = 1;
 const SAFETY_CHECKER     = true;
+const NEGATIVE_PROMPT    = "NSFW, Child, Children, kids, nudity, naked, undressed, xxx, porn, gore";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -65,6 +66,7 @@ export async function generateImage(
 
   const body = JSON.stringify({
     prompt,
+    negative_prompt: NEGATIVE_PROMPT,
     seed,
     image_size: IMAGE_SIZE,
     num_inference_steps: INFERENCE_STEPS,

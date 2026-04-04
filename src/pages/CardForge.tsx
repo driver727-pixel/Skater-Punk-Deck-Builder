@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { CardPayload, Archetype, Rarity, Style, Vibe, District, CardPrompts } from "../lib/types";
-import { generateCard, STORAGE_PACK_LABELS } from "../lib/generator";
-import { buildImagePrompt } from "../lib/promptBuilder";
+import { generateCard, buildSeed, STORAGE_PACK_LABELS } from "../lib/generator";
+import { buildBackgroundPrompt, buildCharacterPrompt, buildFramePrompt } from "../lib/promptBuilder";
 import { generateImage, isImageGenConfigured } from "../services/imageGen";
 import { CardDisplay } from "../components/CardDisplay";
 import { useCollection } from "../hooks/useCollection";
@@ -21,6 +21,26 @@ const DISTRICT_HINTS: Record<District, string> = {
   Batteryville: "🌵 Off-grid Solar/Wind Camp",
 };
 
+// ── Layer state helpers ────────────────────────────────────────────────────────
+
+interface LayerUrls {
+  background: string | null;
+  character:  string | null;
+  frame:      string | null;
+}
+
+interface LayerLoading {
+  background: boolean;
+  character:  boolean;
+  frame:      boolean;
+}
+
+interface LayerSeeds {
+  background: string | null;
+  character:  string | null;
+  frame:      string | null;
+}
+
 export function CardForge() {
   const { addCard, hasCard, cards } = useCollection();
   const { tier, openUpgradeModal } = useTier();
@@ -37,47 +57,146 @@ export function CardForge() {
   });
 
   const [generated, setGenerated] = useState<CardPayload | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [imageLoading, setImageLoading] = useState(false);
-  const [imageError, setImageError] = useState<string | null>(null);
 
-  // Tracks whether the user has clicked "Forge Card" at least once so that
-  // prompt changes can auto-refresh the image without an explicit button click.
+  // ── Per-layer URL and loading state ─────────────────────────────────────────
+  const [layerUrls, setLayerUrls] = useState<LayerUrls>({
+    background: null,
+    character:  null,
+    frame:      null,
+  });
+  const [layerLoading, setLayerLoading] = useState<LayerLoading>({
+    background: false,
+    character:  false,
+    frame:      false,
+  });
+  const [layerErrors, setLayerErrors] = useState<Partial<Record<keyof LayerUrls, string>>>({});
+
+  // Track the seed used to generate each layer so we can skip unchanged layers.
+  const lastSeedsRef = useRef<LayerSeeds>({
+    background: null,
+    character:  null,
+    frame:      null,
+  });
+
+  // Tracks whether the user has clicked "Forge Card" at least once.
   const hasGeneratedRef = useRef(false);
-  // Holds the pending debounce timer so it can be cancelled on each keystroke.
+  // Holds the pending debounce timer.
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Image generation helper ──────────────────────────────────────────────────
-  const fetchImage = async (card: CardPayload, latestPrompts: CardPrompts) => {
+  // ── Layer generation helper ──────────────────────────────────────────────────
+  /**
+   * Generates only the layers whose underlying seed has changed since the last
+   * generation, running dirty layers in parallel to minimise wait time.
+   *
+   * Layer → seed mapping:
+   *   background  = backgroundSeed (district)
+   *   character   = characterSeed  (archetype | style | vibe | stamina | district bag)
+   *   frame       = frameSeed      (rarity)
+   */
+  const fetchLayers = async (card: CardPayload, latestPrompts: CardPrompts) => {
     if (!isImageGenConfigured) return;
-    setImageLoading(true);
-    setImageError(null);
-    try {
-      const prompt = buildImagePrompt(latestPrompts);
-      const result = await generateImage(prompt, card.seed);
-      setImageUrl(result.imageUrl);
-    } catch (err) {
-      setImageError(err instanceof Error ? err.message : "Image generation failed.");
-    } finally {
-      setImageLoading(false);
+
+    const { frameSeed, backgroundSeed, characterSeed } = card;
+
+    // The character prompt includes district-specific bag visuals, so the
+    // effective character cache key combines characterSeed with district.
+    const charCacheKey = `${characterSeed}|${latestPrompts.district}`;
+
+    // Determine which layers are stale
+    const needsBackground = backgroundSeed !== lastSeedsRef.current.background;
+    const needsCharacter  = charCacheKey   !== lastSeedsRef.current.character;
+    const needsFrame      = frameSeed      !== lastSeedsRef.current.frame;
+
+    if (!needsBackground && !needsCharacter && !needsFrame) return;
+
+    // Mark stale layers as loading and clear old errors
+    setLayerLoading({
+      background: needsBackground,
+      character:  needsCharacter,
+      frame:      needsFrame,
+    });
+    setLayerErrors({});
+
+    const promises: Promise<void>[] = [];
+
+    if (needsBackground) {
+      promises.push(
+        generateImage(buildBackgroundPrompt(latestPrompts.district), backgroundSeed)
+          .then((result) => {
+            setLayerUrls((prev) => ({ ...prev, background: result.imageUrl }));
+            lastSeedsRef.current.background = backgroundSeed;
+          })
+          .catch((err: unknown) => {
+            setLayerErrors((prev) => ({
+              ...prev,
+              background: err instanceof Error ? err.message : "Background generation failed.",
+            }));
+          })
+          .finally(() => setLayerLoading((prev) => ({ ...prev, background: false }))),
+      );
     }
+
+    if (needsCharacter) {
+      promises.push(
+        generateImage(buildCharacterPrompt(latestPrompts), charCacheKey)
+          .then((result) => {
+            setLayerUrls((prev) => ({ ...prev, character: result.imageUrl }));
+            lastSeedsRef.current.character = charCacheKey;
+          })
+          .catch((err: unknown) => {
+            setLayerErrors((prev) => ({
+              ...prev,
+              character: err instanceof Error ? err.message : "Character generation failed.",
+            }));
+          })
+          .finally(() => setLayerLoading((prev) => ({ ...prev, character: false }))),
+      );
+    }
+
+    if (needsFrame) {
+      promises.push(
+        generateImage(buildFramePrompt(latestPrompts.rarity), frameSeed)
+          .then((result) => {
+            setLayerUrls((prev) => ({ ...prev, frame: result.imageUrl }));
+            lastSeedsRef.current.frame = frameSeed;
+          })
+          .catch((err: unknown) => {
+            setLayerErrors((prev) => ({
+              ...prev,
+              frame: err instanceof Error ? err.message : "Frame generation failed.",
+            }));
+          })
+          .finally(() => setLayerLoading((prev) => ({ ...prev, frame: false }))),
+      );
+    }
+
+    await Promise.all(promises);
   };
 
-  // ── Auto-refresh image when prompts change (after first forge) ───────────────
-  // The stamina slider fires on every tick, so we debounce by 700 ms to avoid
-  // triggering an API call on each incremental slider movement.
+  // ── Auto-refresh layers when prompts change (after first forge) ──────────────
   useEffect(() => {
     if (!hasGeneratedRef.current) return;
 
     const newCard = generateCard(prompts);
     setGenerated(newCard);
-    setImageUrl(null);
-    setImageLoading(true);
-    setImageError(null);
+
+    // Reset only the URLs for stale layers so the UI shows loading skeletons
+    // for the changing layers while keeping the others intact.
+    const { frameSeed, backgroundSeed, characterSeed } = buildSeed(prompts);
+    const charCacheKey = `${characterSeed}|${prompts.district}`;
+    if (backgroundSeed !== lastSeedsRef.current.background) {
+      setLayerUrls((prev) => ({ ...prev, background: null }));
+    }
+    if (charCacheKey !== lastSeedsRef.current.character) {
+      setLayerUrls((prev) => ({ ...prev, character: null }));
+    }
+    if (frameSeed !== lastSeedsRef.current.frame) {
+      setLayerUrls((prev) => ({ ...prev, frame: null }));
+    }
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      fetchImage(newCard, prompts);
+      fetchLayers(newCard, prompts);
     }, 700);
 
     return () => {
@@ -89,16 +208,17 @@ export function CardForge() {
     setPrompts((p) => ({ ...p, [key]: val }));
 
   const handleGenerate = () => {
-    // Cancel any pending debounced image fetch
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     const card = generateCard(prompts);
     setGenerated(card);
-    setImageUrl(null);
     hasGeneratedRef.current = true;
 
-    // Trigger image generation immediately (no debounce for explicit forge click)
-    fetchImage(card, prompts);
+    // Reset all layers and regenerate immediately
+    setLayerUrls({ background: null, character: null, frame: null });
+    lastSeedsRef.current = { background: null, character: null, frame: null };
+
+    fetchLayers(card, prompts);
   };
 
   const canSave = tierData.canSave;
@@ -106,15 +226,16 @@ export function CardForge() {
   const atLimit = canSave && cardLimit !== null && cards.length >= cardLimit;
 
   const handleSave = () => {
-    if (!canSave) {
-      openUpgradeModal();
-      return;
+    if (!canSave) { openUpgradeModal(); return; }
+    if (atLimit)  { openUpgradeModal(); return; }
+    if (generated) {
+      addCard({
+        ...generated,
+        backgroundImageUrl: layerUrls.background ?? undefined,
+        characterImageUrl:  layerUrls.character  ?? undefined,
+        frameImageUrl:      layerUrls.frame      ?? undefined,
+      });
     }
-    if (atLimit) {
-      openUpgradeModal();
-      return;
-    }
-    if (generated) addCard(imageUrl ? { ...generated, imageUrl } : generated);
   };
 
   const saveLabel = () => {
@@ -125,6 +246,10 @@ export function CardForge() {
   };
 
   const saveBtnDisabled = !!(generated && hasCard(generated.id));
+
+  // Determine overall loading / error state for the preview area
+  const anyLayerLoading = layerLoading.background || layerLoading.character || layerLoading.frame;
+  const layerErrorMessages = Object.values(layerErrors).filter(Boolean);
 
   return (
     <div className="page">
@@ -225,6 +350,9 @@ export function CardForge() {
               ))}
             </div>
             <p className="form-hint">{DISTRICT_HINTS[prompts.district]}</p>
+            <p className="form-hint form-hint--secondary">
+              District changes background scene and courier bag style.
+            </p>
           </div>
 
           <div className="form-group">
@@ -271,6 +399,13 @@ export function CardForge() {
           <button className="btn-primary btn-lg" onClick={handleGenerate}>
             ⚡ Forge Card
           </button>
+
+          {isImageGenConfigured && (
+            <p className="form-hint form-hint--secondary" style={{ marginTop: "0.5rem" }}>
+              🎨 Layered generation: background, character and frame are generated separately —
+              only the layers affected by your changes will be regenerated.
+            </p>
+          )}
         </div>
 
         <div className="forge-preview">
@@ -280,21 +415,26 @@ export function CardForge() {
               Set <code>VITE_IMAGE_API_URL</code> in your <code>.env</code> to enable it.
             </p>
           )}
+          {layerErrorMessages.length > 0 && (
+            <div className="forge-image-errors">
+              {layerErrorMessages.map((msg, i) => (
+                <p key={i} className="forge-image-error">⚠️ {msg}</p>
+              ))}
+            </div>
+          )}
           {generated ? (
-            <>
-              {imageError && (
-                <p className="forge-image-error">⚠️ {imageError}</p>
-              )}
-              <CardDisplay
-                card={generated}
-                onSave={handleSave}
-                isSaved={saveBtnDisabled || (!canSave) || atLimit}
-                saveLabel={saveLabel()}
-                showShare={true}
-                imageUrl={imageUrl ?? undefined}
-                imageLoading={imageLoading}
-              />
-            </>
+            <CardDisplay
+              card={generated}
+              onSave={handleSave}
+              isSaved={saveBtnDisabled || (!canSave) || atLimit}
+              saveLabel={saveLabel()}
+              showShare={true}
+              backgroundImageUrl={layerUrls.background ?? undefined}
+              characterImageUrl={layerUrls.character  ?? undefined}
+              frameImageUrl={layerUrls.frame          ?? undefined}
+              layerLoading={layerLoading}
+              imageLoading={anyLayerLoading}
+            />
           ) : (
             <div className="empty-preview">
               <span className="empty-icon">🛹</span>

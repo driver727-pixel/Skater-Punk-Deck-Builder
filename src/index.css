@@ -668,7 +668,116 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.15s; }
   border-radius: 3px;
 }
 
-/* ===== Nav Badge & User Menu ===== */
+/* ===== Layered Card Art Composite ===== */
+/*
+ * Three AI-generated layers are stacked inside .card-art-composite:
+ *   1. background  – district environment scene (normal blend)
+ *   2. character   – courier portrait on white background (multiply blend removes white BG)
+ *   3. frame       – ornate rarity border on white background (multiply blend removes white BG)
+ *
+ * Using mix-blend-mode: multiply means the white areas of the character/frame
+ * images become transparent, leaving only the coloured artwork visible.
+ * This provides an approximation of alpha compositing without requiring a
+ * separate background-removal step. For sharper results, run the character and
+ * frame images through fal-ai/imageutils/rembg first.
+ */
+.card-art-composite {
+  position: relative;
+  width: 140px;
+  height: 200px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg2);
+  flex-shrink: 0;
+}
+.card-art-composite--full {
+  width: 100%;
+  height: 220px;
+  border-radius: 6px;
+  margin: 0 auto;
+}
+
+.card-art-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.card-art-layer--background {
+  /* Sits at the bottom; no blending needed */
+  z-index: 1;
+  mix-blend-mode: normal;
+}
+.card-art-layer--character {
+  /* Multiply removes the white background from the character portrait */
+  z-index: 2;
+  mix-blend-mode: multiply;
+  object-fit: contain;
+}
+.card-art-layer--frame {
+  /* Multiply keeps only the coloured border, the white centre disappears */
+  z-index: 3;
+  mix-blend-mode: multiply;
+}
+.card-art-layer--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, var(--bg2) 25%, var(--bg3) 50%, var(--bg2) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  object-fit: unset;
+}
+.card-art-layer__label {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  animation: none;
+  text-align: center;
+  padding: 4px;
+}
+
+/* Small badges shown while individual layers are still loading */
+.layer-status-badges {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin: 0 0 6px;
+}
+.layer-status-badge {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+  font-weight: bold;
+}
+.layer-status-badge--loading {
+  background: rgba(0,255,136,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(0,255,136,0.25);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+/* Container for multiple error messages in the forge preview */
+.forge-image-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+/* Secondary form hint (smaller / dimmer than primary) */
+.form-hint--secondary {
+  opacity: 0.6;
+  font-size: 10px;
+}
+
+
 .nav-badge {
   display: inline-flex;
   align-items: center;

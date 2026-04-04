@@ -4,6 +4,12 @@ import { CardArt } from "./CardArt";
 import { StatBar } from "./StatBar";
 import { ShareModal } from "./ShareModal";
 
+interface LayerLoading {
+  background: boolean;
+  character:  boolean;
+  frame:      boolean;
+}
+
 interface CardDisplayProps {
   card: CardPayload;
   compact?: boolean;
@@ -13,10 +19,18 @@ interface CardDisplayProps {
   isSaved?: boolean;
   showShare?: boolean;
   saveLabel?: string;
-  /** URL of the AI-generated illustration (overrides card.imageUrl when provided). */
+  /** URL of the AI-generated illustration (legacy single-image). */
   imageUrl?: string;
   /** When true, shows a loading skeleton while the AI image is being fetched. */
   imageLoading?: boolean;
+  /** Background layer URL (district scene, no characters). */
+  backgroundImageUrl?: string;
+  /** Character layer URL (courier portrait on white background). */
+  characterImageUrl?: string;
+  /** Frame layer URL (ornate playing-card border based on rarity). */
+  frameImageUrl?: string;
+  /** Per-layer loading states — shows targeted skeletons for each layer. */
+  layerLoading?: LayerLoading;
 }
 
 const RARITY_COLORS: Record<string, string> = {
@@ -27,19 +41,151 @@ const RARITY_COLORS: Record<string, string> = {
   Legendary:      "#ffaa00",
 };
 
-export function CardDisplay({ card, compact = false, onSave, onRemove, onEdit, isSaved, showShare = false, saveLabel, imageUrl, imageLoading }: CardDisplayProps) {
+// ── Layer status badge helper ──────────────────────────────────────────────────
+
+function LayerStatusBadges({ loading }: { loading: LayerLoading }) {
+  const badges = [
+    { key: "background", label: "BG",   loading: loading.background },
+    { key: "character",  label: "CHAR", loading: loading.character  },
+    { key: "frame",      label: "FRAME", loading: loading.frame      },
+  ].filter((b) => b.loading);
+
+  if (badges.length === 0) return null;
+
+  return (
+    <div className="layer-status-badges">
+      {badges.map((b) => (
+        <span key={b.key} className="layer-status-badge layer-status-badge--loading">
+          ✨ {b.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// ── Composite art renderer ─────────────────────────────────────────────────────
+
+interface CompositeArtProps {
+  card: CardPayload;
+  backgroundImageUrl?: string;
+  characterImageUrl?: string;
+  frameImageUrl?: string;
+  layerLoading?: LayerLoading;
+  /** Width hint for the SVG fallback only */
+  width?: number;
+  height?: number;
+  fullSize?: boolean;
+}
+
+function CompositeArt({
+  card,
+  backgroundImageUrl,
+  characterImageUrl,
+  frameImageUrl,
+  layerLoading,
+  width = 200,
+  height = 140,
+  fullSize = false,
+}: CompositeArtProps) {
+  const hasAnyLayer =
+    backgroundImageUrl || characterImageUrl || frameImageUrl ||
+    layerLoading?.background || layerLoading?.character || layerLoading?.frame;
+
+  // No AI layer data at all — render SVG fallback
+  if (!hasAnyLayer) {
+    return <CardArt card={card} width={width} height={height} />;
+  }
+
+  return (
+    <div className={`card-art-composite${fullSize ? " card-art-composite--full" : ""}`}>
+      {/* Layer 1 – Background (district environment) */}
+      {backgroundImageUrl ? (
+        <img
+          src={backgroundImageUrl}
+          alt="background"
+          className="card-art-layer card-art-layer--background"
+        />
+      ) : layerLoading?.background ? (
+        <div className="card-art-layer card-art-layer--background card-art-layer--loading">
+          <span className="card-art-layer__label">🌆 Background…</span>
+        </div>
+      ) : null}
+
+      {/* Layer 2 – Character (courier portrait, multiply-blended) */}
+      {characterImageUrl ? (
+        <img
+          src={characterImageUrl}
+          alt="character"
+          className="card-art-layer card-art-layer--character"
+        />
+      ) : layerLoading?.character ? (
+        <div className="card-art-layer card-art-layer--character card-art-layer--loading">
+          <span className="card-art-layer__label">🛹 Character…</span>
+        </div>
+      ) : null}
+
+      {/* Layer 3 – Frame (ornate rarity border, multiply-blended) */}
+      {frameImageUrl ? (
+        <img
+          src={frameImageUrl}
+          alt="frame"
+          className="card-art-layer card-art-layer--frame"
+        />
+      ) : layerLoading?.frame ? (
+        <div className="card-art-layer card-art-layer--frame card-art-layer--loading">
+          <span className="card-art-layer__label">🖼 Frame…</span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
+
+export function CardDisplay({
+  card,
+  compact = false,
+  onSave,
+  onRemove,
+  onEdit,
+  isSaved,
+  showShare = false,
+  saveLabel,
+  imageUrl,
+  imageLoading,
+  backgroundImageUrl,
+  characterImageUrl,
+  frameImageUrl,
+  layerLoading,
+}: CardDisplayProps) {
   const [sharing, setSharing] = useState(false);
   const rarityColor = RARITY_COLORS[card.prompts.rarity] || "#aaaaaa";
   const accent = card.visuals.accentColor || "#00ff88";
 
-  // Resolve the illustration to display: prop > card field > SVG fallback
-  const resolvedImageUrl = imageUrl ?? card.imageUrl;
+  // Prefer layer URLs from props; fall back to card-stored URLs; then legacy imageUrl
+  const resolvedBackground = backgroundImageUrl ?? card.backgroundImageUrl;
+  const resolvedCharacter  = characterImageUrl  ?? card.characterImageUrl;
+  const resolvedFrame      = frameImageUrl      ?? card.frameImageUrl;
+  const resolvedImageUrl   = imageUrl           ?? card.imageUrl;
+
+  const hasLayeredImages = resolvedBackground || resolvedCharacter || resolvedFrame;
+  const resolvedLayerLoading = layerLoading ?? { background: false, character: false, frame: false };
 
   if (compact) {
     return (
       <div className="card-compact" style={{ borderColor: rarityColor }}>
-        {imageLoading ? (
+        {imageLoading && !hasLayeredImages ? (
           <div className="card-art-skeleton" />
+        ) : hasLayeredImages || layerLoading ? (
+          <CompositeArt
+            card={card}
+            backgroundImageUrl={resolvedBackground}
+            characterImageUrl={resolvedCharacter}
+            frameImageUrl={resolvedFrame}
+            layerLoading={resolvedLayerLoading}
+            width={160}
+            height={112}
+          />
         ) : resolvedImageUrl ? (
           <img
             src={resolvedImageUrl}
@@ -65,7 +211,22 @@ export function CardDisplay({ card, compact = false, onSave, onRemove, onEdit, i
         <span className="card-rarity" style={{ color: rarityColor }}>{card.prompts.rarity.toUpperCase()}</span>
       </div>
 
-      {imageLoading ? (
+      {/* Layer loading status badges */}
+      {(layerLoading?.background || layerLoading?.character || layerLoading?.frame) && (
+        <LayerStatusBadges loading={resolvedLayerLoading} />
+      )}
+
+      {/* Art area — layered composite takes priority over legacy single image */}
+      {hasLayeredImages || (layerLoading?.background || layerLoading?.character || layerLoading?.frame) ? (
+        <CompositeArt
+          card={card}
+          backgroundImageUrl={resolvedBackground}
+          characterImageUrl={resolvedCharacter}
+          frameImageUrl={resolvedFrame}
+          layerLoading={resolvedLayerLoading}
+          fullSize
+        />
+      ) : imageLoading ? (
         <div className="card-art-skeleton card-art-skeleton--full">
           <span className="card-art-skeleton__label">✨ Generating image…</span>
         </div>

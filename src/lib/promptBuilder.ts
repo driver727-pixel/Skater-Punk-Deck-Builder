@@ -29,10 +29,10 @@ const DISTRICT_BACKGROUND_DESCRIPTIONS: Record<string, string> = {
     "diesel-punk aesthetic with heavy machinery and riveted ironwork, dramatic orange flare stacks at night",
   "Glass City":
     "a cyberpunk neon megalopolis of towering glass skyscrapers packed with holographic advertisements, " +
-    "decayed and cracked roads with no cars or bicycles anywhere — only electric skateboarders weaving through traffic, " +
-    "business executives riding expensive flying drone-copter vehicles overhead, " +
+    "empty decayed and cracked roads with no cars, no bicycles, and no people anywhere — a hauntingly deserted urban canyon, " +
+    "autonomous delivery drones hovering silently overhead, " +
     "neon reflections on rain-soaked pavement, dense vertical cityscape lit by a thousand screens, " +
-    "high-tech courier packs and sensor gear everywhere, dramatic cyberpunk atmosphere",
+    "high-tech sensor gear and floating holo-signs everywhere, dramatic cyberpunk atmosphere, no humans, no figures",
 };
 
 /**
@@ -43,7 +43,7 @@ const DISTRICT_DESCRIPTIONS: Record<string, string> = {
   Nightshade:   "an underground network of subway tunnels, neon-lit pipes and subterranean communes",
   Batteryville: "a rugged off-grid desert settlement with solar panels and wind turbines",
   "The Grid":   "a diesel-punk industrial wasteland of defunct refineries and oil derricks controlled by rival factions",
-  "Glass City": "a cyberpunk neon megalopolis of glass skyscrapers where only electric skateboarders rule the streets",
+  "Glass City": "a cyberpunk neon megalopolis of glass skyscrapers — empty streets with no cars and no people, only neon reflections and drones",
 };
 
 const STYLE_CLOTHING: Record<string, string> = {

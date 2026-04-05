@@ -26,6 +26,7 @@ app.use(express.json());
 
 const FAL_KEY = process.env.FAL_KEY || '';
 const FAL_URL = 'https://fal.run/fal-ai/flux/dev';
+const BIREFNET_URL = 'https://fal.run/fal-ai/birefnet';
 
 if (!FAL_KEY) {
   console.warn('⚠️  FAL_KEY environment variable is not set — requests will be rejected by Fal.ai.');
@@ -57,6 +58,35 @@ app.post('/api/generate-image', async (req, res) => {
   } catch (err) {
     console.error('Proxy error:', err);
     res.status(500).json({ error: 'Image generation proxy failed.' });
+  }
+});
+
+// Background removal proxy: strips the white/solid background from a generated
+// character image and returns a transparent PNG via the Fal.ai birefnet model.
+app.post('/api/remove-background', async (req, res) => {
+  try {
+    const upstream = await fetch(BIREFNET_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Key ${FAL_KEY}`,
+      },
+      body: JSON.stringify(req.body),
+    });
+
+    if (!upstream.ok) {
+      const text = await upstream.text();
+      let body;
+      try { body = JSON.parse(text); } catch { body = { error: text }; }
+      res.status(upstream.status).json(body);
+      return;
+    }
+
+    const data = await upstream.json();
+    res.json(data);
+  } catch (err) {
+    console.error('Background removal proxy error:', err);
+    res.status(500).json({ error: 'Background removal proxy failed.' });
   }
 });
 

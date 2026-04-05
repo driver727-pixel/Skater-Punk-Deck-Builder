@@ -672,15 +672,12 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.15s; }
 /*
  * Three AI-generated layers are stacked inside .card-art-composite:
  *   1. background  – district environment scene (normal blend)
- *   2. character   – courier portrait on white background (multiply blend removes white BG)
+ *   2. character   – courier portrait (normal blend, fully opaque)
  *   3. frame       – ornate rarity border on black background (screen blend removes black BG)
  *
- * Character layer uses mix-blend-mode: multiply — white areas become transparent.
+ * Character layer uses mix-blend-mode: normal — renders as a solid opaque layer.
  * Frame layer uses mix-blend-mode: screen — the black interior disappears and the
  * coloured gold/silver/foil border remains visible over any background colour.
- * This provides an approximation of alpha compositing without requiring a
- * separate background-removal step. For sharper results, run the character and
- * frame images through fal-ai/imageutils/rembg first.
  */
 .card-art-composite {
   position: relative;
@@ -711,9 +708,9 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.15s; }
   mix-blend-mode: normal;
 }
 .card-art-layer--character {
-  /* Multiply removes the white background from the character portrait */
+  /* Normal blend renders the character as fully opaque */
   z-index: 2;
-  mix-blend-mode: multiply;
+  mix-blend-mode: normal;
   object-fit: contain;
 }
 .card-art-layer--frame {

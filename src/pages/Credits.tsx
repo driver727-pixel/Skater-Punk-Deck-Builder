@@ -119,7 +119,7 @@ export function Credits() {
           associated intellectual property are owned exclusively by SP Digital LLC.
         </p>
         <p>
-          See the <a href="/LICENSE" target="_blank" rel="noopener noreferrer" className="credits-link">LICENSE</a> file for full terms.
+          See the <a href="/LICENSE.txt" target="_blank" rel="noopener noreferrer" className="credits-link">LICENSE</a> file for full terms.
         </p>
       </footer>
     </div>

@@ -1,0 +1,38 @@
+PROPRIETARY SOFTWARE LICENSE
+
+Copyright (c) 2025 SP Digital LLC. All Rights Reserved.
+
+"Punch Skater", the Punch Skater game, card mechanics, game rules, artwork
+concepts, character archetypes, district lore, visual design, source code,
+and all associated intellectual property are owned exclusively by SP Digital LLC.
+
+NOTICE TO ALL USERS AND THIRD PARTIES:
+
+This software and its associated materials are proprietary and confidential.
+No part of this software, including but not limited to its source code, design,
+user interface, game mechanics, AI-generated card artwork, or documentation,
+may be reproduced, distributed, modified, reverse-engineered, publicly performed,
+or transmitted in any form or by any means — electronic, mechanical, photocopying,
+recording, or otherwise — without the express prior written permission of
+SP Digital LLC.
+
+RESTRICTIONS:
+  - You may NOT copy, fork, or redistribute this software or any portion of it.
+  - You may NOT modify or create derivative works based on this software.
+  - You may NOT use this software or any of its components for commercial purposes
+    without a written license agreement from SP Digital LLC.
+  - You may NOT remove or alter any proprietary notices, labels, or marks.
+
+PERMITTED USE:
+  - Personal, non-commercial use of the hosted game at https://punchskater.com
+    is permitted subject to the Terms of Service.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL SP DIGITAL LLC
+BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM, OUT OF, OR
+IN CONNECTION WITH THE SOFTWARE OR ITS USE.
+
+For licensing inquiries, partnerships, or permissions:
+  SP Digital LLC
+  https://punchskater.com

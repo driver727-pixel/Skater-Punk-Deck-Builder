@@ -40,18 +40,26 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Skater Punk Deck Builder',
-        short_name: 'SkaterPunk',
-        description: 'A cyberpunk-themed card deck builder game built with React, TypeScript, and Vite.',
+        name: 'Punch Skater',
+        short_name: 'PunchSkater',
+        description: 'Forge unique AI-powered courier trading cards, build competitive decks, and trade with other skaters across five dystopian districts.',
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
+        start_url: '/',
+        id: 'com.spdigital.punchskater',
         icons: [
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       }

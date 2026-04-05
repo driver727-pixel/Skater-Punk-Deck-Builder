@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { TierProvider } from "./context/TierContext";
 import { Nav } from "./components/Nav";
+import { Footer } from "./components/Footer";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const CardForge  = lazy(() => import("./pages/CardForge").then(m => ({ default: m.CardForge })));
@@ -11,6 +12,7 @@ const DeckBuilder = lazy(() => import("./pages/DeckBuilder").then(m => ({ defaul
 const EditCard   = lazy(() => import("./pages/EditCard").then(m => ({ default: m.EditCard })));
 const Trades     = lazy(() => import("./pages/Trades").then(m => ({ default: m.Trades })));
 const Login      = lazy(() => import("./pages/Login").then(m => ({ default: m.Login })));
+const Credits    = lazy(() => import("./pages/Credits").then(m => ({ default: m.Credits })));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
@@ -45,6 +47,7 @@ function App() {
                   <Routes>
                     <Route path="/" element={<CardForge />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/credits" element={<Credits />} />
                     <Route path="/collection" element={
                       <ProtectedRoute><Collection /></ProtectedRoute>
                     } />
@@ -60,6 +63,7 @@ function App() {
                   </Routes>
                 </Suspense>
               </main>
+              <Footer />
             </div>
           </ErrorBoundary>
         </TierProvider>

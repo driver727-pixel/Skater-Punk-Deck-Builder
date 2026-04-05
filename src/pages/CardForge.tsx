@@ -565,7 +565,6 @@ export function CardForge() {
                   characterBlend={characterBlend}
                 />
               </div>
-              {sharing && <ShareModal card={generated} onClose={() => setSharing(false)} />}
               {isImageGenConfigured && layerUrls.character && (
                 <div className="blend-control">
                   <span className="blend-control__label">
@@ -591,6 +590,7 @@ export function CardForge() {
           )}
         </div>
       </div>
+      {sharing && generated && <ShareModal card={generated} onClose={() => setSharing(false)} />}
     </div>
   );
 }

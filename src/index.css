@@ -198,6 +198,9 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.15s; }
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* ~480px pushes buttons down to align vertically with the STA (Stamina) bar inside the card:
+     16px top-padding + ~25px header + 220px art + ~73px identity + ~38px personality
+     + 12px stats-margin + 5×(14px bar + 5px gap) = ~480px */
   padding-top: 480px;
   flex-shrink: 0;
 }

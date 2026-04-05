@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import type { CardPayload, Archetype, Rarity, Style, Vibe, District, CardPrompts } from "../lib/types";
 import { generateCard, buildSeed, STORAGE_PACK_LABELS } from "../lib/generator";
 import { buildBackgroundPrompt, buildCharacterPrompt, buildFramePrompt } from "../lib/promptBuilder";
-import { generateImage, isImageGenConfigured } from "../services/imageGen";
+import { generateImage, removeBackground, isImageGenConfigured } from "../services/imageGen";
 import { getCachedImage, setCachedImage } from "../services/imageCache";
 import { CardDisplay } from "../components/CardDisplay";
 import { useCollection } from "../hooks/useCollection";
@@ -178,6 +178,36 @@ export function CardForge() {
       return result.imageUrl;
     };
 
+    /**
+     * Resolve the character layer with background removal:
+     * 1. Check cache for a transparent version (`char-nobg::` prefix).
+     * 2. On a miss, generate (or fetch cached) the raw white-background image,
+     *    strip the background via birefnet, then cache the transparent result.
+     * 3. If background removal fails, fall back to the raw image so generation
+     *    is never completely broken.
+     */
+    const resolveCharacterLayer = async (
+      cacheKey: string,
+      prompts: CardPrompts,
+    ): Promise<string> => {
+      const transparentCacheKey = `char-nobg::${cacheKey}`;
+      const cachedTransparent = await getCachedImage(transparentCacheKey);
+      if (cachedTransparent) return cachedTransparent;
+
+      // Generate or fetch the raw (white-background) character image.
+      const rawUrl = await resolveLayer(`char::${cacheKey}`, buildCharacterPrompt(prompts), cacheKey);
+
+      // Strip the white background to get a transparent PNG.
+      try {
+        const { imageUrl: transparentUrl } = await removeBackground(rawUrl);
+        void setCachedImage(transparentCacheKey, transparentUrl);
+        return transparentUrl;
+      } catch {
+        // Background removal failed — return the raw image as a fallback.
+        return rawUrl;
+      }
+    };
+
     if (needsBackground) {
       promises.push(
         resolveLayer(`bg::${backgroundSeed}`, buildBackgroundPrompt(latestPrompts.district), backgroundSeed)
@@ -197,7 +227,7 @@ export function CardForge() {
 
     if (needsCharacter) {
       promises.push(
-        resolveLayer(`char::${charCacheKey}`, buildCharacterPrompt(latestPrompts), charCacheKey)
+        resolveCharacterLayer(charCacheKey, latestPrompts)
           .then((imageUrl) => {
             setLayerUrls((prev) => ({ ...prev, character: imageUrl }));
             lastSeedsRef.current.character = charCacheKey;

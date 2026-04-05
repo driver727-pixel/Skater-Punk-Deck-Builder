@@ -194,8 +194,9 @@ export function buildBackgroundPrompt(district: District): string {
 /**
  * Builds a prompt for the **character layer** of a card.
  *
- * The character is rendered against a plain white background so it can be
- * composited over the background layer using CSS mix-blend-mode: multiply.
+ * The character is rendered against a plain white background, which is then
+ * stripped by the birefnet background-removal model to produce a transparent PNG
+ * that composites cleanly over the background layer using CSS mix-blend-mode: normal.
  * The bag/package description is based on stamina alone — it does NOT depend
  * on the district, so the character layer is only regenerated when archetype,
  * style, vibe, or stamina changes (matching the `characterSeed` cache key).

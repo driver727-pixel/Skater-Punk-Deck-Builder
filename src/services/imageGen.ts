@@ -17,6 +17,12 @@ import { hashSeedToInt } from "../utils/hash";
 const PROXY_API_URL = (import.meta.env.VITE_IMAGE_API_URL as string | undefined)?.trim();
 const API_URL = PROXY_API_URL || "https://fal.run/fal-ai/flux/dev";
 
+// Derive the background-removal URL from the generation URL by replacing the
+// last path segment.  e.g. "/api/generate-image" → "/api/remove-background".
+const BG_REMOVAL_URL = PROXY_API_URL
+  ? PROXY_API_URL.replace(/\/[^/]+$/, "/remove-background")
+  : undefined;
+
 /**
  * True when VITE_IMAGE_API_URL is configured,
  * so callers can gate image generation UI without attempting a doomed request.
@@ -121,4 +127,49 @@ export async function generateImage(
   }
 
   return { imageUrl };
+}
+
+/**
+ * Remove the background from a generated character image using the Fal.ai
+ * birefnet model, returning a transparent PNG URL.
+ *
+ * @param imageUrl - URL of the source image (e.g. a white-background character portrait).
+ * @returns        Resolves with the URL of the background-removed transparent image.
+ * @throws         If the network request fails, the proxy is not configured, or no URL
+ *                 is returned.
+ */
+export async function removeBackground(imageUrl: string): Promise<ImageGenResult> {
+  if (!BG_REMOVAL_URL) {
+    throw new Error(
+      "Background removal is not configured. Set VITE_IMAGE_API_URL in your .env.",
+    );
+  }
+
+  const headers: HeadersInit = { "Content-Type": "application/json" };
+  const body = JSON.stringify({ image_url: imageUrl });
+
+  const response = await fetch(BG_REMOVAL_URL, { method: "POST", headers, body });
+
+  if (!response.ok) {
+    let detail = "";
+    try {
+      const errJson = await response.json();
+      detail = errJson?.detail ?? errJson?.error ?? "";
+    } catch {
+      // ignore parse errors for the error body
+    }
+    throw new Error(
+      `Background removal failed: ${response.status} ${response.statusText}${detail ? ` — ${detail}` : ""}`,
+    );
+  }
+
+  const data = await response.json();
+  // Fal.ai birefnet returns { image: { url: "..." } }
+  const resultUrl: string | undefined = data?.image?.url;
+
+  if (!resultUrl) {
+    throw new Error("Background removal succeeded but no image URL was returned.");
+  }
+
+  return { imageUrl: resultUrl };
 }

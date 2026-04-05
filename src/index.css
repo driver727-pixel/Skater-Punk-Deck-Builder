@@ -672,13 +672,13 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.15s; }
 /*
  * Three AI-generated layers are stacked inside .card-art-composite:
  *   1. background  – district environment scene (normal blend)
- *   2. character   – courier portrait (normal blend + feathered mask so the character
- *                    appears solid at centre with edges that fade into the background)
+ *   2. character   – courier portrait (transparent PNG from background removal; normal blend)
  *   3. frame       – ornate rarity border on black background (screen blend removes black BG)
  *
- * Character layer uses mix-blend-mode: normal so the character body stays fully opaque
- * (no more "ghost" look). A radial-gradient mask feathers only the outer edges of the
- * layer into the background, keeping the portrait centre crisp and solid.
+ * Character layer is a transparent PNG produced by running the white-background
+ * portrait through the birefnet background-removal model.  With a real transparent
+ * background, mix-blend-mode: normal composites it cleanly over any district scene
+ * without masking tricks or colour-shift artefacts.
  * Frame layer uses mix-blend-mode: screen — the black interior becomes transparent and the
  * coloured gold/silver/foil border remains visible over any background colour.
  */
@@ -711,24 +711,11 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.15s; }
   mix-blend-mode: normal;
 }
 .card-art-layer--character {
-  /* Normal blend: character body stays solid; feathered mask fades only the outer edges. */
+  /* Normal blend: character has a transparent background from background removal,
+     so it composites cleanly over the background layer without any masking. */
   z-index: 2;
   mix-blend-mode: normal;
   object-fit: contain;
-  mask-image: radial-gradient(
-    ellipse 72% 88% at 50% 42%,
-    black 50%,
-    rgba(0,0,0,0.85) 62%,
-    rgba(0,0,0,0.3) 78%,
-    transparent 92%
-  );
-  -webkit-mask-image: radial-gradient(
-    ellipse 72% 88% at 50% 42%,
-    black 50%,
-    rgba(0,0,0,0.85) 62%,
-    rgba(0,0,0,0.3) 78%,
-    transparent 92%
-  );
 }
 .card-art-layer--frame {
   /* Screen blend: black interior becomes transparent, coloured foil border stays visible */

@@ -138,7 +138,9 @@ export function buildBackgroundPrompt(district: District): string {
   return (
     `Environment scene: ${bg}. ` +
     `Wide establishing shot, cinematic composition, absolutely no people, no characters, no text. ` +
-    `Photorealistic, ultra-detailed, Unreal Engine 5, volumetric lighting, 4K resolution.`
+    `Minimal Trading card art in the style of 1995 Fleer Ultra X-Men, fantastic realism, airbrushed gouache texture, ` +
+    `vibrant and saturated 90s digital colors, dramatic rim lighting. Hyper-Realistic sci-fi setting. ` +
+    `SFW, family friendly, PG rated, LGBTQIA+.`
   );
 }
 
@@ -166,7 +168,9 @@ export function buildCharacterPrompt(prompts: CardPrompts): string {
     `Character is ${state}. ` +
     `Mood: ${mood}. ` +
     `Isolated on a plain white background, full figure visible from head to toe, centred. ` +
-    `3D cartoon Unreal Engine render style, vibrant colours, crisp outlines, sharp detail. ` +
+    `Minimal Trading card art in the style of 1995 Fleer Ultra X-Men, fantastic realism, airbrushed gouache texture, ` +
+    `vibrant and saturated 90s digital colors, dramatic rim lighting, realistic anatomy, chromium finish, ` +
+    `epic action pose, 90s Marvel aesthetic. No kids. No teens. Adults aged 18-99 only. ` +
     `SFW, family friendly, PG rated, LGBTQIA+.`
   );
 }
@@ -175,18 +179,21 @@ export function buildCharacterPrompt(prompts: CardPrompts): string {
  * Builds a prompt for the **frame layer** of a card.
  *
  * Generates an ornate playing-card-style border whose complexity and style
- * scales with the rarity tier.  The centre of the frame image is left as plain
- * white so that when composited on top of background+character via
- * mix-blend-mode: multiply, only the coloured border remains visible.
+ * scales with the rarity tier.  The centre of the frame image is flat black
+ * so that when composited on top of background+character via
+ * mix-blend-mode: screen, the black interior becomes transparent and only
+ * the coloured gold/silver/foil border remains visible.
  * Changing rarity regenerates only this layer.
  */
 export function buildFramePrompt(rarity: Rarity): string {
   const border = RARITY_FRAME_DESCRIPTIONS[rarity] ?? "a plain decorative border";
   return (
-    `A playing card frame: ${border}. ` +
-    `The interior of the frame is completely flat white — only the border decoration is coloured. ` +
-    `Symmetrical layout, top-down flat graphic illustration style, isolated on white background, no characters, no text. ` +
-    `Clean vector-art look, high contrast, 4K.`
+    `A playing card border frame: ${border}. ` +
+    `Gold, silver, titanium foil, decorative, accents. ` +
+    `The interior of the frame is completely flat black — only the border decoration is coloured. ` +
+    `Symmetrical layout, top-down flat graphic illustration style, isolated on black background, no characters, no text. ` +
+    `Clean vector-art look, high contrast, 4K. ` +
+    `SFW, family friendly, PG rated, LGBTQIA+.`
   );
 }
 

@@ -7,6 +7,8 @@ import { generateImage, removeBackground, isImageGenConfigured } from "../servic
 import { getCachedImage, setCachedImage } from "../services/imageCache";
 import { CardDisplay } from "../components/CardDisplay";
 import { ShareModal } from "../components/ShareModal";
+import { CardViewer3D } from "../components/CardViewer3D";
+import { PrintModal } from "../components/PrintModal";
 import { LanguageProfilePanel } from "../components/LanguageProfilePanel";
 import { useCollection } from "../hooks/useCollection";
 import { useTier } from "../context/TierContext";
@@ -133,6 +135,8 @@ export function CardForge() {
   // 0–1 opacity applied to the character layer (1 = fully opaque / solid portrait).
   const [characterBlend, setCharacterBlend] = useState(1);
   const [sharing, setSharing] = useState(false);
+  const [viewing3D, setViewing3D] = useState(false);
+  const [printing, setPrinting] = useState(false);
 
   // Track the seed used to generate each layer so we can skip unchanged layers.
   const lastSeedsRef = useRef<LayerSeeds>({
@@ -544,6 +548,45 @@ export function CardForge() {
             <LanguageProfilePanel />
           </div>
 
+          {generated && (
+            <div className="forge-generated-actions">
+              {isImageGenConfigured && layerUrls.character && (
+                <div className="blend-control">
+                  <span className="blend-control__label">
+                    <span>Character Blend</span>
+                    <span>{Math.round(characterBlend * 100)}%</span>
+                  </span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={Math.round(characterBlend * 100)}
+                    onChange={(e) => setCharacterBlend(Number(e.target.value) / 100)}
+                    className="stamina-slider"
+                  />
+                </div>
+              )}
+              <div className="forge-generated-buttons">
+                <button className="btn-outline" onClick={() => setViewing3D(true)} title="View card in 3D">
+                  ◈ 3D
+                </button>
+                <button className="btn-outline" onClick={() => setPrinting(true)} title="Print this card">
+                  🖨 Print
+                </button>
+                <button className="btn-outline" onClick={() => setSharing(true)}>
+                  ↗ Share
+                </button>
+                <button
+                  className="btn-primary"
+                  onClick={handleSave}
+                  disabled={saveBtnDisabled || (!canSave) || atLimit}
+                >
+                  {saveLabel()}
+                </button>
+              </div>
+            </div>
+          )}
+
           <button className="btn-primary btn-lg" onClick={handleGenerate}>
             ⚡ Forge Card
           </button>
@@ -571,46 +614,17 @@ export function CardForge() {
             </div>
           )}
           {generated ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", width: "100%" }}>
-              <div className="forge-card-wrapper">
-                <div className="forge-card-side">
-                  <button
-                    className="btn-primary"
-                    onClick={handleSave}
-                    disabled={saveBtnDisabled || (!canSave) || atLimit}
-                  >
-                    {saveLabel()}
-                  </button>
-                  <button className="btn-outline" onClick={() => setSharing(true)}>
-                    ↗ Share
-                  </button>
-                </div>
-                <CardDisplay
-                  card={generated}
-                  backgroundImageUrl={layerUrls.background ?? undefined}
-                  characterImageUrl={layerUrls.character  ?? undefined}
-                  frameImageUrl={layerUrls.frame          ?? undefined}
-                  layerLoading={layerLoading}
-                  imageLoading={anyLayerLoading}
-                  characterBlend={characterBlend}
-                />
-              </div>
-              {isImageGenConfigured && layerUrls.character && (
-                <div className="blend-control">
-                  <span className="blend-control__label">
-                    <span>Character Blend</span>
-                    <span>{Math.round(characterBlend * 100)}%</span>
-                  </span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={Math.round(characterBlend * 100)}
-                    onChange={(e) => setCharacterBlend(Number(e.target.value) / 100)}
-                    className="stamina-slider"
-                  />
-                </div>
-              )}
+            <div className="forge-card-wrapper">
+              <CardDisplay
+                card={generated}
+                backgroundImageUrl={layerUrls.background ?? undefined}
+                characterImageUrl={layerUrls.character  ?? undefined}
+                frameImageUrl={layerUrls.frame          ?? undefined}
+                layerLoading={layerLoading}
+                imageLoading={anyLayerLoading}
+                characterBlend={characterBlend}
+                hideToolButtons={true}
+              />
             </div>
           ) : (
             <div className="empty-preview">
@@ -621,6 +635,26 @@ export function CardForge() {
         </div>
       </div>
       {sharing && generated && <ShareModal card={generated} onClose={() => setSharing(false)} />}
+      {viewing3D && generated && (
+        <CardViewer3D
+          card={generated}
+          backgroundImageUrl={layerUrls.background ?? undefined}
+          characterImageUrl={layerUrls.character ?? undefined}
+          frameImageUrl={layerUrls.frame ?? undefined}
+          characterBlend={characterBlend}
+          onClose={() => setViewing3D(false)}
+        />
+      )}
+      {printing && generated && (
+        <PrintModal
+          card={generated}
+          backgroundImageUrl={layerUrls.background ?? undefined}
+          characterImageUrl={layerUrls.character ?? undefined}
+          frameImageUrl={layerUrls.frame ?? undefined}
+          characterBlend={characterBlend}
+          onClose={() => setPrinting(false)}
+        />
+      )}
     </div>
   );
 }

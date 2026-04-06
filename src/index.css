@@ -201,22 +201,33 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.15s; }
   padding: 24px;
   border-radius: 8px;
 }
-.forge-preview { display: flex; justify-content: center; align-items: flex-start; }
+.forge-preview {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  padding: 24px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
 
-.forge-card-wrapper { display: flex; flex-direction: row; gap: 12px; align-items: flex-start; }
-.forge-card-side {
+/* Card wrapper — centers the zoomed card inside the preview panel */
+.forge-card-wrapper { display: flex; justify-content: center; width: 100%; }
+
+/* Generated-action strip in the form — blend slider + icon buttons */
+.forge-generated-actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  /* ~480px pushes buttons down to align vertically with the STA (Stamina) bar inside the card:
-     16px top-padding + ~25px header + 220px art + ~73px identity + ~38px personality
-     + 12px stats-margin + 5×(14px bar + 5px gap) = ~480px */
-  padding-top: 480px;
-  flex-shrink: 0;
+  gap: 10px;
+  padding: 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
 }
-@media (max-width: 800px) {
-  .forge-card-wrapper { flex-direction: column; align-items: center; }
-  .forge-card-side { padding-top: 0; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+.forge-generated-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .empty-preview {
@@ -243,6 +254,8 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.15s; }
   min-height: 400px;
   font-size: 6px;
   box-sizing: border-box;
+  /* Scale up to fill the preview column while preserving proportions */
+  zoom: 3.5;
 }
 
 .card-header {

@@ -65,7 +65,7 @@ export function generateConlangName(vocabulary: CraftlinguaWord[], seed: string)
 
 /**
  * Generate a short "Signature Catchphrase" by picking 3–5 vocabulary words
- * and joining them.  Words with shorter forms are preferenced so the phrase
+ * and joining them.  Words with shorter forms are preferred so the phrase
  * stays readable on a card.
  */
 export function generateCatchphrase(vocabulary: CraftlinguaWord[], seed: string): string {

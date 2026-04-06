@@ -1312,3 +1312,172 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.15s; }
   justify-content: flex-end;
   margin-top: 8px;
 }
+
+/* ── Language Profile Panel ──────────────────────────────────────────────── */
+
+.lang-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.lang-panel--loaded {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+}
+
+.lang-panel-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.lang-panel-badge { font-size: 16px; }
+.lang-panel-name  { font-weight: 700; color: var(--text); }
+.lang-panel-code  { color: var(--text-dim); font-size: 11px; }
+.lang-panel-count {
+  background: var(--accent);
+  color: var(--bg);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lang-panel-actions { display: flex; gap: 6px; }
+
+.lang-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+}
+.lang-panel-header:hover { background: var(--bg3); }
+.lang-panel-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.lang-panel-chevron { font-size: 11px; color: var(--text-dim); }
+
+.lang-panel-body { padding: 0 14px 14px; }
+.lang-panel-desc { font-size: 12px; color: var(--text-dim); margin-bottom: 12px; }
+.lang-panel-desc a { color: var(--accent); text-decoration: none; }
+.lang-panel-desc a:hover { text-decoration: underline; }
+
+.lang-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.lang-dropzone:hover,
+.lang-dropzone--active {
+  border-color: var(--accent);
+  background: rgba(0, 255, 136, 0.04);
+  color: var(--text);
+}
+
+.lang-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+.lang-divider::before,
+.lang-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.lang-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  padding: 8px 10px;
+  resize: vertical;
+  margin-bottom: 8px;
+}
+.lang-textarea:focus { outline: none; border-color: var(--accent); }
+
+.lang-error {
+  color: var(--danger);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.lang-panel-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ── Card conlang elements ────────────────────────────────────────────────── */
+
+.card-catchphrase {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-style: italic;
+  letter-spacing: 0.5px;
+  margin: 2px 0 6px;
+  padding: 4px 8px;
+  border-left: 2px solid var(--accent);
+  opacity: 0.85;
+}
+
+.card-lang-badge {
+  font-size: 10px;
+  background: rgba(0, 255, 136, 0.12);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 999px;
+  padding: 1px 6px;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.conlang-text {
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  opacity: 0.9;
+}
+
+.conlang-translate-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.btn-translate {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-size: 11px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-translate:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}

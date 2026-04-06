@@ -48,6 +48,27 @@ export interface CardPayload {
   };
   tags: string[];
   createdAt: string;
+  /**
+   * Constructed-language data generated when a Craftlingua language profile was
+   * active at card-creation time.  Only present on cards forged with an active
+   * profile.
+   */
+  conlang?: {
+    /** Name of the conlang used to generate this data (e.g. "Neon-Kana"). */
+    languageName: string;
+    /** BCP-47-style language code (e.g. "nnk"). */
+    languageCode: string;
+    /** Character name generated from the constructed language vocabulary. */
+    name: string;
+    /** Signature catchphrase in the constructed language. */
+    catchphrase: string;
+    /** Passive trait description translated to the constructed language. */
+    passiveTrait: string;
+    /** Active ability description translated to the constructed language. */
+    activeAbility: string;
+    /** Flavor text translated to the constructed language. */
+    flavorText: string;
+  };
   /** AI-generated illustration URL (single combined image — backward-compatible). */
   imageUrl?: string;
   /** AI-generated background layer URL (district scene, no characters). */

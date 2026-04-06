@@ -36,6 +36,9 @@ interface CardDisplayProps {
   layerLoading?: LayerLoading;
   /** 0–1 opacity of the character layer (1 = fully opaque). Passed through to CompositeArt. */
   characterBlend?: number;
+  /** When true, the 3D-viewer and Print buttons (and their modals) are suppressed so a parent
+   *  component can render them in a different location. */
+  hideToolButtons?: boolean;
 }
 
 const RARITY_COLORS: Record<string, string> = {
@@ -167,6 +170,7 @@ export function CardDisplay({
   frameImageUrl,
   layerLoading,
   characterBlend,
+  hideToolButtons = false,
 }: CardDisplayProps) {
   const [sharing, setSharing] = useState(false);
   const [viewing3D, setViewing3D] = useState(false);
@@ -365,12 +369,16 @@ export function CardDisplay({
             ✎ Edit
           </button>
         )}
-        <button className="btn-outline" onClick={() => setViewing3D(true)} title="View card in 3D">
-          ◈ 3D
-        </button>
-        <button className="btn-outline" onClick={() => setPrinting(true)} title="Print this card">
-          🖨 Print
-        </button>
+        {!hideToolButtons && (
+          <>
+            <button className="btn-outline" onClick={() => setViewing3D(true)} title="View card in 3D">
+              ◈ 3D
+            </button>
+            <button className="btn-outline" onClick={() => setPrinting(true)} title="Print this card">
+              🖨 Print
+            </button>
+          </>
+        )}
         {showShare && (
           <button className="btn-outline" onClick={() => setSharing(true)}>
             ↗ Share
@@ -384,7 +392,7 @@ export function CardDisplay({
       </div>
 
       {sharing && <ShareModal card={card} onClose={() => setSharing(false)} />}
-      {viewing3D && (
+      {!hideToolButtons && viewing3D && (
         <CardViewer3D
           card={card}
           backgroundImageUrl={resolvedBackground}
@@ -394,7 +402,7 @@ export function CardDisplay({
           onClose={() => setViewing3D(false)}
         />
       )}
-      {printing && (
+      {!hideToolButtons && printing && (
         <PrintModal
           card={card}
           backgroundImageUrl={resolvedBackground}

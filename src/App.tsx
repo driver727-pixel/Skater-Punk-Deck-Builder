@@ -2,6 +2,7 @@ import { Component, ReactNode, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { TierProvider } from "./context/TierContext";
+import { LanguageProvider } from "./context/LanguageContext";
 import { Nav } from "./components/Nav";
 import { Footer } from "./components/Footer";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -39,33 +40,35 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <TierProvider>
-          <ErrorBoundary>
-            <div className="app">
-              <Nav />
-              <main className="main">
-                <Suspense fallback={<div className="page-loading">Loading…</div>}>
-                  <Routes>
-                    <Route path="/" element={<CardForge />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/credits" element={<Credits />} />
-                    <Route path="/collection" element={
-                      <ProtectedRoute><Collection /></ProtectedRoute>
-                    } />
-                    <Route path="/decks" element={
-                      <ProtectedRoute><DeckBuilder /></ProtectedRoute>
-                    } />
-                    <Route path="/edit/:cardId" element={
-                      <ProtectedRoute><EditCard /></ProtectedRoute>
-                    } />
-                    <Route path="/trades" element={
-                      <ProtectedRoute><Trades /></ProtectedRoute>
-                    } />
-                  </Routes>
-                </Suspense>
-              </main>
-              <Footer />
-            </div>
-          </ErrorBoundary>
+          <LanguageProvider>
+            <ErrorBoundary>
+              <div className="app">
+                <Nav />
+                <main className="main">
+                  <Suspense fallback={<div className="page-loading">Loading…</div>}>
+                    <Routes>
+                      <Route path="/" element={<CardForge />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/credits" element={<Credits />} />
+                      <Route path="/collection" element={
+                        <ProtectedRoute><Collection /></ProtectedRoute>
+                      } />
+                      <Route path="/decks" element={
+                        <ProtectedRoute><DeckBuilder /></ProtectedRoute>
+                      } />
+                      <Route path="/edit/:cardId" element={
+                        <ProtectedRoute><EditCard /></ProtectedRoute>
+                      } />
+                      <Route path="/trades" element={
+                        <ProtectedRoute><Trades /></ProtectedRoute>
+                      } />
+                    </Routes>
+                  </Suspense>
+                </main>
+                <Footer />
+              </div>
+            </ErrorBoundary>
+          </LanguageProvider>
         </TierProvider>
       </AuthProvider>
     </BrowserRouter>

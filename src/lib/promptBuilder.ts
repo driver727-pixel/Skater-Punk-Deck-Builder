@@ -180,10 +180,14 @@ function staminaState(stamina: number): string {
  * no people, no text — making it suitable for use as a compositable backdrop.
  * Changing the district regenerates only this prompt (and its layer image).
  */
-export function buildBackgroundPrompt(district: District): string {
+export function buildBackgroundPrompt(district: District, graffitiWords?: string[]): string {
   const bg = DISTRICT_BACKGROUND_DESCRIPTIONS[district] ?? district;
+  const graffitiLine = graffitiWords?.length
+    ? `Graffiti tags on the walls and surfaces read '${graffitiWords.join("' and '")}' in bold spray paint. `
+    : "";
   return (
     `Environment scene: ${bg}. ` +
+    graffitiLine +
     `Wide establishing shot, cinematic composition, absolutely no people, no characters, no text. ` +
     `Minimal Trading card art in the style of 1995 Fleer Ultra X-Men, fantastic realism, airbrushed gouache texture, ` +
     `vibrant and saturated 90s digital colors, dramatic rim lighting. Hyper-Realistic sci-fi setting. ` +
@@ -202,18 +206,22 @@ export function buildBackgroundPrompt(district: District): string {
  * style, vibe, or stamina changes (matching the `characterSeed` cache key).
  * Changing district or rarity leaves this layer untouched.
  */
-export function buildCharacterPrompt(prompts: CardPrompts): string {
+export function buildCharacterPrompt(prompts: CardPrompts, graffitiWords?: string[]): string {
   const clothing  = STYLE_CLOTHING[prompts.style]    ?? prompts.style;
   const pose      = ARCHETYPE_POSES[prompts.archetype] ?? prompts.archetype;
   const board     = VIBE_BOARD[prompts.vibe]          ?? prompts.vibe;
   const mood      = RARITY_MOOD[prompts.rarity]       ?? "bold";
   const bagDesc   = characterBagDescription(prompts.stamina);
   const state     = staminaState(prompts.stamina);
+  const graffitiLine = graffitiWords?.length
+    ? `The skateboard deck and wheels feature graffiti tags or brand logos reading '${graffitiWords.join("' and '")}'. `
+    : "";
 
   return (
     `Full-body portrait of a ${prompts.archetype} skater courier, ` +
     `wearing ${clothing}, ${pose}, ` +
     `carrying ${bagDesc}, riding ${board} all-terrain electric skateboard with big off-road wheels, lights and gear. ` +
+    graffitiLine +
     `Character is ${state}. ` +
     `Mood: ${mood}. ` +
     `Isolated on a plain white background, full figure visible from head to toe, centred. ` +

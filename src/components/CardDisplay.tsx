@@ -3,6 +3,7 @@ import type { CardPayload } from "../lib/types";
 import { CardArt } from "./CardArt";
 import { StatBar } from "./StatBar";
 import { ShareModal } from "./ShareModal";
+import { HIGH_RARITY_TIERS } from "../lib/generator";
 
 interface LayerLoading {
   background: boolean;
@@ -166,8 +167,25 @@ export function CardDisplay({
   characterBlend,
 }: CardDisplayProps) {
   const [sharing, setSharing] = useState(false);
+  // false = show conlang (default for high-rarity), true = show English translation
+  const [showEnglish, setShowEnglish] = useState(false);
   const rarityColor = RARITY_COLORS[card.prompts.rarity] || "#aaaaaa";
   const accent = card.visuals.accentColor || "#00ff88";
+
+  // Whether this card has conlang data and is a high-rarity tier
+  const hasConlangLore =
+    !!card.conlang && HIGH_RARITY_TIERS.has(card.prompts.rarity);
+
+  // Helpers that return the active language string (conlang or English)
+  const passiveTraitDesc = hasConlangLore && !showEnglish
+    ? card.conlang!.passiveTrait
+    : card.traits.passiveTrait.description;
+  const activeAbilityDesc = hasConlangLore && !showEnglish
+    ? card.conlang!.activeAbility
+    : card.traits.activeAbility.description;
+  const displayFlavorText = hasConlangLore && !showEnglish
+    ? card.conlang!.flavorText
+    : card.flavorText;
 
   // Prefer layer URLs from props; fall back to card-stored URLs; then legacy imageUrl
   const resolvedBackground = backgroundImageUrl ?? card.backgroundImageUrl;
@@ -251,6 +269,11 @@ export function CardDisplay({
 
       <div className="card-identity">
         <h2 className="card-name">{card.identity.name}</h2>
+        {card.conlang?.catchphrase && (
+          <p className="card-catchphrase">
+            &ldquo;{card.conlang.catchphrase}&rdquo;
+          </p>
+        )}
         <div className="card-subline">
           <span>{card.prompts.archetype}</span>
           <span className="sep">·</span>
@@ -262,6 +285,14 @@ export function CardDisplay({
           <span style={{ opacity: 0.6 }}>{card.identity.manufacturer}</span>
           <span className="sep">·</span>
           <span style={{ opacity: 0.6 }}>{card.prompts.district}</span>
+          {card.conlang && (
+            <>
+              <span className="sep">·</span>
+              <span className="card-lang-badge" title={`Language: ${card.conlang.languageName}`}>
+                🌐 {card.conlang.languageCode.toUpperCase()}
+              </span>
+            </>
+          )}
         </div>
       </div>
 
@@ -282,11 +313,15 @@ export function CardDisplay({
           <span className="stat-label">ACT</span>
           <div className="stat-active-body">
             <span className="stat-active-name">{card.traits.activeAbility.name}</span>
-            <p className="stat-active-desc">{card.traits.activeAbility.description}</p>
+            <p className={`stat-active-desc${hasConlangLore && !showEnglish ? " conlang-text" : ""}`}>
+              {activeAbilityDesc}
+            </p>
           </div>
         </div>
         <div className="stat-flavor">
-          <em className="stat-flavor-text">&ldquo;{card.flavorText}&rdquo;</em>
+          <em className={`stat-flavor-text${hasConlangLore && !showEnglish ? " conlang-text" : ""}`}>
+            &ldquo;{displayFlavorText}&rdquo;
+          </em>
         </div>
       </div>
 
@@ -294,8 +329,21 @@ export function CardDisplay({
         <div className="trait">
           <span className="trait-label">PASSIVE</span>
           <span className="trait-name">{card.traits.passiveTrait.name}</span>
-          <p className="trait-desc">{card.traits.passiveTrait.description}</p>
+          <p className={`trait-desc${hasConlangLore && !showEnglish ? " conlang-text" : ""}`}>
+            {passiveTraitDesc}
+          </p>
         </div>
+        {hasConlangLore && (
+          <div className="conlang-translate-row">
+            <button
+              className="btn-translate"
+              onClick={() => setShowEnglish((v) => !v)}
+              title={showEnglish ? "Show conlang lore" : "Translate to English"}
+            >
+              {showEnglish ? "🌐 Show Lore" : "🔤 Translate"}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="card-actions">

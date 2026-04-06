@@ -1,5 +1,10 @@
-import type { CardPayload, CardPrompts } from "./types";
+import type { CardPayload, CardPrompts, CraftlinguaWord } from "./types";
 import { createSeededRandom, seedFromString } from "./prng";
+import {
+  generateConlangName,
+  generateCatchphrase,
+  translateToConlang,
+} from "./languageIngestion";
 
 const FIRST_NAMES = ["Vex", "Zara", "Nyx", "Kael", "Syn", "Dex", "Lyra", "Cade", "Mira", "Razor", "Nova", "Jett", "Blix", "Cipher", "Rook", "Sable", "Echo", "Flux", "Kira", "Zero"];
 const LAST_NAMES = ["Vance", "Cross", "Nakamura", "Reeves", "Santos", "Okafor", "Petrov", "Chen", "Wolff", "Diaz", "Park", "Torres", "Kwan", "Adler", "Brax", "Solano", "Ito", "Marez", "Quinn", "Steele"];
@@ -111,15 +116,18 @@ export function buildSeed(prompts: CardPrompts): {
   return { frameSeed, backgroundSeed, characterSeed, masterSeed };
 }
 
-export function generateCard(prompts: CardPrompts): CardPayload {
+/** Rarity tiers that unlock conlang lore on the card display. */
+export const HIGH_RARITY_TIERS = new Set(["Legendary", "Rare"]);
+
+export function generateCard(prompts: CardPrompts, vocabulary?: CraftlinguaWord[]): CardPayload {
   const { frameSeed, backgroundSeed, characterSeed, masterSeed } = buildSeed(prompts);
 
   // Character-specific properties (name, traits, visuals) are seeded by
   // characterSeed so they remain stable when only district or rarity changes.
   const charRng = createSeededRandom(characterSeed);
 
-  const firstName = charRng.pick(FIRST_NAMES);
-  const lastName = charRng.pick(LAST_NAMES);
+  const defaultFirstName = charRng.pick(FIRST_NAMES);
+  const defaultLastName  = charRng.pick(LAST_NAMES);
   const crew = charRng.pick(CREWS);
   const manufacturer = charRng.pick(MANUFACTURERS);
 
@@ -147,6 +155,14 @@ export function generateCard(prompts: CardPrompts): CardPayload {
     stamina: clamp(prompts.stamina, 1, 10),
   };
 
+  // Use a conlang-generated name when vocabulary is available; otherwise fall
+  // back to the seeded English name.  Both paths always consume the same RNG
+  // calls above so all subsequent picks remain deterministic.
+  const conlangName = vocabulary?.length
+    ? generateConlangName(vocabulary, characterSeed)
+    : null;
+  const identityName = conlangName ?? `${defaultFirstName} ${defaultLastName}`;
+
   const personalityTags = charRng.pickN(PERSONALITY_TAGS, 3);
   const passiveTrait = charRng.pick(PASSIVE_TRAITS);
   const activeAbility = charRng.pick(ACTIVE_ABILITIES);
@@ -167,6 +183,26 @@ export function generateCard(prompts: CardPrompts): CardPayload {
     ...personalityTags.map((t) => t.toLowerCase()),
   ];
 
+  // Build conlang data when vocabulary is provided.  The translations are built
+  // AFTER all charRng picks so the RNG sequence is never disturbed.
+  // Language name/code is passed via _languageName/_languageCode properties that
+  // CardForge attaches when creating the vocabulary array from the loaded profile.
+  let conlang: CardPayload["conlang"] | undefined;
+  if (vocabulary?.length) {
+    const first = vocabulary[0] as CraftlinguaWord & { _languageName?: string; _languageCode?: string };
+    const langName = first._languageName ?? "Neon-Kana";
+    const langCode = first._languageCode ?? "nnk";
+    conlang = {
+      languageName: langName,
+      languageCode: langCode,
+      name: identityName,
+      catchphrase: generateCatchphrase(vocabulary, characterSeed),
+      passiveTrait:  translateToConlang(passiveTrait.description, vocabulary),
+      activeAbility: translateToConlang(activeAbility.description, vocabulary),
+      flavorText:    translateToConlang(flavorText, vocabulary),
+    };
+  }
+
   return {
     id: `card-${masterSeed.replace(/[^a-z0-9]/gi, "-")}-${seedFromString(masterSeed)}`,
     version: "1.0.0",
@@ -176,7 +212,7 @@ export function generateCard(prompts: CardPrompts): CardPayload {
     backgroundSeed,
     characterSeed,
     identity: {
-      name: `${firstName} ${lastName}`,
+      name: identityName,
       crew,
       manufacturer,
       serialNumber,
@@ -198,5 +234,6 @@ export function generateCard(prompts: CardPrompts): CardPayload {
     },
     tags,
     createdAt: new Date().toISOString(),
+    conlang,
   };
 }

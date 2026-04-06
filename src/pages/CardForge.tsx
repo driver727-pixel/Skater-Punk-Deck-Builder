@@ -1,13 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import type { CardPayload, Archetype, Rarity, Style, Vibe, District, CardPrompts } from "../lib/types";
+import type { CardPayload, Archetype, Rarity, Style, Vibe, District, CardPrompts, CraftlinguaWord } from "../lib/types";
 import { generateCard, buildSeed, STORAGE_PACK_LABELS } from "../lib/generator";
 import { buildBackgroundPrompt, buildCharacterPrompt, buildFramePrompt } from "../lib/promptBuilder";
+import { getGraffitiWords } from "../lib/languageIngestion";
 import { generateImage, removeBackground, isImageGenConfigured } from "../services/imageGen";
 import { getCachedImage, setCachedImage } from "../services/imageCache";
 import { CardDisplay } from "../components/CardDisplay";
 import { ShareModal } from "../components/ShareModal";
+import { LanguageProfilePanel } from "../components/LanguageProfilePanel";
 import { useCollection } from "../hooks/useCollection";
 import { useTier } from "../context/TierContext";
+import { useLanguage } from "../context/LanguageContext";
 import { TIERS } from "../lib/tiers";
 
 const ARCHETYPES: Archetype[] = ["Ninja", "Punk Rocker", "Ex Military", "Hacker", "Chef", "Olympic", "Fash"];
@@ -79,9 +82,27 @@ interface LayerSeeds {
   frame:      string | null;
 }
 
+/**
+ * Attach `_languageName` and `_languageCode` to each vocabulary word so
+ * `generateCard` can read them when building the `conlang` block.
+ * These are non-enumerable-style hidden properties added to plain word objects.
+ */
+function tagVocabulary(
+  vocab: CraftlinguaWord[],
+  profile: { language: { name: string; code: string } } | null,
+): (CraftlinguaWord & { _languageName: string; _languageCode: string })[] {
+  if (!vocab.length || !profile) return [];
+  return vocab.map((w) => ({
+    ...w,
+    _languageName: profile.language.name,
+    _languageCode: profile.language.code,
+  }));
+}
+
 export function CardForge() {
   const { addCard, hasCard, cards } = useCollection();
   const { tier, openUpgradeModal } = useTier();
+  const { profile, vocabulary } = useLanguage();
   const tierData = TIERS[tier];
 
   const [prompts, setPrompts] = useState<CardPrompts>({
@@ -135,10 +156,13 @@ export function CardForge() {
    *   character   = characterSeed  (archetype | style | vibe | stamina | district bag)
    *   frame       = frameSeed      (rarity)
    */
-  const fetchLayers = async (card: CardPayload, latestPrompts: CardPrompts) => {
+  const fetchLayers = async (card: CardPayload, latestPrompts: CardPrompts, latestVocabulary: CraftlinguaWord[]) => {
     if (!isImageGenConfigured) return;
 
     const { frameSeed, backgroundSeed, characterSeed } = card;
+
+    // Pick 1–2 conlang words for graffiti / brand logo injection in prompts.
+    const graffitiWords = getGraffitiWords(latestVocabulary, characterSeed);
 
     // Character layer cache key is based on characterSeed alone (no district)
     // so the character image stays untouched when only the district changes.
@@ -197,7 +221,7 @@ export function CardForge() {
       if (cachedTransparent) return cachedTransparent;
 
       // Generate or fetch the raw (white-background) character image.
-      const rawUrl = await resolveLayer(`char::${cacheKey}`, buildCharacterPrompt(prompts), cacheKey);
+      const rawUrl = await resolveLayer(`char::${cacheKey}`, buildCharacterPrompt(prompts, graffitiWords), cacheKey);
 
       // Strip the white background to get a transparent PNG.
       try {
@@ -212,7 +236,7 @@ export function CardForge() {
 
     if (needsBackground) {
       promises.push(
-        resolveLayer(`bg::${backgroundSeed}`, buildBackgroundPrompt(latestPrompts.district), backgroundSeed)
+        resolveLayer(`bg::${backgroundSeed}`, buildBackgroundPrompt(latestPrompts.district, graffitiWords), backgroundSeed)
           .then((imageUrl) => {
             setLayerUrls((prev) => ({ ...prev, background: imageUrl }));
             lastSeedsRef.current.background = backgroundSeed;
@@ -268,7 +292,8 @@ export function CardForge() {
   useEffect(() => {
     if (!hasGeneratedRef.current) return;
 
-    const newCard = generateCard(prompts);
+    const taggedVocabulary = tagVocabulary(vocabulary, profile);
+    const newCard = generateCard(prompts, taggedVocabulary.length ? taggedVocabulary : undefined);
     setGenerated(newCard);
 
     // Reset only the URLs for stale layers so the UI shows loading skeletons
@@ -287,13 +312,13 @@ export function CardForge() {
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      fetchLayers(newCard, prompts);
+      fetchLayers(newCard, prompts, taggedVocabulary);
     }, 700);
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [prompts]);
+  }, [prompts, vocabulary, profile]);
 
   const set = <K extends keyof CardPrompts>(key: K, val: CardPrompts[K]) =>
     setPrompts((p) => ({ ...p, [key]: val }));
@@ -301,7 +326,8 @@ export function CardForge() {
   const handleGenerate = () => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    const card = generateCard(prompts);
+    const taggedVocabulary = tagVocabulary(vocabulary, profile);
+    const card = generateCard(prompts, taggedVocabulary.length ? taggedVocabulary : undefined);
     setGenerated(card);
     hasGeneratedRef.current = true;
 
@@ -320,7 +346,7 @@ export function CardForge() {
       setLayerUrls((prev) => ({ ...prev, frame: null }));
     }
 
-    fetchLayers(card, prompts);
+    fetchLayers(card, prompts, taggedVocabulary);
   };
 
   const canSave = tierData.canSave;
@@ -512,6 +538,10 @@ export function CardForge() {
             <p className="form-hint form-hint--secondary">
               Accent color tints the SVG card frame and highlight details.
             </p>
+          </div>
+
+          <div className="form-group">
+            <LanguageProfilePanel />
           </div>
 
           <button className="btn-primary btn-lg" onClick={handleGenerate}>

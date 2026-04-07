@@ -99,7 +99,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Fall back to redirect when popup is blocked
       if (
         msg.includes("popup-blocked") ||
-        msg.includes("popup-closed-by-user") ||
         msg.includes("cancelled-popup-request")
       ) {
         await signInWithRedirect(auth, googleProvider);

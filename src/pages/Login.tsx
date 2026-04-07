@@ -63,7 +63,7 @@ export function Login() {
       setError("Passwords do not match.");
       return;
     }
-    if (password.length < 6) {
+    if (mode === "signup" && password.length < 6) {
       setError("Password must be at least 6 characters.");
       return;
     }

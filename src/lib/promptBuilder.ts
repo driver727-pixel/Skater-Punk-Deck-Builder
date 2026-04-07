@@ -219,6 +219,7 @@ export function buildCharacterPrompt(prompts: CardPrompts, graffitiWords?: strin
 
   return (
     `Full-body portrait of a ${prompts.archetype} skater courier, ` +
+    `facing directly toward the viewer, front-facing, looking at the camera, ` +
     `wearing ${clothing}, ${pose}, ` +
     `carrying ${bagDesc}, riding ${board} all-terrain electric skateboard with big off-road wheels, lights and gear. ` +
     graffitiLine +
@@ -307,6 +308,7 @@ export function buildImagePrompt(prompts: CardPrompts): string {
 
   return (
     `A hyper-realistic 3D cartoon-style portrait of a ${prompts.archetype} skater courier ` +
+    `facing directly toward the viewer, front-facing, looking at the camera, ` +
     `wearing ${clothing}, ${pose}, ` +
     `carrying ${bag}, riding ${board} all-terrain electric skateboard with big off-road wheels, lights and gear. ` +
     `The background is ${district}. ` +

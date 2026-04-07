@@ -10,7 +10,7 @@ import { useTier } from "../context/TierContext";
 
 const ARCHETYPES: Archetype[] = ["Ninja", "Punk Rocker", "Ex Military", "Hacker", "Chef"];
 const RARITIES: Rarity[] = ["Punch Skater", "Apprentice", "Master", "Rare", "Legendary"];
-const STYLES: Style[] = ["Corporate", "Street", "Off-grid", "Military", "Union"];
+const STYLES: Style[] = ["Corporate", "Street", "Off-grid", "Military", "Union", "Olympic"];
 const VIBES: Vibe[] = ["Grunge", "Neon", "Chrome", "Plastic"];
 const DISTRICTS: District[] = ["Airaway", "Nightshade", "Batteryville"];
 const GENDERS: Gender[] = ["Woman", "Man", "Non-binary"];

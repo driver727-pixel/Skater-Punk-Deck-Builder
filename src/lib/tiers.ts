@@ -7,6 +7,8 @@ export interface Tier {
   cardLimit: number | null;
   canSave: boolean;
   canEditDecks: boolean;
+  /** Whether this tier may forge (generate) cards without spending a referral credit. */
+  canGenerate: boolean;
   /** Whether this tier may connect a Craftlingua language profile. */
   canUseCraftlingua: boolean;
   description: string;
@@ -24,11 +26,13 @@ export const TIERS: Record<TierLevel, Tier> = {
     cardLimit: 0,
     canSave: false,
     canEditDecks: false,
+    canGenerate: false,
     canUseCraftlingua: false,
-    description: "Generate cards and share them — no account needed.",
+    description: "Explore the app — upgrade or earn referral credits to forge cards.",
     features: [
-      "Generate unlimited cards",
+      "Browse the app",
       "Share cards via link",
+      "Earn free generate credits via referrals",
       "No account required",
     ],
     stripeUrl: null,
@@ -41,6 +45,7 @@ export const TIERS: Record<TierLevel, Tier> = {
     cardLimit: 2,
     canSave: true,
     canEditDecks: false,
+    canGenerate: true,
     canUseCraftlingua: true,
     description: "Sign up and save up to 2 cards or characters.",
     features: [
@@ -60,6 +65,7 @@ export const TIERS: Record<TierLevel, Tier> = {
     cardLimit: null,
     canSave: true,
     canEditDecks: true,
+    canGenerate: true,
     canUseCraftlingua: true,
     description: "Full access — edit all cards, build decks, manage characters.",
     features: [

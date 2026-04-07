@@ -4,10 +4,12 @@ import { generateCard } from "../lib/generator";
 import { CardDisplay } from "../components/CardDisplay";
 import { CardViewer3D } from "../components/CardViewer3D";
 import { PrintModal } from "../components/PrintModal";
+import { ReferralPanel } from "../components/ReferralPanel";
 import { generateImage, removeBackground, isImageGenConfigured } from "../services/imageGen";
 import { getCachedImage, setCachedImage } from "../services/imageCache";
 import { getStaticBackgroundUrl, getStaticFrameUrl } from "../services/staticAssets";
 import { buildBackgroundPrompt, buildCharacterPrompt, buildFramePrompt } from "../lib/promptBuilder";
+import { useTier } from "../context/TierContext";
 
 const ARCHETYPES: Archetype[] = ["The Knights Technarchy", "Qu111s", "Iron Curtains", "D4rk $pider", "The Asclepians", "The Mesopotamian Society", "Hermes' Squirmies", "UCPS", "The Team"];
 const RARITIES: Rarity[] = ["Punch Skater", "Apprentice", "Master", "Rare", "Legendary"];
@@ -50,6 +52,7 @@ const INITIAL_LAYER_STATE: LayerState = {
 };
 
 export function CardForge() {
+  const { canForge, generateCredits, consumeCredit, openUpgradeModal } = useTier();
   const [prompts, setPrompts] = useState<CardPrompts>({
     archetype: "The Knights Technarchy", rarity: "Punch Skater", style: "Street",
     vibe: "Grunge", district: "Nightshade", accentColor: "#00ff88", stamina: 5,
@@ -181,6 +184,11 @@ export function CardForge() {
 
   // ── Main forge handler ───────────────────────────────────────────────────
   const handleForge = useCallback(() => {
+    // Gate: free-tier users without referral credits cannot generate
+    if (!canForge) {
+      openUpgradeModal();
+      return;
+    }
     // Cancel any in-flight generation
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -191,6 +199,11 @@ export function CardForge() {
     const card = generateCard(prompts);
     setGenerated(card);
     setForging(true);
+
+    // Consume one referral credit when on the free tier
+    if (generateCredits > 0) {
+      consumeCredit();
+    }
 
     // Reset layer state
     setLayers(INITIAL_LAYER_STATE);
@@ -238,7 +251,7 @@ export function CardForge() {
     generateLayer("frame", frameKey, framePrompt, frameSeed, signal);
 
     setForging(false);
-  }, [prompts, generateLayer]);
+  }, [prompts, generateLayer, canForge, generateCredits, consumeCredit, openUpgradeModal]);
 
   // ── Expired-URL retry handler ────────────────────────────────────────────
   // Called when a composite img element fires onError (e.g. fal.ai CDN URL has
@@ -417,9 +430,20 @@ export function CardForge() {
             className="btn-primary btn-lg btn-forge"
             onClick={handleForge}
             disabled={forging || isAnyLayerLoading}
+            data-testid="forge-button"
           >
-            {isAnyLayerLoading ? "✨ Generating…" : "⚡ FORGE COURIER CARD"}
+            {isAnyLayerLoading
+              ? "✨ Generating…"
+              : !canForge
+              ? "🔒 FORGE COURIER CARD — Upgrade to Unlock"
+              : generateCredits > 0
+              ? `⚡ FORGE COURIER CARD (${generateCredits} credit${generateCredits === 1 ? "" : "s"} left)`
+              : "⚡ FORGE COURIER CARD"
+            }
           </button>
+
+          {/* Referral panel — helps free-tier users earn credits by sharing */}
+          <ReferralPanel />
 
           {/* Post-generation controls */}
           {generated && (

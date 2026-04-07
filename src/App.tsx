@@ -105,3 +105,7 @@ function App() {
 }
 
 export default App;
+import { generateCharacterSeed } from './lib/generator';
+
+const myNewCharacter = generateCharacterSeed();
+console.log(myNewCharacter);

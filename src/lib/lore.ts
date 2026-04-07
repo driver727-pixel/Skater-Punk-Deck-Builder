@@ -130,23 +130,6 @@ export const DISTRICT_LORE: DistrictLoreEntry[] = [
     ],
   },
   {
-    name: "The Tunnels",
-    controlledBy: "Various underground crews — contested",
-    tagline: "You don't find the Tunnels. The Tunnels find you.",
-    description:
-      "A vast network of former transit tunnels running beneath the city. Vibrant " +
-      "communities have taken root here — subterranean homes, underground markets, " +
-      "and tight-knit skate gangs who treat these passages as sacred territory. " +
-      "The Tunnels are shaded, intimate, and deeply political. Knowing the right " +
-      "people is more important than knowing the routes.",
-    atmosphere: "Dim lighting, heat and humidity, spray-paint murals, low ceilings, acoustic echoes.",
-    crews: ["Nightshade Runners", "The Undercurrent", "Deep Burners"],
-    flavorTexts: [
-      "\"Every graffiti tag is a landmark. Learn to read them.\"",
-      "\"Wrong tunnel, wrong crew. You won't get a second warning.\"",
-    ],
-  },
-  {
     name: "Batteryville",
     controlledBy: "HexChain Logistics / Recycler Collectives",
     tagline: "The City runs on our power. We run on spite.",
@@ -377,7 +360,7 @@ export const FACTION_LORE: FactionLoreEntry[] = [
   },
   {
     name: "Qu111s (Quills)",
-    districts: ["Nightshade", "The Tunnels"],
+    districts: ["Nightshade"],
     tagline: "The truth is in the data. We will release it.",
     description:
       "A guerrilla journalist organization that monitors the activities of the oligarchs. " +
@@ -410,7 +393,7 @@ export const FACTION_LORE: FactionLoreEntry[] = [
   },
   {
     name: "D4rk $pider",
-    districts: ["The Grid", "The Tunnels"],
+    districts: ["The Grid", "Nightshade"],
     tagline: "Data for blackmail. Blackmail for survival.",
     description:
       "Hackers on the dark web who mirror the Quills' methods but use data for blackmail " +
@@ -443,7 +426,7 @@ export const FACTION_LORE: FactionLoreEntry[] = [
   },
   {
     name: "The Knights Technarchy",
-    districts: ["Nightshade", "Airaway", "The Tunnels"],
+    districts: ["Nightshade", "Airaway"],
     tagline: "The Dark Lights see everything. Serve or be disappeared.",
     description:
       "Cyber ninja zealots who serve a massive secret society known as the Dark Lights. " +

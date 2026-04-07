@@ -19,13 +19,12 @@ const ACCENT_PRESETS = ["#00ff88", "#00ccff", "#ff00aa", "#ffaa00", "#8b5cf6", "
 const DISTRICT_HINTS: Record<District, string> = {
   Airaway:          "☁️ Floating City in the Clouds",
   "The Roads":      "🛣️ Open Courier Highways",
-  "The Tunnels":    "🚇 Underground Skate Network",
   Batteryville:     "🌵 Off-grid Solar/Wind Camp",
   "The Grid":       "🏭 Diesel-punk Industrial Zone",
   Electropolis:     "🚔 Security Showcase District",
-  Nightshade:       "🌆 Cyberpunk Megalopolis",
+  Nightshade:       "🌆 The Murk — Underground Tunnels & Neon Alleys",
   "The Forest":     "🌲 Off-grid Agrarian Commune",
-  "Glass City":     "🏙️ Deserted Neon Skyscraper District",
+  "Glass City":     "🏙️ Cyberpunk Megalopolis",
 };
 
 export function EditCard() {

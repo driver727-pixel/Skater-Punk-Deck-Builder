@@ -1,5 +1,8 @@
 import { LORE_CHARACTER_NAMES, ARCHETYPE_TO_FACTION, VIBE_TO_MANUFACTURER, LORE_PASSIVE_TRAITS, LORE_ACTIVE_ABILITIES } from './lore';
-import { CardPayload, CardPrompts } from './types';
+import { CardPayload, CardPrompts, Rarity } from './types';
+
+/** Rarities that unlock conlang/lore overlays on card display. */
+export const HIGH_RARITY_TIERS: ReadonlySet<Rarity> = new Set<Rarity>(["Rare", "Legendary"]);
 
 export const generateCard = (prompts: CardPrompts): CardPayload => {
   const name = LORE_CHARACTER_NAMES[Math.floor(Math.random() * LORE_CHARACTER_NAMES.length)];

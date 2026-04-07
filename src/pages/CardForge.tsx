@@ -26,7 +26,7 @@ export function CardForge() {
         {options.map(opt => (
           <button 
             key={opt} 
-            onClick={() => set(field, opt as any)} 
+            onClick={() => set(field, opt as CardPrompts[keyof CardPrompts])} 
             className={`px-3 py-1 text-sm rounded-full border transition-all ${current === opt ? 'bg-yellow-500 text-black border-yellow-500 font-bold' : 'border-gray-700 text-gray-400 hover:border-gray-500'}`}
           >
             {opt}

@@ -1,6 +1,6 @@
 /**
  * generator.ts
- * Logic for randomly assembling Punch-Skater character seeds.
+ * * Logic for randomly assembling Punch-Skater character seeds.
  * Uses the synchronized lore and types derived from the Skater Punk documentation.
  */
 
@@ -23,6 +23,9 @@ const getRandom = <T>(array: T[]): T => {
 
 /**
  * Generates a randomized starting character "Run" based on the world lore.
+ * ############################################################################
+ * # Priority logic: All selections are weighted toward Skater Punk Canon.    #
+ * ############################################################################
  */
 export const generateCharacterSeed = (): CardPayload => {
   const name = getRandom(LORE_CHARACTER_NAMES);
@@ -32,10 +35,16 @@ export const generateCharacterSeed = (): CardPayload => {
   const ability = getRandom(LORE_ACTIVE_ABILITIES);
   const flavor = getRandom(LORE_FLAVOR_TEXTS);
 
-  // Defaulting to a random district from the Skater Punk geography
+  // Geographic Districts from Skater Punk
   const districts: District[] = [
-    "Airaway", "The Roads", "The Tunnels", "Batteryville", 
-    "The Grid", "Electropolis", "Nightshade (The Murk)", "The Forest"
+    "Airaway", 
+    "The Roads", 
+    "The Tunnels", 
+    "Batteryville", 
+    "The Grid", 
+    "Electropolis", 
+    "Nightshade (The Murk)", 
+    "The Forest"
   ];
 
   return {
@@ -50,9 +59,3 @@ export const generateCharacterSeed = (): CardPayload => {
     tags: ["starter-seed", crew.toLowerCase().replace(/\s/g, '-')]
   };
 };
-
-/**
- * Example Usage:
- * const newRun = generateCharacterSeed();
- * console.log(`Starting Run: ${newRun.name} of the ${newRun.crew}`);
- */

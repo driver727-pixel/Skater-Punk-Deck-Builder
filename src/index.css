@@ -2587,3 +2587,51 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 
 /* Tier-coloured tooltip border accent */
 [data-theme] .tier-badge-btn::after { border-color: var(--accent); }
+
+/* ===== Referral Panel ===== */
+.referral-panel {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.referral-panel__title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.referral-panel__desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+.referral-panel__credits {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+.referral-panel__count {
+  color: var(--accent);
+  font-weight: 700;
+}
+.referral-panel__link-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.referral-panel__input {
+  flex: 1;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.referral-panel__copy {
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 6px 12px;
+}

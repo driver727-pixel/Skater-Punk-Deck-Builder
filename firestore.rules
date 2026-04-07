@@ -51,5 +51,24 @@ service cloud.firestore {
           && resource.data.status == 'pending')
       );
     }
+    // ── Referral Claims ──────────────────────────────────────────────────────
+    // Written by any visitor who arrives via a referral link.
+    // Doc ID format: {referrerUid}_{visitorKey}
+    // - Anyone may create a claim (unauthenticated visitors included).
+    // - Create is idempotent: if the doc already exists the write is silently
+    //   rejected by the "no update" rule.
+    // - Only the referrer (authenticated) may read their own claims.
+    // - Self-referral is blocked: the write is allowed only when the visitor
+    //   is unauthenticated OR is a different user than the referrer.
+    match /referralClaims/{claimId} {
+      allow read: if request.auth != null
+        && resource.data.referrerUid == request.auth.uid;
+      allow create: if request.resource.data.keys().hasOnly(['referrerUid', 'visitorKey', 'claimedAt'])
+        && request.resource.data.referrerUid is string
+        && request.resource.data.visitorKey is string
+        // Prevent self-referral for authenticated visitors
+        && (request.auth == null || request.auth.uid != request.resource.data.referrerUid);
+      allow update, delete: if false;
+    }
   }
 }

@@ -17,6 +17,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../lib/firebase";
+import { syncReferralCredits } from "../services/referrals";
 
 interface AuthContextValue {
   user: User | null;
@@ -52,7 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       setLoading(false);
-      if (u) await upsertUserProfile(u).catch(() => {/* non-fatal */});
+      if (u) {
+        await upsertUserProfile(u).catch(() => {/* non-fatal */});
+        syncReferralCredits(u.uid).catch(() => {/* non-fatal */});
+      }
     });
     return unsubscribe;
   }, []);

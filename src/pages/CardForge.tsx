@@ -192,7 +192,7 @@ export function CardForge() {
           </div>
 
           <div className="form-group">
-            <label>Rarity</label>
+            <label>Class</label>
             <div className="pill-group">
               {RARITIES.map((opt) => (
                 <button

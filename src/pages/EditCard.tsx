@@ -133,7 +133,7 @@ export function EditCard() {
           </div>
 
           <div className="form-group">
-            <label>Rarity</label>
+            <label>Class</label>
             <div className="pill-group">
               {RARITIES.map((r) => (
                 <button key={r} className={`pill ${prompts.rarity === r ? "selected" : ""}`} onClick={() => set("rarity", r)}>{r}</button>

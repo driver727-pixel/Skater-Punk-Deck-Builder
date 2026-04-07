@@ -43,7 +43,9 @@ export function CardForge() {
   const abortRef = useRef<AbortController | null>(null);
 
   // Clean up on unmount
-  useEffect(() => () => { abortRef.current?.abort(); }, []);
+  useEffect(() => {
+    return () => { abortRef.current?.abort(); };
+  }, []);
 
   const set = <K extends keyof CardPrompts>(key: K, val: CardPrompts[K]) =>
     setPrompts((p) => ({ ...p, [key]: val }));
@@ -137,9 +139,9 @@ export function CardForge() {
     const charKey  = `char::${card.characterSeed}`;
     const frameKey = `frame::${card.frameSeed}`;
 
-    const bgSeed    = card.seed;
-    const charSeed  = card.seed;
-    const frameSeed = card.seed;
+    const bgSeed    = card.backgroundSeed;
+    const charSeed  = card.characterSeed;
+    const frameSeed = card.frameSeed;
 
     // Background layer
     generateLayer("background", bgKey, bgPrompt, bgSeed, signal);

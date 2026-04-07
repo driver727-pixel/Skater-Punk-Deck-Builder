@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
+import Stripe from 'stripe';
 import 'dotenv/config';
 
 const app = express();
@@ -45,12 +46,34 @@ const importRateLimit = rateLimit({
   message: { error: 'Too many requests — please slow down.' },
 });
 
+// Stripe checkout sessions — tightly rate-limited to prevent abuse.
+const checkoutRateLimit = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Too many checkout requests — please wait a moment and try again.' },
+});
+
 const FAL_KEY = process.env.FAL_KEY || '';
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
 const FAL_URL = 'https://fal.run/fal-ai/flux/dev';
 const BIREFNET_URL = 'https://fal.run/fal-ai/birefnet';
 
+// Allowed Stripe price IDs — only these may be used to create checkout sessions.
+const ALLOWED_PRICE_IDS = new Set([
+  'price_1R3UInRCr5JxQN06Z8O0k2yG', // tier2 Street Creator ($5)
+  'price_1R3UIoRCr5JxQN06K6M8l3zH', // tier3 Deck Master ($10)
+]);
+
+// Stripe client — instantiated once at startup so it is reused across requests.
+const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
+
 if (!FAL_KEY) {
   console.warn('⚠️  FAL_KEY environment variable is not set — requests will be rejected by Fal.ai.');
+}
+if (!stripe) {
+  console.warn('⚠️  STRIPE_SECRET_KEY environment variable is not set — checkout sessions will be unavailable.');
 }
 
 // Transparent proxy: the React front-end POSTs to /api/generate-image and
@@ -196,6 +219,50 @@ app.post('/api/import', importRateLimit, (req, res) => {
     ...(language ? { language } : {}),
     ...(vocabulary ? { vocabularyCount: vocabulary.length } : {}),
   });
+});
+
+// ── Stripe Checkout Sessions ──────────────────────────────────────────────────
+// Creates a Stripe Checkout Session for one of the two allowed price IDs and
+// returns the hosted payment page URL.  The caller supplies success_url and
+// cancel_url so the user is returned to the correct page after payment.
+app.post('/api/create-checkout-session', checkoutRateLimit, async (req, res) => {
+  if (!stripe) {
+    res.status(503).json({ error: 'Payment processing is not configured.' });
+    return;
+  }
+
+  const { priceId, successUrl, cancelUrl } = req.body ?? {};
+
+  if (!priceId || typeof priceId !== 'string' || !ALLOWED_PRICE_IDS.has(priceId)) {
+    res.status(400).json({ error: 'Invalid or unsupported price ID.' });
+    return;
+  }
+
+  const validUrl = (u) => {
+    if (typeof u !== 'string') return false;
+    try {
+      const p = new URL(u);
+      return p.protocol === 'https:' || (p.protocol === 'http:' && p.hostname === 'localhost');
+    } catch { return false; }
+  };
+
+  if (!validUrl(successUrl) || !validUrl(cancelUrl)) {
+    res.status(400).json({ error: 'successUrl and cancelUrl must be valid HTTPS URLs.' });
+    return;
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      line_items: [{ price: priceId, quantity: 1 }],
+      mode: 'payment',
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('Stripe checkout error:', err);
+    res.status(500).json({ error: 'Failed to create checkout session.' });
+  }
 });
 
 const PORT = process.env.PORT || 3001;

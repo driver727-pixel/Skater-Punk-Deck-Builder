@@ -227,7 +227,9 @@ export function buildCharacterPrompt(prompts: CardPrompts, graffitiWords?: strin
     `Isolated on a plain white background, full figure visible from head to toe, centred. ` +
     `Minimal Trading card art in the style of 1995 Fleer Ultra X-Men, fantastic realism, airbrushed gouache texture, ` +
     `vibrant and saturated 90s digital colors, dramatic rim lighting, realistic anatomy, chromium finish, ` +
-    `epic action pose, 90s Marvel aesthetic. No kids. No teens. Adults aged 18-99 only. ` +
+    `epic action pose, 90s Marvel aesthetic. ` +
+    `Diverse gender representation — equally likely to be a woman, man, or non-binary adult. ` +
+    `No kids. No teens. Adults aged 18-99 only. ` +
     `SFW, family friendly, PG rated, LGBTQIA+.`
   );
 }
@@ -310,6 +312,8 @@ export function buildImagePrompt(prompts: CardPrompts): string {
     `The background is ${district}. ` +
     `Character is ${state}. ` +
     `Mood: ${mood}. Stamina ${prompts.stamina}/10. ` +
+    `Diverse gender representation — equally likely to be a woman, man, or non-binary adult. ` +
+    `Adults aged 18-99 only. No kids. No teens. ` +
     `Rendered in Unreal Engine, vibrant colours, octane render, cinematic lighting, 4K. ` +
     `SFW, Family Friendly, PG rated, LGBTQIA+.`
   );

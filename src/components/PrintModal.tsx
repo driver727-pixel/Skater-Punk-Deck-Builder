@@ -6,6 +6,10 @@ import { StatBar } from "./StatBar";
 interface PrintModalProps {
   card: CardPayload;
   backgroundImageUrl?: string;
+  /** Full print-quality background URL (1536 × 2048 px). When provided, this
+   *  is used in the hidden print-only area instead of backgroundImageUrl so the
+   *  browser prints at the highest available resolution. */
+  backgroundPrintUrl?: string;
   characterImageUrl?: string;
   frameImageUrl?: string;
   characterBlend?: number;
@@ -37,6 +41,7 @@ function BleedMarks() {
 export function PrintModal({
   card,
   backgroundImageUrl,
+  backgroundPrintUrl,
   characterImageUrl,
   frameImageUrl,
   characterBlend,
@@ -46,6 +51,8 @@ export function PrintModal({
   const accent = card.visuals.accentColor || "#00ff88";
   const rarityColor = RARITY_COLORS[card.prompts.rarity] || "#aaaaaa";
   const hasAnyLayer = backgroundImageUrl || characterImageUrl || frameImageUrl;
+  // Use the full print-quality background in the hidden printable area when available.
+  const printBackgroundUrl = backgroundPrintUrl ?? backgroundImageUrl;
 
   const handlePrint = () => {
     window.print();
@@ -205,8 +212,8 @@ export function PrintModal({
             <div className="print-only-card" style={{ borderColor: rarityColor }}>
               {hasAnyLayer ? (
                 <div className="print-art-composite">
-                  {backgroundImageUrl && (
-                    <img src={backgroundImageUrl} alt="background" className="print-art-layer print-art-layer--bg" />
+                  {printBackgroundUrl && (
+                    <img src={printBackgroundUrl} alt="background" className="print-art-layer print-art-layer--bg" />
                   )}
                   {characterImageUrl && (
                     <img

@@ -8,7 +8,7 @@ import { PrintModal } from "../components/PrintModal";
 import { ReferralPanel } from "../components/ReferralPanel";
 import { generateImage, removeBackground, isImageGenConfigured, getImageDimensions, type ImageGenOptions } from "../services/imageGen";
 import { getCachedImage, setCachedImage } from "../services/imageCache";
-import { getStaticBackgroundUrl, getStaticFrameUrl } from "../services/staticAssets";
+import { getStaticBackgroundUrl, getStaticBackgroundSmallUrl, getStaticFrameUrl } from "../services/staticAssets";
 import { buildBackgroundPrompt, buildCharacterPrompt, buildFramePrompt } from "../lib/promptBuilder";
 import { useTier } from "../context/TierContext";
 import { useCollection } from "../hooks/useCollection";
@@ -44,6 +44,9 @@ function toFileSlug(name: string): string {
 
 interface LayerState {
   backgroundUrl?: string;
+  /** Full print-quality background URL (1536 × 2048 px). Only set when a
+   *  screen-quality small variant is available; used for print / download. */
+  backgroundPrintUrl?: string;
   characterUrl?: string;
   frameUrl?: string;
   loading: { background: boolean; character: boolean; frame: boolean };
@@ -129,6 +132,9 @@ export function CardForge() {
         if (!skipCache) {
           // 1. Check for a pre-loaded static asset (served from public/assets/).
           //    These are permanent files that never expire and consume no credits.
+          //    For backgrounds we prefer the screen-quality small variant for
+          //    display and keep the full-size URL as backgroundPrintUrl for
+          //    print / download.
           const staticUrl =
             layer === "background"
               ? getStaticBackgroundUrl(seed as District)
@@ -138,12 +144,22 @@ export function CardForge() {
 
           if (staticUrl) {
             if (signal.aborted) return;
-            const urlKey = `${layer}Url` as keyof Pick<LayerState, "backgroundUrl" | "characterUrl" | "frameUrl">;
-            setLayers((s) => ({
-              ...s,
-              [urlKey]: staticUrl,
-              loading: { ...s.loading, [layer]: false },
-            }));
+            if (layer === "background") {
+              const smallUrl = getStaticBackgroundSmallUrl(seed as District);
+              setLayers((s) => ({
+                ...s,
+                backgroundUrl: smallUrl ?? staticUrl,
+                backgroundPrintUrl: smallUrl ? staticUrl : undefined,
+                loading: { ...s.loading, background: false },
+              }));
+            } else {
+              const urlKey = `${layer}Url` as keyof Pick<LayerState, "characterUrl" | "frameUrl">;
+              setLayers((s) => ({
+                ...s,
+                [urlKey]: staticUrl,
+                loading: { ...s.loading, [layer]: false },
+              }));
+            }
             return;
           }
 
@@ -424,7 +440,7 @@ export function CardForge() {
     try {
       await downloadCardAsJpg(
         generated.identity.name,
-        layers.backgroundUrl,
+        layers.backgroundPrintUrl ?? layers.backgroundUrl,
         layers.characterUrl,
         layers.frameUrl,
         characterBlend,
@@ -717,6 +733,7 @@ export function CardForge() {
         <PrintModal
           card={generated}
           backgroundImageUrl={layers.backgroundUrl}
+          backgroundPrintUrl={layers.backgroundPrintUrl}
           characterImageUrl={layers.characterUrl}
           frameImageUrl={layers.frameUrl}
           characterBlend={characterBlend}

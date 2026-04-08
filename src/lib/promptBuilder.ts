@@ -33,7 +33,7 @@ const ARCHETYPE_POSES: Record<string, string> = {
   "The Knights Technarchy": "crouched in a stealthy ready stance, dressed in all black with no lights on the board",
   "Qu111s":                 "a defiant, heroic investigative reporter striking an exaggerated, dynamic action pose, intensely determined expression, dramatically windswept hair, riding a low tech electric skateboard with smaller all-terrain wheels",
   "Iron Curtains":          "a hyper-muscular mercenary, 90s comic book military, big muscles bodybuilder type, exaggerated pose and facial expression, riding big girthy electric skateboards on big chunky off-road wheels",
-  "D4rk $pider":            "a cyber-hacker mutant wearing mirrored wrap-around visor shades, surrounded by thick glowing neon-green fiber-optic cables, fiercely typing on a chunky retro-futuristic mechanical hacking deck, riding a high tech electric skateboard with lots of wires and antennas",
+  "D4rk $pider":            "a cyber-hacker wearing mirrored wrap-around visor shades, surrounded by thick glowing neon-green fiber-optic cables, fiercely typing on a chunky retro-futuristic mechanical hacking deck, riding a high tech electric skateboard with lots of wires and antennas",
   "The Asclepians":         "standing with sleek professional posture, high-tech earpiece visible, corporate logo on the board",
   "The Mesopotamian Society":"defiant rock-star pose in rugged survivalist gear, all-terrain off-road mountain board style",
   "Hermes' Squirmies":      "casual working stance in union worker overalls covered in badge patches",

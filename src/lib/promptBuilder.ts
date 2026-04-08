@@ -192,7 +192,7 @@ export function buildCharacterPrompt(prompts: CardPrompts, graffitiWords?: strin
     AGE_RESTRICTION +
     `Trading card art in the style of 1995 Fleer Ultra X-Men, fantastic realism, airbrushed gouache texture, ` +
     `vibrant and saturated 90s digital colors, dramatic rim lighting, realistic anatomy. ` +
-    `Isolated on a plain white background, full figure visible from head to toe, centred. ` +
+    `Isolated on a solid neutral medium-gray studio background, full figure visible from head to toe, centred. ` +
     `SFW, family friendly, PG rated, LGBTQIA+.`
   );
 }

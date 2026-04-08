@@ -73,7 +73,7 @@ export function Nav() {
             Collection
           </NavLink>
           <NavLink to="/decks" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-            Deck Builder
+            My Decks
           </NavLink>
           <NavLink to="/trades" className={({ isActive }) => `nav-link${isActive ? " active" : ""}${pendingTrades > 0 ? " nav-link--badge" : ""}`}>
             Trades{pendingTrades > 0 && <span className="nav-badge">{pendingTrades}</span>}

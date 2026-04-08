@@ -74,6 +74,8 @@ export function CardForge() {
   const [printing, setPrinting] = useState(false);
   const [savingToDeck, setSavingToDeck] = useState(false);
   const [savedCard, setSavedCard] = useState<CardPayload | null>(null);
+  const [savedDeckFull, setSavedDeckFull] = useState(false);
+  const [isFirstCard, setIsFirstCard] = useState(false);
 
   // Abort controller ref for cancelling in-flight image generation
   const abortRef = useRef<AbortController | null>(null);
@@ -312,6 +314,9 @@ export function CardForge() {
     }
     setSavingToDeck(true);
 
+    // Capture whether this is the user's first card BEFORE updating state
+    const firstCard = cards.length === 0;
+
     // Attach current layer URLs to the card so the deck shows them
     const cardToSave: CardPayload = {
       ...generated,
@@ -321,9 +326,11 @@ export function CardForge() {
     };
 
     addCard(cardToSave);
-    saveCardToFirstDeck(cardToSave);
+    const { deckFull } = saveCardToFirstDeck(cardToSave);
 
     setSavingToDeck(false);
+    setIsFirstCard(firstCard);
+    setSavedDeckFull(deckFull);
     setSavedCard(cardToSave);
   }, [generated, layers, tierData, addCard, saveCardToFirstDeck, openUpgradeModal]);
 
@@ -612,12 +619,17 @@ export function CardForge() {
           <div className="save-celebrate-modal" onClick={(e) => e.stopPropagation()}>
             <div className="save-celebrate-emoji">🎉</div>
             <h2 className="save-celebrate-title">
-              {cards.length <= 1
+              {isFirstCard
                 ? "Congrats! You forged your first player card!"
                 : "Card forged and saved!"}
             </h2>
             <p className="save-celebrate-name">{savedCard.identity.name}</p>
             <p className="save-celebrate-seed">SEED · {savedCard.seed}</p>
+            {savedDeckFull && (
+              <p className="save-celebrate-notice">
+                Your deck is full — visit My Decks to manage your cards.
+              </p>
+            )}
             <button
               className="btn-primary"
               onClick={() => { setSavedCard(null); navigate("/decks"); }}

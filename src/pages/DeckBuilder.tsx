@@ -254,10 +254,9 @@ export function DeckBuilder() {
               {slotsRemaining === 0 && (
                 <div className="deck-full-notice">
                   <span>🃏 Deck is full ({DECK_CARD_LIMIT}/{DECK_CARD_LIMIT} cards).</span>
-                  {canCreateDeck && (
+                  {canCreateDeck ? (
                     <span> Create a new deck to save more cards.</span>
-                  )}
-                  {!canCreateDeck && !tierData.canEditDecks && (
+                  ) : (
                     <span> <button className="btn-outline btn-sm" onClick={openUpgradeModal}>Upgrade for more decks</button></span>
                   )}
                 </div>

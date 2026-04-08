@@ -11,6 +11,8 @@ export interface Tier {
   canGenerate: boolean;
   /** Whether this tier may connect a Craftlingua language profile. */
   canUseCraftlingua: boolean;
+  /** Maximum number of decks this tier may own (null = unlimited). */
+  maxDecks: number | null;
   description: string;
   features: string[];
   stripeUrl: string | null;
@@ -28,6 +30,7 @@ export const TIERS: Record<TierLevel, Tier> = {
     canEditDecks: false,
     canGenerate: false,
     canUseCraftlingua: false,
+    maxDecks: 0,
     description: "Explore the app — upgrade or earn referral credits to forge cards.",
     features: [
       "Browse the app",
@@ -42,16 +45,17 @@ export const TIERS: Record<TierLevel, Tier> = {
     level: "tier2",
     name: "Street Creator",
     price: "$5 one-time",
-    cardLimit: 2,
+    cardLimit: 6,
     canSave: true,
     canEditDecks: false,
     canGenerate: true,
     canUseCraftlingua: true,
-    description: "Sign up and save up to 2 cards or characters.",
+    maxDecks: 1,
+    description: "Sign up and save up to 6 cards in one deck.",
     features: [
       "Everything in Free",
       "Account & card saving",
-      "Create & edit up to 2 cards",
+      "One deck with up to 6 cards",
       "Export your collection",
       "CraftLingua language profiles",
     ],
@@ -67,11 +71,12 @@ export const TIERS: Record<TierLevel, Tier> = {
     canEditDecks: true,
     canGenerate: true,
     canUseCraftlingua: true,
-    description: "Full access — edit all cards, build decks, manage characters.",
+    maxDecks: null,
+    description: "Full access — edit all cards, build multiple decks, manage characters.",
     features: [
       "Everything in Street Creator",
       "Unlimited cards & characters",
-      "Full deck builder",
+      "Multiple decks (6 cards each)",
       "Edit & delete any card",
       "CraftLingua language profiles",
     ],

@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { CardPrompts, CardPayload, Archetype, Rarity, Style, Vibe, District, Gender } from "../lib/types";
 import { generateCard } from "../lib/generator";
 import { CardDisplay } from "../components/CardDisplay";
@@ -10,6 +11,9 @@ import { getCachedImage, setCachedImage } from "../services/imageCache";
 import { getStaticBackgroundUrl, getStaticFrameUrl } from "../services/staticAssets";
 import { buildBackgroundPrompt, buildCharacterPrompt, buildFramePrompt } from "../lib/promptBuilder";
 import { useTier } from "../context/TierContext";
+import { useCollection } from "../hooks/useCollection";
+import { useDecks } from "../hooks/useDecks";
+import { TIERS } from "../lib/tiers";
 
 const ARCHETYPES: Archetype[] = ["The Knights Technarchy", "Qu111s", "Iron Curtains", "D4rk $pider", "The Asclepians", "The Mesopotamian Society", "Hermes' Squirmies", "UCPS", "The Team"];
 const RARITIES: Rarity[] = ["Punch Skater", "Apprentice", "Master", "Rare", "Legendary"];
@@ -52,7 +56,11 @@ const INITIAL_LAYER_STATE: LayerState = {
 };
 
 export function CardForge() {
-  const { canForge, generateCredits, consumeCredit, openUpgradeModal } = useTier();
+  const { tier, canForge, generateCredits, consumeCredit, openUpgradeModal } = useTier();
+  const tierData = TIERS[tier];
+  const navigate = useNavigate();
+  const { addCard, cards } = useCollection();
+  const { saveCardToFirstDeck } = useDecks();
   const [prompts, setPrompts] = useState<CardPrompts>({
     archetype: "The Knights Technarchy", rarity: "Punch Skater", style: "Street",
     vibe: "Grunge", district: "Nightshade", accentColor: "#00ff88", stamina: 5,
@@ -64,6 +72,8 @@ export function CardForge() {
   const [forging, setForging] = useState(false);
   const [viewing3D, setViewing3D] = useState(false);
   const [printing, setPrinting] = useState(false);
+  const [savingToDeck, setSavingToDeck] = useState(false);
+  const [savedCard, setSavedCard] = useState<CardPayload | null>(null);
 
   // Abort controller ref for cancelling in-flight image generation
   const abortRef = useRef<AbortController | null>(null);
@@ -293,6 +303,30 @@ export function CardForge() {
   const isAnyLayerLoading = layers.loading.background || layers.loading.character || layers.loading.frame;
   const hasAnyLayerUrl = !!(layers.backgroundUrl || layers.characterUrl || layers.frameUrl);
 
+  // ── Save to Deck ─────────────────────────────────────────────────────────
+  const handleSaveToDeck = useCallback(() => {
+    if (!generated) return;
+    if (!tierData.canSave) {
+      openUpgradeModal();
+      return;
+    }
+    setSavingToDeck(true);
+
+    // Attach current layer URLs to the card so the deck shows them
+    const cardToSave: CardPayload = {
+      ...generated,
+      backgroundImageUrl: layers.backgroundUrl,
+      characterImageUrl: layers.characterUrl,
+      frameImageUrl: layers.frameUrl,
+    };
+
+    addCard(cardToSave);
+    saveCardToFirstDeck(cardToSave);
+
+    setSavingToDeck(false);
+    setSavedCard(cardToSave);
+  }, [generated, layers, tierData, addCard, saveCardToFirstDeck, openUpgradeModal]);
+
   return (
     <div className="page">
       <h1 className="page-title">CARD FORGE</h1>
@@ -472,6 +506,24 @@ export function CardForge() {
                 <button className="btn-outline" onClick={() => setPrinting(true)} title="Print this card">
                   🖨 Print
                 </button>
+                {tierData.canSave ? (
+                  <button
+                    className="btn-primary"
+                    onClick={handleSaveToDeck}
+                    disabled={savingToDeck}
+                    title="Save card to your deck"
+                  >
+                    💾 Save to Deck
+                  </button>
+                ) : (
+                  <button
+                    className="btn-outline"
+                    onClick={openUpgradeModal}
+                    title="Upgrade to save cards to a deck"
+                  >
+                    🔒 Save to Deck
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -553,6 +605,27 @@ export function CardForge() {
           characterBlend={characterBlend}
           onClose={() => setPrinting(false)}
         />
+      )}
+      {/* ── Save-to-deck celebration overlay ── */}
+      {savedCard && (
+        <div className="save-celebrate-overlay" onClick={() => { setSavedCard(null); navigate("/decks"); }}>
+          <div className="save-celebrate-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="save-celebrate-emoji">🎉</div>
+            <h2 className="save-celebrate-title">
+              {cards.length <= 1
+                ? "Congrats! You forged your first player card!"
+                : "Card forged and saved!"}
+            </h2>
+            <p className="save-celebrate-name">{savedCard.identity.name}</p>
+            <p className="save-celebrate-seed">SEED · {savedCard.seed}</p>
+            <button
+              className="btn-primary"
+              onClick={() => { setSavedCard(null); navigate("/decks"); }}
+            >
+              Go to My Decks →
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

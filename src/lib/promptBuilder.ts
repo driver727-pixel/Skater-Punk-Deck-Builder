@@ -190,11 +190,9 @@ export function buildCharacterPrompt(prompts: CardPrompts, graffitiWords?: strin
     `Mood: ${mood}. ` +
     genderLine +
     AGE_RESTRICTION +
-    `Isolated on a plain white background, full figure visible from head to toe, centred. ` +
     `Trading card art in the style of 1995 Fleer Ultra X-Men, fantastic realism, airbrushed gouache texture, ` +
-    `vibrant and saturated 90s digital colors, dramatic rim lighting, realistic anatomy, chromium finish, ` +
-    `epic action pose, 90s Marvel aesthetic, tack-sharp focus, ultra-crisp details, high resolution, ` +
-    `perfectly in focus, pin-sharp, no blur, no soft focus, no depth-of-field. ` +
+    `vibrant and saturated 90s digital colors, dramatic rim lighting, realistic anatomy. ` +
+    `Isolated on a plain white background, full figure visible from head to toe, centred. ` +
     `SFW, family friendly, PG rated, LGBTQIA+.`
   );
 }

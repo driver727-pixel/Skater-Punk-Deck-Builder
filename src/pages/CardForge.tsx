@@ -28,19 +28,6 @@ const ACCENT_PRESETS = ["#00ff88", "#00ccff", "#ff4444", "#ffaa00", "#8b5cf6", "
 
 /** Maximum number of automatic retries per layer when a cached URL fails to load. */
 const MAX_LAYER_RETRIES = 1;
-
-// ── Per-layer generation options ───────────────────────────────────────────────
-//
-// All three layers target the poker card print size (2.5 × 3.5 in @ 300 DPI =
-// 750 × 1050 px, aspect ratio 5:7).  The character is generated taller so the
-// full figure has room to breathe after background removal; the background and
-// frame target the exact card dimensions for a pixel-perfect composite.
-
-const BACKGROUND_CACHE_VERSION = "v2-print";
-const BACKGROUND_GENERATION_OPTIONS: ImageGenOptions = {
-  imageSize: { width: 750, height: 1050 },
-};
-
 const CHARACTER_CACHE_VERSION = "v2-hq";
 const CHARACTER_GENERATION_OPTIONS: ImageGenOptions = {
   imageSize: { width: 1024, height: 1536 },
@@ -49,11 +36,6 @@ const CHARACTER_GENERATION_OPTIONS: ImageGenOptions = {
 };
 const CHARACTER_MIN_DIMENSIONS = { width: 900, height: 1300 };
 const CHARACTER_SEED_VARIANTS = ["hq-a", "hq-b"];
-
-const FRAME_CACHE_VERSION = "v2-print";
-const FRAME_GENERATION_OPTIONS: ImageGenOptions = {
-  imageSize: { width: 750, height: 1050 },
-};
 
 /** Converts a display name to a kebab-case filename stem (e.g. "The Grid" → "the-grid"). */
 function toFileSlug(name: string): string {
@@ -295,9 +277,9 @@ export function CardForge() {
     const charPrompt  = buildCharacterPrompt(prompts);
     const framePrompt = buildFramePrompt(prompts.rarity);
 
-    const bgKey    = `bg::${BACKGROUND_CACHE_VERSION}::${card.backgroundSeed}`;
+    const bgKey    = `bg::${card.backgroundSeed}`;
     const charKey  = `char::${CHARACTER_CACHE_VERSION}::${card.characterSeed}`;
-    const frameKey = `frame::${FRAME_CACHE_VERSION}::${card.frameSeed}`;
+    const frameKey = `frame::${card.frameSeed}`;
 
     const bgSeed    = card.backgroundSeed;
     const charSeed  = card.characterSeed;
@@ -322,7 +304,7 @@ export function CardForge() {
 
     // Store params so handleLayerError can retry without re-running handleForge
     layerParamsRef.current = {
-      background: { key: bgKey,    prompt: bgPrompt,    seed: bgSeed,    generationOptions: BACKGROUND_GENERATION_OPTIONS },
+      background: { key: bgKey,    prompt: bgPrompt,    seed: bgSeed    },
       character:  {
         key: charKey,
         prompt: charPrompt,
@@ -332,11 +314,11 @@ export function CardForge() {
         validateResult: validateCharacterLayer,
         generationOptions: CHARACTER_GENERATION_OPTIONS,
       },
-      frame:      { key: frameKey, prompt: framePrompt, seed: frameSeed, generationOptions: FRAME_GENERATION_OPTIONS },
+      frame:      { key: frameKey, prompt: framePrompt, seed: frameSeed  },
     };
 
     // Background layer
-    generateLayer("background", bgKey, bgPrompt, bgSeed, signal, undefined, undefined, BACKGROUND_GENERATION_OPTIONS);
+    generateLayer("background", bgKey, bgPrompt, bgSeed, signal);
 
     // Character layer — post-process with background removal
     generateLayer(
@@ -352,7 +334,7 @@ export function CardForge() {
     );
 
     // Frame layer
-    generateLayer("frame", frameKey, framePrompt, frameSeed, signal, undefined, undefined, FRAME_GENERATION_OPTIONS);
+    generateLayer("frame", frameKey, framePrompt, frameSeed, signal);
 
     setForging(false);
   }, [prompts, generateLayer, canForge, generateCredits, consumeCredit, openUpgradeModal]);

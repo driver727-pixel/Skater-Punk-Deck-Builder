@@ -294,7 +294,7 @@ export function CardForge() {
       const { width, height } = await getImageDimensions(url);
       if (width < CHARACTER_MIN_DIMENSIONS.width || height < CHARACTER_MIN_DIMENSIONS.height) {
         throw new Error(
-          `Character layer came back too small (${width}×${height}); retrying a higher-quality render.`,
+          `Character layer dimensions ${width}×${height} are below the minimum ${CHARACTER_MIN_DIMENSIONS.width}×${CHARACTER_MIN_DIMENSIONS.height}.`,
         );
       }
     };

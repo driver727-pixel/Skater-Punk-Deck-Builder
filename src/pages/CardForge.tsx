@@ -441,12 +441,11 @@ export function CardForge() {
     // Capture whether this is the user's first card BEFORE updating state
     const firstCard = cards.length === 0;
 
-    // Attach current layer URLs to the card so the collection shows them
     const cardToSave: CardPayload = {
       ...generated,
-      backgroundImageUrl: layers.backgroundUrl,
-      characterImageUrl: layers.characterUrl,
-      frameImageUrl: layers.frameUrl,
+      ...(layers.backgroundUrl != null ? { backgroundImageUrl: layers.backgroundUrl } : {}),
+      ...(layers.characterUrl != null ? { characterImageUrl: layers.characterUrl } : {}),
+      ...(layers.frameUrl != null ? { frameImageUrl: layers.frameUrl } : {}),
     };
 
     try {

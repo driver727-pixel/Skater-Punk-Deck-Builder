@@ -63,10 +63,10 @@ export function applyFactionBranding(
     ),
     discovery: {
       displayArchetype,
-      revealedFaction: revealedFaction ?? undefined,
       isSecretReveal: !!revealedFaction,
-      logoMark: isDarkSpiderReveal ? "🕷 D4rk $pider" : undefined,
-      unlockedAt: revealedFaction ? new Date().toISOString() : undefined,
+      ...(revealedFaction != null ? { revealedFaction } : {}),
+      ...(isDarkSpiderReveal ? { logoMark: "🕷 D4rk $pider" } : {}),
+      ...(revealedFaction != null ? { unlockedAt: new Date().toISOString() } : {}),
     },
   };
 }

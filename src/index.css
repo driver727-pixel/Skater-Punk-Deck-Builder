@@ -3180,6 +3180,12 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .board-summary__chip:hover { border-color: var(--accent); color: var(--accent); }
 .board-summary__sep { color: var(--border); font-size: 12px; }
 
+/* BoardComposite preview inside the Board Builder wizard */
+.board-builder__preview {
+  border-top: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+}
+
 /* ===== Card Board Loadout Section (on the card itself) ===== */
 .card-board {
   margin: 4px 0;
@@ -3207,6 +3213,38 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .card-board__icon { font-size: 6px; line-height: 1; }
 .card-board__key { color: var(--text-dim); width: 20px; letter-spacing: 0.5px; flex-shrink: 0; }
 .card-board__val { color: var(--text); font-weight: bold; }
+
+/* ===== Board Composite ===== */
+
+/*
+ * Container maintains a landscape 3:2 aspect ratio so all board layers
+ * scale together without distortion.  position: relative is required so
+ * the absolutely-positioned layer images are clipped to this box.
+ */
+.board-composite {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+}
+
+/* Each layer fills the entire container and uses object-fit: contain so
+ * wide wheels and narrow decks all fit without cropping or stretching. */
+.board-composite__layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* Smooth fade-in when a new component is selected */
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Visual stacking order: wheels at the back, deck at the front */
+.board-composite__layer--wheels     { z-index: 10; }
+.board-composite__layer--drivetrain { z-index: 20; }
+.board-composite__layer--deck       { z-index: 30; }
 
 /* ===== Asset Generator (/dev/asset-generator) ===== */
 .asset-gen-page { padding-bottom: 48px; }

@@ -462,7 +462,14 @@ export const DEFAULT_BOARD_CONFIG: BoardConfig = {
   battery: "SlimStealth",
 };
 
-// ── Board Loadout ──────────────────────────────────────────────────────────────
+// ── Loadout stat defaults (used when a component has no catalog entry) ─────────
+
+const DEFAULT_STYLE    = "Custom";
+const DEFAULT_SPEED    = 5;
+const DEFAULT_ACCEL    = 5;
+const DEFAULT_DISTRICT = "The Roads";
+const DEFAULT_RANGE    = 5;
+
 
 /**
  * Combined stats derived from a fully assembled board.
@@ -498,10 +505,10 @@ export function calculateBoardStats(config: BoardConfig): BoardLoadout {
   const batteryModel = BOARD_COMPONENT_CATALOG.find((m) => m.seedKey === batterySeed);
 
   return {
-    style:        deckModel?.style        ?? "Custom",
-    speed:        driveModel?.speed       ?? 5,
-    acceleration: driveModel?.acceleration ?? 5,
-    district:     wheelModel?.district    ?? "The Roads",
-    range:        batteryModel?.range     ?? 5,
+    style:        deckModel?.style         ?? DEFAULT_STYLE,
+    speed:        driveModel?.speed        ?? DEFAULT_SPEED,
+    acceleration: driveModel?.acceleration ?? DEFAULT_ACCEL,
+    district:     wheelModel?.district     ?? DEFAULT_DISTRICT,
+    range:        batteryModel?.range      ?? DEFAULT_RANGE,
   };
 }

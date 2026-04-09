@@ -39,7 +39,7 @@ export function BoardComposite({
   batteryIsTopMounted = false,
   className,
 }: BoardCompositeProps) {
-  if (!deckUrl && !drivetrainUrl && !wheelsUrl && !batteryUrl) return null;
+  if ([deckUrl, drivetrainUrl, wheelsUrl, batteryUrl].every((u) => !u)) return null;
 
   const batteryZIndex = batteryIsTopMounted ? 40 : 25;
 

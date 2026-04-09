@@ -253,6 +253,53 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
   },
 ];
 
+// ── Asset URL helpers ──────────────────────────────────────────────────────────
+
+/** Maps each BoardType to the seedKey of its representative deck asset. */
+const BOARD_TYPE_DECK_SEED: Record<BoardType, string | null> = {
+  Street:   "deck-carbon-street-drop-through",
+  AT:       "deck-bamboo-at-top-mount",
+  Mountain: "deck-off-grid-mountain-board",
+  Surf:     "deck-swallowtail-surf-skate",
+  Slider:   null, // no catalog asset yet
+};
+
+/** Maps each Drivetrain value to the seedKey of its representative asset. */
+const DRIVETRAIN_SEED: Record<Drivetrain, string | null> = {
+  Belt: "drivetrain-dual-belt-drive",
+  Hub:  "drivetrain-stealth-hub-motors",
+  Gear: "drivetrain-sealed-gear-drive",
+  AWD:  null, // no catalog asset yet
+};
+
+/** Maps each WheelType value to the seedKey of its representative asset. */
+const WHEEL_SEED: Record<WheelType, string | null> = {
+  Urethane:  "wheel-100mm-urethane-street",
+  Pneumatic: "wheel-175mm-pneumatic-at",
+  Rubber:    "wheel-120mm-cloud-sliders",
+};
+
+/**
+ * Returns the public asset URLs for all three board layers based on the active
+ * `BoardConfig`. Assets live at `public/assets/boards/<seedKey>.png`.
+ * Returns `null` for any component that has no catalog asset yet.
+ */
+export function getBoardAssetUrls(config: BoardConfig): {
+  deckUrl: string | null;
+  drivetrainUrl: string | null;
+  wheelsUrl: string | null;
+} {
+  const deckSeed  = BOARD_TYPE_DECK_SEED[config.boardType];
+  const driveSeed = DRIVETRAIN_SEED[config.drivetrain];
+  const wheelSeed = WHEEL_SEED[config.wheels];
+
+  return {
+    deckUrl:       deckSeed  ? `/assets/boards/${deckSeed}.png`  : null,
+    drivetrainUrl: driveSeed ? `/assets/boards/${driveSeed}.png` : null,
+    wheelsUrl:     wheelSeed ? `/assets/boards/${wheelSeed}.png` : null,
+  };
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 /** Returns the total additive stat bonuses across all three board selections. */

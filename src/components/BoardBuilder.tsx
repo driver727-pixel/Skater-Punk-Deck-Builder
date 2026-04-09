@@ -19,7 +19,9 @@ import {
   DRIVETRAIN_OPTIONS,
   WHEEL_OPTIONS,
   DEFAULT_BOARD_CONFIG,
+  getBoardAssetUrls,
 } from "../lib/boardBuilder";
+import { BoardComposite } from "./BoardComposite";
 
 interface BoardBuilderProps {
   value: BoardConfig;
@@ -134,6 +136,12 @@ export function BoardBuilder({ value, onChange }: BoardBuilderProps) {
 
       {/* Selected config summary */}
       <BoardSummaryRow config={value} onEdit={setActiveStep} />
+
+      {/* Live board composite preview */}
+      <BoardComposite
+        {...getBoardAssetUrls(value)}
+        className="board-builder__preview"
+      />
     </div>
   );
 }

@@ -2,6 +2,22 @@ import { useState } from "react";
 import { generateImage, removeBackground } from "../services/imageGen";
 import { BOARD_COMPONENT_CATALOG } from "../lib/boardBuilder";
 
+// ── Download helper ────────────────────────────────────────────────────────────
+
+/** Delay in ms before revoking a blob object URL after triggering a download. */
+const OBJECT_URL_REVOKE_DELAY_MS = 15_000;
+
+async function downloadAssetImage(imageUrl: string, seedKey: string): Promise<void> {
+  const response = await fetch(imageUrl);
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = `${seedKey}.png`;
+  anchor.click();
+  setTimeout(() => URL.revokeObjectURL(objectUrl), OBJECT_URL_REVOKE_DELAY_MS);
+}
+
 // ── Prompt template ────────────────────────────────────────────────────────────
 
 function buildAssetPrompt(componentName: string, visualDescription: string): string {
@@ -47,6 +63,7 @@ export function AssetGenerator() {
     Object.fromEntries(ALL_ITEMS.map((i) => [i.seedKey, { status: "idle" }]))
   );
   const [runningAll, setRunningAll] = useState(false);
+  const [downloading, setDownloading] = useState<Record<string, boolean>>({});
 
   function setItemState(seedKey: string, patch: Partial<ItemState>) {
     setStates((prev) => ({
@@ -80,6 +97,24 @@ export function AssetGenerator() {
     setRunningAll(false);
   }
 
+  async function downloadOne(item: AssetItem) {
+    const url = states[item.seedKey]?.imageUrl;
+    if (!url) return;
+    setDownloading((prev) => ({ ...prev, [item.seedKey]: true }));
+    try {
+      await downloadAssetImage(url, item.seedKey);
+    } finally {
+      setDownloading((prev) => ({ ...prev, [item.seedKey]: false }));
+    }
+  }
+
+  async function downloadAll() {
+    const doneItems = ALL_ITEMS.filter((i) => states[i.seedKey]?.status === "done");
+    for (const item of doneItems) {
+      await downloadOne(item);
+    }
+  }
+
   const doneCount = ALL_ITEMS.filter((i) => states[i.seedKey]?.status === "done").length;
   const loadingCount = ALL_ITEMS.filter(
     (i) => states[i.seedKey]?.status === "generating" || states[i.seedKey]?.status === "removing-bg",
@@ -94,13 +129,23 @@ export function AssetGenerator() {
           <h1 className="page-title">🎨 Asset Generator</h1>
           <p className="page-sub">
             Dev tool — generates green-screen board component images via fal.ai.
-            Right-click any image to save to <code>public/assets/boards/</code>.
+            Click <strong>⬇ Download</strong> on any image to save it to{" "}
+            <code>public/assets/boards/</code> with the correct filename.
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <span className="asset-gen-counter">
             {doneCount} / {ALL_ITEMS.length} done
           </span>
+          {doneCount > 0 && (
+            <button
+              className="btn-outline"
+              onClick={downloadAll}
+              disabled={runningAll || loadingCount > 0}
+            >
+              ⬇ Download All
+            </button>
+          )}
           <button
             className="btn-primary"
             onClick={generateAll}
@@ -138,7 +183,7 @@ export function AssetGenerator() {
                           src={state.imageUrl}
                           alt={item.label}
                           className="asset-gen-img"
-                          title="Right-click → Save image as…"
+                          title={`${item.seedKey}.png`}
                         />
                       )}
                       {state.status === "error" && (
@@ -163,6 +208,16 @@ export function AssetGenerator() {
                           ? "↺ Regenerate"
                           : "▶ Generate"}
                       </button>
+                      {state.status === "done" && state.imageUrl && (
+                        <button
+                          className="btn-primary"
+                          onClick={() => downloadOne(item)}
+                          disabled={!!downloading[item.seedKey]}
+                          title={`Save as ${item.seedKey}.png`}
+                        >
+                          {downloading[item.seedKey] ? "⏳ Saving…" : "⬇ Download"}
+                        </button>
+                      )}
                       {state.status === "error" && (
                         <span className="asset-gen-error-msg">{state.error}</span>
                       )}

@@ -29,13 +29,19 @@ The `seedKey` values are defined in `src/lib/boardBuilder.ts`
 | `drivetrain-dual-belt-drive`      | Belt drive trucks |
 | `drivetrain-sealed-gear-drive`    | Gear drive trucks |
 | `drivetrain-stealth-hub-motors`   | Hub motor trucks  |
+| `battery-slim-stealth-pack`       | Slim Stealth battery |
+| `battery-double-stack-brick`      | Double-Stack battery |
+| `battery-top-mounted-peli-case`   | Top-Mounted Peli Case |
 
 ## Workflow
 
-1. Open **Card Forge → Asset Generator** (admin only).
-2. Click **Generate All** (or generate individual items).
-3. Right-click each preview image → **Save image as…** → save to this folder
-   with the matching `<seedKey>.png` filename.
+1. Open **Card Forge → Asset Generator** (admin only, `/dev/asset-generator`).
+2. Click **⚡ Generate All** (or generate individual items).
+3. Once images appear, click **⬇ Download** on each card — the browser will save
+   the file with the correct `<seedKey>.png` filename automatically.
+   Alternatively click **⬇ Download All** at the top to save every completed
+   image in one pass.
+4. Move the downloaded files to this folder (`public/assets/boards/`).
 
 Until the PNGs are placed here the `BoardComposite` layers are simply invisible
 (the component renders `null` when all URLs are absent).

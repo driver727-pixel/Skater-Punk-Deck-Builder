@@ -235,7 +235,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Deck",
     name: "Carbon Street Drop-Through",
     description:
-      "A sleek, low-profile carbon fiber drop-through longboard deck with geometric grip tape.",
+      "A sleek, matte black carbon fiber longboard deck, drop-through mounting holes, symmetrical cutouts, ultra-thin profile, weave texture visible under studio lighting, isolated on white background.",
     seedKey: "deck-carbon-street-drop-through",
     icon: "🛹",
     style: "Sleek",
@@ -244,7 +244,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Deck",
     name: "Bamboo AT Top-Mount",
     description:
-      "A wide, sturdy bamboo top-mount deck with aggressive, heavy-duty grip tape.",
+      "A light-grain bamboo electric skateboard deck, top-mount concave shape, clear grip tape showing wood grain, rugged aesthetic, thick enough for an enclosure, high-quality 8k photography.",
     seedKey: "deck-bamboo-at-top-mount",
     icon: "🏕️",
     style: "Aggressive",
@@ -253,7 +253,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Deck",
     name: "Off-Grid Mountain Board",
     description:
-      "A flexible composite mountain board deck equipped with rugged foot bindings.",
+      "A heavy-duty composite mountainboard deck, extreme concave, foot strap mounting points, thick and rugged construction, matte tactical finish, top-down view.",
     seedKey: "deck-off-grid-mountain-board",
     icon: "⛰️",
     style: "Aggressive",
@@ -273,7 +273,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Wheel",
     name: "100mm Urethane Street",
     description:
-      "A set of smooth, translucent neon-green 100mm polyurethane street wheels.",
+      "Macro shot of a 100mm electric skateboard wheel, high-rebound translucent orange urethane, smooth surface, precision bearing seat, 80A durometer texture, realistic lighting.",
     seedKey: "wheel-100mm-urethane-street",
     icon: "🟡",
     district: "Electropolis",
@@ -282,7 +282,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Wheel",
     name: "175mm Pneumatic AT",
     description:
-      "A set of chunky, knobby 175mm rubber pneumatic all-terrain tires on metallic hubs.",
+      "A 7-inch pneumatic all-terrain rubber tire for a skateboard, deep knobby tread pattern, black nylon hub, 3-spoke design, side-profile view, industrial look.",
     seedKey: "wheel-175mm-pneumatic-at",
     icon: "🟢",
     district: "The Forest",
@@ -291,7 +291,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Wheel",
     name: "120mm Cloud Sliders",
     description:
-      "Oversized, shock-absorbing 120mm foam-core urethane slider wheels.",
+      "120mm semi-transparent foamies skateboard wheels, honeycomb core pattern, curved contact patch, rubberized texture, teal color, studio lighting.",
     seedKey: "wheel-120mm-cloud-sliders",
     icon: "⚪",
     district: "The Roads",
@@ -302,7 +302,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Drivetrain",
     name: "Dual Belt Drive",
     description:
-      "Heavy-duty dual rear belt-drive motors with exposed mechanical pulleys and wide trucks.",
+      "Close up of an electric skateboard rear truck, dual 6374 brushless motors, heavy-duty rubber belts, aluminum motor mounts, CNC machined pulleys, mechanical engineering aesthetic.",
     seedKey: "drivetrain-dual-belt-drive",
     icon: "⚙️",
     speed: 8,
@@ -312,7 +312,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Drivetrain",
     name: "Sealed Gear Drive",
     description:
-      "Rugged, fully enclosed gear-drive trucks built for high torque and off-road abuse.",
+      "A professional electric skateboard gear drive system, fully enclosed CNC aluminum housing, oil-slick finish, precision bolts, rugged drivetrain mounted on 300mm trucks.",
     seedKey: "drivetrain-sealed-gear-drive",
     icon: "🔩",
     speed: 6,
@@ -322,7 +322,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Drivetrain",
     name: "Stealth Hub Motors",
     description:
-      "Sleek, minimalist in-wheel hub motors attached to precision carving trucks.",
+      "Minimalist electric skateboard hub motor wheels, brushless motor integrated into the wheel core, no visible belts or gears, sleek stealthy black finish, futuristic design.",
     seedKey: "drivetrain-stealth-hub-motors",
     icon: "🔇",
     speed: 7,
@@ -334,7 +334,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Battery",
     name: "Slim Stealth Pack",
     description:
-      "Low profile, standard range, hidden carbon enclosure.",
+      "Ultra-low profile electric skateboard battery enclosure, flexible segmented plastic, matte black finish, charging port and power button visible, mounted to the underside of a deck.",
     seedKey: "battery-slim-stealth-pack",
     icon: "🔋",
     range: 4,
@@ -344,7 +344,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Battery",
     name: "Double-Stack Brick",
     description:
-      "Heavy, thick enclosure meant for long journeys.",
+      "Large capacity double-stack 12s4p battery enclosure for DIY electric skateboard, rugged ABS plastic, thick profile, industrial heat-sync fins, heavy-duty aesthetic.",
     seedKey: "battery-double-stack-brick",
     icon: "🧱",
     range: 8,

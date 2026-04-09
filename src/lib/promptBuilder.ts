@@ -15,18 +15,18 @@ const DISTRICT_DESCRIPTIONS: Record<string, string> = {
 };
 
 const STYLE_CLOTHING: Record<string, string> = {
-  Corporate:      "a sleek corporate suit with a high-tech earpiece",
-  Street:         "a street-style hoodie and cargo pants with graffiti patches",
-  "Off-grid":     "rugged off-grid survivalist gear with utility belts",
-  Military:       "tactical military fatigues with body armour",
-  Union:          "union worker overalls covered in badge patches",
-  Olympic:        "a coordinated high-end athletic ensemble — matching top and bottoms in sponsor colours, performance fabric, logo patches, and a professional snowboard warm-up suit or full snowsuit",
-  Ninja:          "all-black stealthy clothing with no visible logos or markings, dark form-fitting outfit",
-  "Punk Rocker":  "recycled DIY clothing with hand-sewn patches and improvised accessories",
-  "Ex Military":  "tactical fatigues with cheap-looking plastic body armor and roughly assembled gear",
-  Hacker:         "a dark hoodie with embedded tech and a screen-visor or goggles with small display screens",
-  Chef:           "a white chef apron and tall chef hat, kitchen non-slip shoes",
-  Fascist:        "rugged survivalist explorer gear with utility belts and cargo pockets",
+  Corporate:      "a sleek corporate suit with a high-tech earpiece, 90's action comic book hero look",
+  Street:         "a street-style hoodie and cargo pants with graffiti patches, 90's action comic book hero look",
+  "Off-grid":     "rugged off-grid survivalist gear with utility belts, 90's action comic book hero look",
+  Military:       "tactical military fatigues with body armour, 90's action comic book hero look",
+  Union:          "union worker overalls covered in badge patches, 90's action comic book hero look",
+  Olympic:        "a coordinated high-end athletic ensemble — matching top and bottoms in sponsor colours, performance fabric, logo patches, and a professional snowboard warm-up suit or full snowsuit, 90's action comic book hero look",
+  Ninja:          "all-black stealthy clothing with no visible logos or markings, dark form-fitting outfit, 90's action comic book hero look",
+  "Punk Rocker":  "recycled DIY clothing with hand-sewn patches and improvised accessories, 90's action comic book hero look",
+  "Ex Military":  "tactical fatigues with cheap-looking plastic body armor and roughly assembled gear, 90's action comic book hero look",
+  Hacker:         "a dark hoodie with embedded tech and a screen-visor or goggles with small display screens, 90's action comic book hero look",
+  Chef:           "a white chef apron and tall chef hat, kitchen non-slip shoes, 90's action comic book hero look",
+  Fascist:        "rugged survivalist explorer gear with utility belts and cargo pockets, 90's action comic book hero look",
 };
 
 const ARCHETYPE_POSES: Record<string, string> = {

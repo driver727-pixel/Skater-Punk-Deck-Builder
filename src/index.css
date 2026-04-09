@@ -3184,6 +3184,8 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .board-builder__preview {
   border-top: 1px solid var(--border);
   background: rgba(0, 0, 0, 0.2);
+  max-height: 140px;
+  overflow: hidden;
 }
 
 /* Lock-it-in row below the carousels */
@@ -3192,7 +3194,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   align-items: center;
   justify-content: center;
   gap: 14px;
-  padding: 16px 14px;
+  padding: 10px 14px;
   border-top: 1px solid var(--border);
   background: rgba(0, 0, 0, 0.25);
 }
@@ -3590,7 +3592,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 
 /* Item dimensions exposed as a custom property for consistent reuse. */
 :root {
-  --conveyor-item-size: 110px;
+  --conveyor-item-size: 80px;
 }
 
 /*
@@ -3621,7 +3623,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 14px 4px;
+  padding: 3px 10px 2px;
 }
 
 .conveyor__label {
@@ -3651,7 +3653,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 0;
+  padding: 8px 0;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -3700,8 +3702,8 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 10px 8px;
+  gap: 3px;
+  padding: 6px 6px;
   background: var(--bg3);
   border: 2px solid var(--border);
   border-radius: 4px;
@@ -3769,7 +3771,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   animation: clamp-pulse 1.2s ease-in-out infinite;
 }
 
-.conveyor__item-icon   { font-size: 22px; line-height: 1; }
+.conveyor__item-icon   { font-size: 18px; line-height: 1; }
 .conveyor__item-name   { font-size: 11px; font-weight: bold; color: var(--text); letter-spacing: 0.5px; }
 .conveyor__item-tagline {
   font-size: 9px;

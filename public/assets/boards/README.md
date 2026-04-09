@@ -4,7 +4,7 @@ Static PNG images for the `BoardComposite` component.
 
 Each file is a **square, green-screen** product photograph exported from the
 Asset Generator (`/dev/asset-generator`), with the background removed via the
-`removeBackground` utility (fal.ai birefrence).
+`removeBackground` utility (fal.ai birefernet).
 
 ## Naming convention
 

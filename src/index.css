@@ -98,12 +98,10 @@ body {
 .main {
   flex: 1;
   overflow-y: auto;
-  max-width: 95vw;
-  margin: 0 auto;
 }
 .page {
   width: 100%;
-  max-width: 1200px;
+  max-width: min(1200px, 95vw);
   padding: 24px 18px;
   margin: 0 auto;
 }
@@ -295,7 +293,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 /* ===== Card Forge Layout ===== */
 .forge-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
   gap: 20px;
   align-items: start;
 }

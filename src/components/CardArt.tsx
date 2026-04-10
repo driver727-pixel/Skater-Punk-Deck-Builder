@@ -219,6 +219,10 @@ function CardFrame({ width, height, rarity, frameSeed, uid }: FrameProps) {
     const FRAY_Y_JITTER = 3.5;
     const FRAY_MIN_LENGTH = 2.5;
     const FRAY_LENGTH_RANGE = 3;
+    const FRAY_LEFT_X_DIRECTION = -1;
+    const FRAY_RIGHT_X_DIRECTION = 1;
+    const FRAY_TOP_Y_DIRECTION = -1;
+    const FRAY_BOTTOM_Y_DIRECTION = 1;
     const frays = Array.from({ length: 8 }, (_, i) => {
       const isTop = i < 4;
       const side = i % 2 === 0 ? "left" : "right";
@@ -228,7 +232,9 @@ function CardFrame({ width, height, rarity, frameSeed, uid }: FrameProps) {
         : FRAY_RIGHT_BASE_X + seededVal(frameSeed, 500 + i * 3) * FRAY_X_JITTER;
       const y = baseY + (seededVal(frameSeed, 501 + i * 3) - 0.5) * FRAY_Y_JITTER;
       const len = FRAY_MIN_LENGTH + seededVal(frameSeed, 502 + i * 3) * FRAY_LENGTH_RANGE;
-      return { x, y, len };
+      const xDirection = side === "left" ? FRAY_LEFT_X_DIRECTION : FRAY_RIGHT_X_DIRECTION;
+      const yDirection = isTop ? FRAY_TOP_Y_DIRECTION : FRAY_BOTTOM_Y_DIRECTION;
+      return { x, y, len, xDirection, yDirection };
     });
     return (
       <>
@@ -247,8 +253,8 @@ function CardFrame({ width, height, rarity, frameSeed, uid }: FrameProps) {
             key={`fray-${i}`}
             x1={f.x}
             y1={f.y}
-            x2={f.x + (i % 2 === 0 ? -f.len : f.len)}
-            y2={f.y + (i < 4 ? -1 : 1)}
+            x2={f.x + f.len * f.xDirection}
+            y2={f.y + f.yDirection}
             stroke="#d8c8a1"
             strokeOpacity="0.45"
             strokeWidth="0.5"

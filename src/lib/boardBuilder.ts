@@ -235,7 +235,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Deck",
     name: "Carbon Street Drop-Through",
     description:
-      "A sleek, matte black carbon fiber longboard deck, drop-through mounting holes, symmetrical cutouts, ultra-thin profile, weave texture visible under studio lighting, isolated on white background.",
+      "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. A sleek, matte black carbon fiber longboard deck, drop-through mounting holes, symmetrical cutouts, ultra-thin profile, weave texture visible under studio lighting, isolated on white background.",
     seedKey: "deck-carbon-street-drop-through",
     icon: "🛹",
     style: "Sleek",
@@ -244,7 +244,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Deck",
     name: "Bamboo AT Top-Mount",
     description:
-      "A light-grain bamboo electric skateboard deck, top-mount concave shape, clear grip tape showing wood grain, rugged aesthetic, thick enough for an enclosure, high-quality 8k photography.",
+      "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. A light-grain bamboo electric skateboard deck, top-mount concave shape, clear grip tape showing wood grain, rugged aesthetic, thick enough for an enclosure.",
     seedKey: "deck-bamboo-at-top-mount",
     icon: "🏕️",
     style: "Aggressive",
@@ -253,7 +253,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Deck",
     name: "Off-Grid Mountain Board",
     description:
-      "A heavy-duty composite mountainboard deck, extreme concave, foot strap mounting points, thick and rugged construction, matte tactical finish, top-down view.",
+      "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. A heavy-duty composite mountainboard deck, extreme concave, foot strap mounting points, thick and rugged construction, matte tactical finish.",
     seedKey: "deck-off-grid-mountain-board",
     icon: "⛰️",
     style: "Aggressive",
@@ -262,7 +262,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Deck",
     name: "Swallowtail Surf-Skate",
     description:
-      "A short, wide cruiser deck with a distinct swallowtail shape and vibrant retro grip art.",
+      "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. A short, wide cruiser deck with a distinct swallowtail shape and vibrant retro grip art.",
     seedKey: "deck-swallowtail-surf-skate",
     icon: "🏄",
     style: "Retro",
@@ -273,7 +273,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Wheel",
     name: "100mm Urethane Street",
     description:
-      "Macro shot of a 100mm electric skateboard wheel, high-rebound translucent orange urethane, smooth surface, precision bearing seat, 80A durometer texture, realistic lighting.",
+      "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. A 100mm electric skateboard wheel, high-rebound translucent orange urethane, smooth surface, precision bearing seat, 80A durometer texture, realistic lighting.",
     seedKey: "wheel-100mm-urethane-street",
     icon: "🟡",
     district: "Electropolis",
@@ -282,7 +282,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Wheel",
     name: "175mm Pneumatic AT",
     description:
-      "A 7-inch pneumatic all-terrain rubber tire for a skateboard, deep knobby tread pattern, black nylon hub, 3-spoke design, side-profile view, industrial look.",
+      "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. A 7-inch pneumatic all-terrain rubber tire for a skateboard, deep knobby tread pattern, black nylon hub, 3-spoke design, industrial look.",
     seedKey: "wheel-175mm-pneumatic-at",
     icon: "🟢",
     district: "The Forest",
@@ -291,7 +291,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Wheel",
     name: "120mm Cloud Sliders",
     description:
-      "120mm semi-transparent foamies skateboard wheels, honeycomb core pattern, curved contact patch, rubberized texture, teal color, studio lighting.",
+      "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. 120mm semi-transparent foamies skateboard wheels, honeycomb core pattern, curved contact patch, rubberized texture, teal color.",
     seedKey: "wheel-120mm-cloud-sliders",
     icon: "⚪",
     district: "The Roads",
@@ -302,7 +302,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Drivetrain",
     name: "Dual Belt Drive",
     description:
-      "Close up of an electric skateboard rear truck, dual 6374 brushless motors, heavy-duty rubber belts, aluminum motor mounts, CNC machined pulleys, mechanical engineering aesthetic.",
+      "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. An electric skateboard rear truck, dual 6374 brushless motors, heavy-duty rubber belts, aluminum motor mounts, CNC machined pulleys, mechanical engineering aesthetic.",
     seedKey: "drivetrain-dual-belt-drive",
     icon: "⚙️",
     speed: 8,
@@ -312,7 +312,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Drivetrain",
     name: "Sealed Gear Drive",
     description:
-      "A professional electric skateboard gear drive system, fully enclosed CNC aluminum housing, oil-slick finish, precision bolts, rugged drivetrain mounted on 300mm trucks.",
+      "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. A professional electric skateboard gear drive system, fully enclosed CNC aluminum housing, oil-slick finish, precision bolts, rugged drivetrain mounted on 300mm trucks.",
     seedKey: "drivetrain-sealed-gear-drive",
     icon: "🔩",
     speed: 6,
@@ -322,7 +322,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Drivetrain",
     name: "Stealth Hub Motors",
     description:
-      "Minimalist electric skateboard hub motor wheels, brushless motor integrated into the wheel core, no visible belts or gears, sleek stealthy black finish, futuristic design.",
+      "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. Minimalist electric skateboard hub motor wheels, brushless motor integrated into the wheel core, no visible belts or gears, sleek stealthy black finish, futuristic design.",
     seedKey: "drivetrain-stealth-hub-motors",
     icon: "🔇",
     speed: 7,
@@ -334,7 +334,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Battery",
     name: "Slim Stealth Pack",
     description:
-      "Ultra-low profile electric skateboard battery enclosure, flexible segmented plastic, matte black finish, charging port and power button visible, mounted to the underside of a deck.",
+      "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. Ultra-low profile electric skateboard battery enclosure, flexible segmented plastic, matte black finish, charging port and power button visible, mounted to the underside of a deck.",
     seedKey: "battery-slim-stealth-pack",
     icon: "🔋",
     range: 4,
@@ -344,7 +344,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Battery",
     name: "Double-Stack Brick",
     description:
-      "Large capacity double-stack 12s4p battery enclosure for DIY electric skateboard, rugged ABS plastic, thick profile, industrial heat-sink fins, heavy-duty aesthetic.",
+      "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. Large capacity double-stack 12s4p battery enclosure for DIY electric skateboard, rugged ABS plastic, thick profile, industrial heat-sink fins, heavy-duty aesthetic.",
     seedKey: "battery-double-stack-brick",
     icon: "🧱",
     range: 8,
@@ -354,7 +354,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
     category: "Battery",
     name: "Top-Mounted Peli Case",
     description:
-      "A rugged, waterproof utility box strapped to the top of the deck.",
+      "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. A rugged, waterproof utility box strapped to the top of the deck.",
     seedKey: "battery-top-mounted-peli-case",
     icon: "📦",
     range: 10,

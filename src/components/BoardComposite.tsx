@@ -49,7 +49,7 @@ export function BoardComposite({
   // Track which provided layer URLs have finished loading.
   // Using a Set of URL strings means the overlay is removed as soon as every
   // provided URL has fired onLoad — even when URLs change between renders.
-  const [loadedUrls, setLoadedUrls] = useState<Set<string>>(new Set());
+  const [loadedUrls, setLoadedUrls] = useState<Set<string>>(() => new Set());
 
   // Memoised list of currently-provided (non-null) URLs.
   const providedUrls = useMemo(
@@ -62,7 +62,8 @@ export function BoardComposite({
   useEffect(() => {
     const current = new Set(providedUrls);
     setLoadedUrls((prev) => {
-      const filtered = new Set([...prev].filter((url) => current.has(url)));
+      const filtered = new Set<string>();
+      for (const url of prev) { if (current.has(url)) filtered.add(url); }
       return filtered.size === prev.size ? prev : filtered;
     });
   }, [providedUrls]);

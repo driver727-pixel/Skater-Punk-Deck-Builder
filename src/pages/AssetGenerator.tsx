@@ -44,7 +44,7 @@ const ASSET_COMPONENT_DESCRIPTIONS: Record<string, string> = {
   "battery-slim-stealth-pack":
     "A long, flat, ultra-low profile lithium-ion battery pack enclosure made of textured black plastic. Integrated charging port and power switch visible.",
   "battery-double-stack-brick":
-    "A massive, thick, dual-layered (double-stack) block-style battery enclosure for high range. Rugged aluminum heat-sync fins visible on the surface.",
+    "A massive, thick, dual-layered (double-stack) block-style battery enclosure for high range. Rugged aluminum heat-sink fins visible on the surface.",
   "battery-top-mounted-peli-case":
     "A specific, yellow 'Pelican' case style (Peli-Case) top-mounted battery enclosure. Heavy-duty construction, rugged latches, and handle visible.",
 };

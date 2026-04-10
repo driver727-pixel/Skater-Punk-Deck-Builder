@@ -270,6 +270,12 @@ app.post('/api/create-checkout-session', checkoutRateLimit, async (req, res) => 
   }
 });
 
+// Health-check route — required so Render's uptime ping returns 200 instead of
+// Express's default "Cannot GET /" 404.
+app.get('/', (_req, res) => {
+  res.json({ status: 'ok' });
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Card Forge Proxy running on port ${PORT}`);

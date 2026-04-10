@@ -44,7 +44,7 @@ const googleProvider = new GoogleAuthProvider();
 
 export { RecaptchaVerifier };
 
-function createFirebaseUnavailableError() {
+function createAuthUnavailableError() {
   return new Error(firebaseUnavailableMessage);
 }
 
@@ -93,12 +93,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    if (!auth) throw createFirebaseUnavailableError();
+    if (!auth) throw createAuthUnavailableError();
     await signInWithEmailAndPassword(auth, email, password);
   }, []);
 
   const signUp = useCallback(async (email: string, password: string) => {
-    if (!auth) throw createFirebaseUnavailableError();
+    if (!auth) throw createAuthUnavailableError();
     await createUserWithEmailAndPassword(auth, email, password);
   }, []);
 
@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
-    if (!auth) throw createFirebaseUnavailableError();
+    if (!auth) throw createAuthUnavailableError();
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err: unknown) {
@@ -126,13 +126,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const sendPasswordReset = useCallback(async (email: string) => {
-    if (!auth) throw createFirebaseUnavailableError();
+    if (!auth) throw createAuthUnavailableError();
     await sendPasswordResetEmail(auth, email);
   }, []);
 
   const signInWithPhone = useCallback(
     async (phone: string, appVerifier: ApplicationVerifier) => {
-      if (!auth) throw createFirebaseUnavailableError();
+      if (!auth) throw createAuthUnavailableError();
       return signInWithPhoneNumber(auth, phone, appVerifier);
     },
     []

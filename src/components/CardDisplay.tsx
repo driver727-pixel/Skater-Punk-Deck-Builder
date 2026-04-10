@@ -130,7 +130,7 @@ function CompositeArt({
         />
       ) : layerLoading?.background ? (
         <div className="card-art-layer card-art-layer--background card-art-layer--loading">
-          <span className="card-art-layer__label">🌆 Background…</span>
+          <img src="/assets/loading.gif" alt="Loading…" className="card-art-loading-gif" />
         </div>
       ) : null}
 
@@ -145,7 +145,7 @@ function CompositeArt({
         />
       ) : layerLoading?.character ? (
         <div className="card-art-layer card-art-layer--character card-art-layer--loading">
-          <span className="card-art-layer__label">🛹 Character…</span>
+          <img src="/assets/loading.gif" alt="Loading…" className="card-art-loading-gif" />
         </div>
       ) : null}
 
@@ -159,7 +159,7 @@ function CompositeArt({
         />
       ) : layerLoading?.frame ? (
         <div className="card-art-layer card-art-layer--frame card-art-layer--loading">
-          <span className="card-art-layer__label">🖼 Frame…</span>
+          <img src="/assets/loading.gif" alt="Loading…" className="card-art-loading-gif" />
         </div>
       ) : null}
     </div>
@@ -256,7 +256,9 @@ export function CardDisplay({
     return (
       <div className="card-compact" style={{ borderColor: rarityColor }}>
         {imageLoading && !hasLayeredImages ? (
-          <div className="card-art-skeleton" />
+          <div className="card-art-skeleton">
+            <img src="/assets/loading.gif" alt="Loading…" className="card-art-loading-gif" />
+          </div>
         ) : hasLayeredImages || layerLoading ? (
           <CompositeArt
             card={card}
@@ -321,7 +323,7 @@ export function CardDisplay({
         />
       ) : imageLoading ? (
         <div className="card-art-skeleton card-art-skeleton--full">
-          <span className="card-art-skeleton__label">✨ Generating image…</span>
+          <img src="/assets/loading.gif" alt="Loading…" className="card-art-loading-gif" />
         </div>
       ) : resolvedImageUrl ? (
         <img

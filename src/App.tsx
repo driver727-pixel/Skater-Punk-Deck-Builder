@@ -8,6 +8,7 @@ import { Nav } from "./components/Nav";
 import { Footer } from "./components/Footer";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminRoute } from "./components/AdminRoute";
+import { firebaseUnavailableMessage, isFirebaseConfigured } from "./lib/firebase";
 
 /** Applies data-theme and data-time attributes to <html> for CSS theming. */
 function ThemeApplier() {
@@ -75,6 +76,9 @@ function App() {
             <ErrorBoundary>
               <div className="app">
                 <Nav />
+                {!isFirebaseConfigured && (
+                  <div className="firebase-banner">{firebaseUnavailableMessage}</div>
+                )}
                 <main className="main">
                   <Suspense fallback={<div className="page-loading">Loading…</div>}>
                     <Routes>

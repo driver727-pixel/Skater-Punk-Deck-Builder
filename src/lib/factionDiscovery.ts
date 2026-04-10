@@ -20,6 +20,7 @@ export const FORGE_ARCHETYPE_OPTIONS: ForgeArchetypeOption[] = [
 
 const ARCHETYPE_LABEL_MAP = new Map(FORGE_ARCHETYPE_OPTIONS.map((option) => [option.value, option.label]));
 
+// Former Ninja matches move to Hacker; former Hacker matches move to Corporate.
 const DARK_SPIDER_STYLE_MATCHES: ReadonlySet<string> = new Set(["Hacker", "Corporate", "Military"]);
 const DARK_SPIDER_VIBE_MATCHES = new Set(["Neon", "Plastic"]);
 const DARK_SPIDER_DISTRICT_MATCHES: ReadonlySet<District> = new Set([

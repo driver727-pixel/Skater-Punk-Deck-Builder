@@ -32,6 +32,10 @@ export function normalizeStyle(style: unknown): Style {
   return (ACTIVE_STYLE_SET.has(resolved) ? resolved : "Street") as Style;
 }
 
+/**
+ * Applies only the first legacy hop so old style-linked gameplay/faction rules
+ * can be reassigned exactly as requested before full style normalization.
+ */
 export function remapStyleConnection(style: unknown): string {
   const raw = typeof style === "string" ? style : "Street";
   return LEGACY_STYLE_REMAP[raw] ?? raw;

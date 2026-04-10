@@ -1027,29 +1027,32 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   letter-spacing: 1px;
 }
 .card-art-skeleton {
+  position: relative;
+  overflow: hidden;
   width: 112px;
   height: 160px;
   border-radius: 4px;
-  background: linear-gradient(90deg, var(--bg2) 25%, var(--bg3) 50%, var(--bg2) 75%);
-  background-size: 800px 100%;
-  animation: shimmer 1.4s infinite linear;
+  background: var(--bg2);
   display: flex;
   align-items: center;
   justify-content: center;
+}
+/* Shimmer sweep rendered on top of the loading GIF */
+.card-art-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.10) 50%, transparent 100%);
+  background-size: 600px 100%;
+  animation: shimmer 1.6s infinite linear;
+  pointer-events: none;
+  z-index: 1;
 }
 .card-art-skeleton--full {
   width: 100%;
   height: auto;
   aspect-ratio: 5/7;
   border-radius: 6px;
-  flex-direction: column;
-  gap: 6px;
-}
-.card-art-skeleton__label {
-  font-size: 11px;
-  color: var(--text-dim);
-  letter-spacing: 0.5px;
-  animation: none;
 }
 
 /* Error message shown below the card when image gen fails */
@@ -1146,18 +1149,43 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(90deg, var(--bg2) 25%, var(--bg3) 50%, var(--bg2) 75%);
-  background-size: 800px 100%;
-  animation: shimmer 1.4s infinite linear;
+  overflow: hidden;
+  background: var(--bg2);
   object-fit: unset;
 }
-.card-art-layer__label {
-  font-size: 10px;
-  color: var(--text-dim);
-  letter-spacing: 0.5px;
-  animation: none;
-  text-align: center;
-  padding: 4px;
+/* Shimmer sweep rendered on top of the loading GIF */
+.card-art-layer--loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.10) 50%, transparent 100%);
+  background-size: 600px 100%;
+  animation: shimmer 1.6s infinite linear;
+  pointer-events: none;
+  z-index: 1;
+}
+/* GIF sits below the shimmer overlay */
+.card-art-layer--loading .card-art-loading-gif {
+  position: relative;
+  z-index: 0;
+}
+
+/* ── Loading GIF sizing ──────────────────────────────────────────────────────
+ * Applied to every <img src="/assets/loading.gif"> used inside loading
+ * skeletons and layer-loading divs.  Keeps the GIF centred and proportional
+ * without breaking out of its container.
+ */
+.card-art-loading-gif {
+  max-width: 50%;
+  max-height: 50%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+/* Inside the skeleton the GIF must sit below the ::after shimmer sweep */
+.card-art-skeleton .card-art-loading-gif {
+  position: relative;
+  z-index: 0;
 }
 
 /* Small badges shown while individual layers are still loading */
@@ -3638,6 +3666,38 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .board-composite__layer--wheels     { z-index: 10; }
 .board-composite__layer--drivetrain { z-index: 20; }
 .board-composite__layer--deck       { z-index: 30; }
+
+/*
+ * Loading overlay shown over the skateboard composite while any provided
+ * layer image is still loading.  Sits above all layer PNGs (z-index 50).
+ * The ::after pseudo-element adds a shimmer sweep on top of the loading GIF.
+ */
+.board-composite__loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  overflow: hidden;
+  background: var(--bg2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.board-composite__loading-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.10) 50%, transparent 100%);
+  background-size: 600px 100%;
+  animation: shimmer 1.6s infinite linear;
+  pointer-events: none;
+  z-index: 1;
+}
+.board-composite__loading-overlay .card-art-loading-gif {
+  position: relative;
+  z-index: 0;
+  max-width: 40%;
+  max-height: 40%;
+}
 
 /* ===== Conveyor Carousel ===== */
 

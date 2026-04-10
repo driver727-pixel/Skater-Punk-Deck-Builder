@@ -270,6 +270,9 @@ export function CardForge() {
       openUpgradeModal();
       return;
     }
+    // Play "lock it in" sound effect
+    new Audio('/assets/sounds/lock-it-in.wav').play().catch(() => { /* autoplay blocked */ });
+
     // Cancel any in-flight generation
     abortRef.current?.abort();
     const controller = new AbortController();

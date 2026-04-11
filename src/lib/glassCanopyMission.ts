@@ -434,7 +434,7 @@ export function buildGlassCanopyMissionPreview(
     };
   }
 
-  const deckSize = cards.length || 1;
+  const deckSize = cards.length;
   const totalStats = cards.reduce(
     (acc, card) => {
       acc.speed += card.stats.speed;

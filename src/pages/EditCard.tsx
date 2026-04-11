@@ -18,6 +18,8 @@ const DISTRICTS: District[] = ["Airaway", "Nightshade", "Batteryville", "The Gri
 const GENDERS: Gender[] = ["Woman", "Man", "Non-binary"];
 const AGE_GROUPS: AgeGroup[] = ["Young Adult", "Adult", "Middle-aged", "Senior"];
 const BODY_TYPES: BodyType[] = ["Slim", "Athletic", "Average", "Stocky", "Heavy"];
+const DEFAULT_AGE_GROUP: AgeGroup = "Adult";
+const DEFAULT_BODY_TYPE: BodyType = "Athletic";
 const ACCENT_PRESETS = ["#00ff88", "#00ccff", "#ff4444", "#ffaa00", "#8b5cf6", "#ff66cc"];
 
 export function EditCard() {
@@ -46,8 +48,8 @@ export function EditCard() {
         district: original.prompts.district as District,
         accentColor: original.prompts.accentColor,
         gender: (original.prompts.gender as Gender) ?? "Non-binary",
-        ageGroup: (original.prompts.ageGroup as AgeGroup) ?? "Adult",
-        bodyType: (original.prompts.bodyType as BodyType) ?? "Athletic",
+        ageGroup: (original.prompts.ageGroup as AgeGroup) ?? DEFAULT_AGE_GROUP,
+        bodyType: (original.prompts.bodyType as BodyType) ?? DEFAULT_BODY_TYPE,
       });
       if (original.board) setBoardConfig(original.board);
       // Show the original card as starting preview

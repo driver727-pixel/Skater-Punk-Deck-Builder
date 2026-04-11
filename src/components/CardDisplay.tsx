@@ -43,6 +43,9 @@ interface CardDisplayProps {
   /** When true, the 3D-viewer and Print buttons (and their modals) are suppressed so a parent
    *  component can render them in a different location. */
   hideToolButtons?: boolean;
+  /** When true, hides the entire card-actions button row (Edit, 3D, Print, Share, Remove, Save)
+   *  so a parent component can render all action buttons outside the card. */
+  hideAllActions?: boolean;
   /** When provided, renders inline edit controls for name and bio/flavor text. */
   onUpdate?: (updates: { name?: string; flavorText?: string }) => void;
   /** Called when a composite image layer fails to load (e.g. expired fal.ai URL). */
@@ -189,6 +192,7 @@ export function CardDisplay({
   layerLoading,
   characterBlend,
   hideToolButtons = false,
+  hideAllActions = false,
   onUpdate,
   onLayerError,
 }: CardDisplayProps) {
@@ -496,6 +500,7 @@ export function CardDisplay({
           )}
         </div>
 
+        {!hideAllActions && (
         <div className="card-actions">
           {onSave && (
             <button
@@ -532,6 +537,7 @@ export function CardDisplay({
             </button>
           )}
         </div>
+        )}
       </div>
 
       {sharing && <ShareModal card={card} onClose={() => setSharing(false)} />}

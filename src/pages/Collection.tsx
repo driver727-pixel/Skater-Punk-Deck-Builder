@@ -8,7 +8,11 @@ import { getDisplayedArchetype } from "../lib/cardIdentity";
 import { CardThumbnail } from "../components/CardThumbnail";
 import { TradeModal } from "../components/TradeModal";
 import { ImportModal } from "../components/ImportModal";
+import { ShareModal } from "../components/ShareModal";
+import { CardViewer3D } from "../components/CardViewer3D";
+import { PrintModal } from "../components/PrintModal";
 import { exportJson } from "../lib/storage";
+import { downloadCardAsJpg } from "../services/cardDownload";
 import { useTier } from "../context/TierContext";
 import { TIERS } from "../lib/tiers";
 
@@ -22,6 +26,10 @@ export function Collection() {
   const [selected, setSelected] = useState<CardPayload | null>(null);
   const [tradeTarget, setTradeTarget] = useState<CardPayload | null>(null);
   const [showImport, setShowImport] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [viewing3D, setViewing3D] = useState(false);
+  const [printing, setPrinting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const existingIds = useMemo(() => new Set(cards.map((c) => c.id)), [cards]);
 
@@ -44,6 +52,21 @@ export function Collection() {
     };
     updateCard(updated);
     setSelected(updated);
+  };
+
+  const handleDownload = async () => {
+    if (!selected) return;
+    setDownloading(true);
+    try {
+      await downloadCardAsJpg(
+        selected.identity.name,
+        selected.backgroundImageUrl,
+        selected.characterImageUrl,
+        selected.frameImageUrl,
+      );
+    } finally {
+      setDownloading(false);
+    }
   };
 
   if (!tierData.canSave) {
@@ -126,29 +149,70 @@ export function Collection() {
               <button className="close-btn" onClick={() => setSelected(null)}>✕</button>
               <CardDisplay
                 card={selected}
-                showShare={true}
-                onEdit={tierData.canSave ? () => navigate(`/edit/${selected.id}`) : undefined}
                 onUpdate={tierData.canSave ? handleCardUpdate : undefined}
-                onRemove={tierData.canEditDecks ? () => {
-                  removeCardFromAllDecks(selected.id);
-                  removeCard(selected.id);
-                  setSelected(null);
-                } : undefined}
+                hideAllActions
               />
               <div style={{ marginTop: "8px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                {tierData.canSave && (
+                  <button
+                    className="btn-outline btn-sm"
+                    onClick={() => navigate(`/edit/${selected.id}`)}
+                  >
+                    ✎ Edit
+                  </button>
+                )}
+                <button
+                  className="btn-outline btn-3d btn-sm"
+                  onClick={() => setViewing3D(true)}
+                  title="View card in 3D"
+                >
+                  ◈ 3D
+                </button>
+                <button
+                  className="btn-outline btn-sm"
+                  onClick={() => setPrinting(true)}
+                  title="Print this card"
+                >
+                  🖨 Print
+                </button>
+                <button
+                  className="btn-outline btn-sm"
+                  onClick={() => setSharing(true)}
+                >
+                  ↗ Share
+                </button>
+                <button
+                  className="btn-outline btn-sm"
+                  onClick={handleDownload}
+                  disabled={downloading}
+                  title="Download card as image"
+                >
+                  {downloading ? "⏳ Downloading…" : "⬇ Download"}
+                </button>
                 <button
                   className="btn-outline btn-sm"
                   onClick={() => setTradeTarget(selected)}
                 >
                   🤝 Offer Trade
                 </button>
+                {tierData.canEditDecks ? (
+                  <button
+                    className="btn-danger btn-sm"
+                    onClick={() => {
+                      removeCardFromAllDecks(selected.id);
+                      removeCard(selected.id);
+                      setSelected(null);
+                    }}
+                  >
+                    Remove
+                  </button>
+                ) : (
+                  <div className="tier-lock-note">
+                    <span>🔒 Upgrade to Deck Master to remove cards</span>
+                    <button className="btn-outline btn-sm" onClick={openUpgradeModal}>Upgrade</button>
+                  </div>
+                )}
               </div>
-              {!tierData.canEditDecks && (
-                <div className="tier-lock-note">
-                  <span>🔒 Upgrade to Deck Master to remove cards</span>
-                  <button className="btn-outline btn-sm" onClick={openUpgradeModal}>Upgrade</button>
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -167,6 +231,30 @@ export function Collection() {
           existingIds={existingIds}
           onImport={handleImportCards}
           onClose={() => setShowImport(false)}
+        />
+      )}
+
+      {sharing && selected && (
+        <ShareModal card={selected} onClose={() => setSharing(false)} />
+      )}
+
+      {viewing3D && selected && (
+        <CardViewer3D
+          card={selected}
+          backgroundImageUrl={selected.backgroundImageUrl}
+          characterImageUrl={selected.characterImageUrl}
+          frameImageUrl={selected.frameImageUrl}
+          onClose={() => setViewing3D(false)}
+        />
+      )}
+
+      {printing && selected && (
+        <PrintModal
+          card={selected}
+          backgroundImageUrl={selected.backgroundImageUrl}
+          characterImageUrl={selected.characterImageUrl}
+          frameImageUrl={selected.frameImageUrl}
+          onClose={() => setPrinting(false)}
         />
       )}
     </div>

@@ -192,7 +192,7 @@ export function AssetGenerator() {
         const catItems = ALL_ITEMS.filter((i) => i.category === cat);
         return (
           <section key={cat} className="asset-gen-section">
-            <h2 className="asset-gen-section-title">{cat.endsWith("s") ? cat : `${cat}s`}</h2>
+            <h2 className="asset-gen-section-title">{cat === "Battery" ? "Batteries" : cat.endsWith("s") ? cat : `${cat}s`}</h2>
             <div className="asset-gen-grid">
               {catItems.map((item) => {
                 const state = states[item.seedKey];

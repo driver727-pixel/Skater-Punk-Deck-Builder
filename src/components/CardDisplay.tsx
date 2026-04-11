@@ -410,28 +410,30 @@ export function CardDisplay({
           )}
 
           {/* Bio field — shown directly under name/age */}
-          {onUpdate && editingBio ? (
-            <textarea
-              className="card-edit-textarea card-bio-textarea"
-              value={localBio}
-              onChange={(e) => setLocalBio(e.target.value)}
-              onBlur={commitBio}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") { setLocalBio(card.flavorText); setEditingBio(false); }
-              }}
-              autoFocus
-              rows={3}
-              maxLength={200}
-            />
-          ) : (
-            <p
-              className={`card-bio${onUpdate && !hasConlangLore ? " card-bio--editable" : ""}`}
-              onClick={() => { if (onUpdate && !hasConlangLore) setEditingBio(true); }}
-              title={onUpdate && !hasConlangLore ? "Click to edit bio" : undefined}
-            >
-              {localBio}
-              {onUpdate && !hasConlangLore && <span className="card-edit-hint">✎</span>}
-            </p>
+          {(localBio || onUpdate) && (
+            onUpdate && !hasConlangLore && editingBio ? (
+              <textarea
+                className="card-edit-textarea card-bio-textarea"
+                value={localBio}
+                onChange={(e) => setLocalBio(e.target.value)}
+                onBlur={commitBio}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") { setLocalBio(card.flavorText); setEditingBio(false); }
+                }}
+                autoFocus
+                rows={3}
+                maxLength={200}
+              />
+            ) : (
+              <p
+                className={`card-bio${onUpdate && !hasConlangLore ? " card-bio--editable" : ""}`}
+                onClick={() => { if (onUpdate && !hasConlangLore) setEditingBio(true); }}
+                title={onUpdate && !hasConlangLore ? "Click to edit bio" : undefined}
+              >
+                {localBio}
+                {onUpdate && !hasConlangLore && <span className="card-edit-hint">✎</span>}
+              </p>
+            )
           )}
 
           {card.conlang?.catchphrase && (
@@ -463,6 +465,10 @@ export function CardDisplay({
           {hasConlangLore && !showEnglish ? (
             <em className="stat-flavor-text conlang-text">
               &ldquo;{displayFlavorText}&rdquo;
+            </em>
+          ) : localBio && !onUpdate ? (
+            <em className="stat-flavor-text">
+              &ldquo;{localBio}&rdquo;
             </em>
           ) : null}
         </div>

@@ -1,4 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+async function openPrimaryNavIfNeeded(page: Page) {
+  const collectionLink = page.getByRole('link', { name: /collection/i });
+  if (await collectionLink.isVisible().catch(() => false)) return;
+
+  const menuButton = page.getByRole('button', { name: /open menu|close menu/i });
+  if (await menuButton.isVisible().catch(() => false)) {
+    await menuButton.click();
+  }
+}
 
 // ── Home / Card Forge ─────────────────────────────────────────────────────────
 
@@ -16,15 +26,17 @@ test.describe('Home page (Card Forge)', () => {
 
   test('shows the Card Forge nav link as active', async ({ page }) => {
     await page.goto('/');
+    await openPrimaryNavIfNeeded(page);
     const cardForgeLink = page.getByRole('link', { name: /card forge/i });
     await expect(cardForgeLink).toBeVisible();
     await expect(cardForgeLink).toHaveClass(/active/);
   });
 
-  test('shows nav links for Collection, Deck Builder, Trades', async ({ page }) => {
+  test('shows nav links for Collection, My Decks, Trades', async ({ page }) => {
     await page.goto('/');
+    await openPrimaryNavIfNeeded(page);
     await expect(page.getByRole('link', { name: /collection/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /deck builder/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /my decks/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /trades/i })).toBeVisible();
   });
 
@@ -33,7 +45,7 @@ test.describe('Home page (Card Forge)', () => {
   test('shows the site footer with copyright', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('.site-footer__copy')).toContainText('SP Digital LLC');
-    await expect(page.locator('.site-footer__link')).toBeVisible();
+    await expect(page.getByRole('link', { name: /^credits$/i })).toBeVisible();
   });
 });
 
@@ -126,7 +138,7 @@ test.describe('Credits page', () => {
 
   test('footer navigates to credits from home', async ({ page }) => {
     await page.goto('/');
-    await page.locator('.site-footer__link').click();
+    await page.getByRole('link', { name: /^credits$/i }).click();
     await expect(page).toHaveURL('/credits');
     await expect(page.locator('.credits-org')).toHaveText('SP Digital LLC');
   });
@@ -192,4 +204,3 @@ test.describe('SEO & meta tags', () => {
     expect(content).toContain('SP Digital LLC');
   });
 });
-

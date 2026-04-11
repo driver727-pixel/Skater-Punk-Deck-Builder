@@ -1806,6 +1806,36 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   padding: 0 4px;
   margin-left: 5px;
 }
+.trade-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.trade-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.trade-summary-label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.trade-summary-value {
+  font-size: 24px;
+  color: var(--text);
+}
+.trade-summary-note {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
 .trades-list { display: flex; flex-direction: column; gap: 12px; }
 .trade-item {
   display: flex;
@@ -1842,10 +1872,28 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   border-radius: 6px;
   padding: 4px;
   transition: border-color 0.15s;
+  background: transparent;
 }
 .trade-pick-thumb:hover { border-color: var(--accent); }
 .trade-pick-thumb--active { border-color: var(--accent2); }
+.trade-pick-thumb:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  border-color: rgba(255,255,255,0.08);
+}
 .trade-pick-name { font-size: 10px; color: var(--text-dim); max-width: 84px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trade-pick-status {
+  font-size: 9px;
+  color: var(--accent2);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.trade-helper-text {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
 .trade-selected-info { font-size: 12px; color: var(--text); padding: 8px 0; }
 
 /* ===== Community Market Tab ===== */

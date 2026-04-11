@@ -31,6 +31,8 @@ export function Trades() {
   const [showModal, setShowModal] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const pendingOutboxCount = outbox.filter((trade) => trade.status === "pending").length;
+  const resolvedOutboxCount = outbox.length - pendingOutboxCount;
 
   useEffect(() => {
     if (!uid) return;
@@ -167,6 +169,24 @@ export function Trades() {
 
       {error && <p className="forge-image-error" style={{ marginBottom: "16px" }}>{error}</p>}
 
+      <div className="trade-summary-grid">
+        <div className="trade-summary-card">
+          <span className="trade-summary-label">Incoming</span>
+          <strong className="trade-summary-value">{inbox.length}</strong>
+          <span className="trade-summary-note">Offers waiting on your response</span>
+        </div>
+        <div className="trade-summary-card">
+          <span className="trade-summary-label">Outgoing</span>
+          <strong className="trade-summary-value">{pendingOutboxCount}</strong>
+          <span className="trade-summary-note">Cards you currently have on hold</span>
+        </div>
+        <div className="trade-summary-card">
+          <span className="trade-summary-label">Resolved</span>
+          <strong className="trade-summary-value">{resolvedOutboxCount}</strong>
+          <span className="trade-summary-note">Accepted, declined, or cancelled offers</span>
+        </div>
+      </div>
+
       <div className="trades-tabs">
         <button
           className={`login-tab ${tab === "inbox" ? "login-tab--active" : ""}`}
@@ -233,7 +253,7 @@ export function Trades() {
           {outbox.length === 0 ? (
             <div className="empty-state">
               <span className="empty-icon">📤</span>
-              <p>You haven't sent any trade offers yet.</p>
+              <p>You haven't sent any card offers yet.</p>
             </div>
           ) : (
             <div className="trades-list">
@@ -280,7 +300,7 @@ export function Trades() {
           {market.length === 0 ? (
             <div className="empty-state">
               <span className="empty-icon">🏪</span>
-              <p>No community listings right now. Be the first to offer a trade!</p>
+              <p>No community listings right now. Be the first to send a card offer.</p>
             </div>
           ) : (
             <div className="market-grid">

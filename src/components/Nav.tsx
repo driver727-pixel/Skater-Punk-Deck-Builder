@@ -146,6 +146,12 @@ export function Nav() {
                     <div className="user-dropdown-email">{user.email}</div>
                     <button
                       className="user-dropdown-item"
+                      onClick={() => { setMenuOpen(false); navigate("/account"); }}
+                    >
+                      ⚙ Account Settings
+                    </button>
+                    <button
+                      className="user-dropdown-item"
                       onClick={() => { setMenuOpen(false); navigate("/trades"); }}
                     >
                       🤝 Trades{pendingTrades > 0 && ` (${pendingTrades})`}

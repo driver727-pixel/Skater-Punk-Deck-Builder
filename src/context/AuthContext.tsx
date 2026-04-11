@@ -12,6 +12,11 @@ import {
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   sendPasswordResetEmail,
+  updatePassword,
+  updateProfile,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  deleteUser,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
@@ -36,6 +41,9 @@ interface AuthContextValue {
   signInWithGoogle: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   signInWithPhone: (phone: string, appVerifier: ApplicationVerifier) => Promise<ConfirmationResult>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  changeDisplayName: (newName: string) => Promise<void>;
+  deleteAccount: (currentPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -138,8 +146,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const changePassword = useCallback(
+    async (currentPassword: string, newPassword: string) => {
+      if (!auth || !auth.currentUser) throw createAuthUnavailableError();
+      const u = auth.currentUser;
+      if (!u.email) throw new Error("Password change is only available for email/password accounts.");
+      const credential = EmailAuthProvider.credential(u.email, currentPassword);
+      await reauthenticateWithCredential(u, credential);
+      await updatePassword(u, newPassword);
+    },
+    []
+  );
+
+  const changeDisplayName = useCallback(
+    async (newName: string) => {
+      if (!auth || !auth.currentUser) throw createAuthUnavailableError();
+      await updateProfile(auth.currentUser, { displayName: newName });
+      await upsertUserProfile(auth.currentUser);
+      // Trigger a re-render by updating the user state
+      setUser({ ...auth.currentUser } as User);
+    },
+    []
+  );
+
+  const deleteAccount = useCallback(
+    async (currentPassword: string) => {
+      if (!auth || !auth.currentUser) throw createAuthUnavailableError();
+      const u = auth.currentUser;
+      if (u.email) {
+        const credential = EmailAuthProvider.credential(u.email, currentPassword);
+        await reauthenticateWithCredential(u, credential);
+      }
+      await deleteUser(u);
+    },
+    []
+  );
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, signInWithGoogle, sendPasswordReset, signInWithPhone }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, signInWithGoogle, sendPasswordReset, signInWithPhone, changePassword, changeDisplayName, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );

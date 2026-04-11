@@ -1525,6 +1525,73 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 .password-toggle:hover { color: var(--text); }
 
+/* ===== Account Settings Page ===== */
+.account-settings {
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.account-section {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+}
+.account-section--danger {
+  border-color: var(--danger);
+  background: rgba(255, 68, 68, 0.04);
+}
+.account-section-title {
+  font-size: 15px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  font-weight: bold;
+}
+.account-section-title--danger {
+  color: var(--danger);
+}
+.account-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.account-info-row:last-of-type {
+  margin-bottom: 16px;
+}
+.account-info-label {
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 10px;
+  font-weight: bold;
+}
+.account-info-value {
+  color: var(--text);
+  word-break: break-all;
+}
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.account-danger-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+.account-danger-actions .btn-danger {
+  flex: 1;
+}
+.account-danger-actions .btn-outline {
+  flex: 0 0 auto;
+}
+
 /* ===== Trades Page ===== */
 .trades-tabs {
   display: flex;

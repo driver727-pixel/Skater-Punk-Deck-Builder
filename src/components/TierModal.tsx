@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { TIERS, saveEmail, type TierLevel } from "../lib/tiers";
 import { useTier } from "../context/TierContext";
+import { resolveApiUrl } from "../lib/apiUrls";
 
 interface TierModalProps {
   onClose: () => void;
 }
 
-const CHECKOUT_API_URL =
-  import.meta.env.VITE_CHECKOUT_API_URL ?? "/api/create-checkout-session";
+const CHECKOUT_API_URL = resolveApiUrl(
+  import.meta.env.VITE_CHECKOUT_API_URL as string | undefined,
+  "/api/create-checkout-session",
+);
 
 export function TierModal({ onClose }: TierModalProps) {
   const { tier, email, setTier } = useTier();

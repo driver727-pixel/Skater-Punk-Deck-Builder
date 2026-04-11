@@ -133,13 +133,6 @@ interface MissionState {
   success: boolean;
 }
 
-const MISSION_STAT_LABELS: Record<MissionCheckStat, string> = {
-  speed: "SPD",
-  acceleration: "ACC",
-  stealth: "STL",
-  batteryRemaining: "RNG",
-};
-
 function roundMissionStat(value: number): number {
   return Number(value.toFixed(1));
 }
@@ -149,9 +142,9 @@ function clampMissionStat(value: number): number {
 }
 
 function syncDerivedResources(stats: MissionPlayerStats): void {
-  stats.range = roundMissionStat(stats.batteryRemaining);
   stats.health = clampMissionStat(stats.health);
   stats.batteryRemaining = clampMissionStat(stats.batteryRemaining);
+  stats.range = roundMissionStat(stats.batteryRemaining);
 }
 
 function resolveBoardLoadout(playerDeck: MissionPlayerDeck): Partial<BoardLoadout> {

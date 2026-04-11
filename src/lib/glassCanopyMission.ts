@@ -300,7 +300,7 @@ export const LobbyDrone: MissionHazardStep = {
   successText:
     "You slipped past the Lobby Patrol Drone on a whisper-quiet line, leaving the penthouse lobby cold and blind.",
   failureText: ({ playerStats, wheelType }) =>
-    `The Lobby Patrol Drone tagged your approach${wheelType ? ` with ${wheelType} wheels under you` : ""}. Heat rises to ${playerStats.heatLevel}, making Phase 3 and 4 checks ${playerStats.heatLevel} points harder.`,
+    `The Lobby Patrol Drone tagged your approach${wheelType ? ` with ${wheelType} wheels under you` : ""}. Heat spikes by +2 to ${playerStats.heatLevel}, making Phase 3 and 4 checks ${playerStats.heatLevel} points harder.`,
   onFailure: [{ type: "adjust", stat: "heatLevel", amount: 2 }],
 };
 

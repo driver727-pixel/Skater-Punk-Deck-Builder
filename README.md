@@ -52,6 +52,7 @@ cp .env.example .env
 | `VITE_FIREBASE_*` | `.env` (client) | Firebase project config (public) |
 | `VITE_IMAGE_API_URL` | `.env` (client) | URL of the `/api/generate-image` proxy endpoint |
 | `VITE_CHECKOUT_API_URL` | `.env` (client) | URL of the `/api/create-checkout-session` endpoint |
+| `VITE_ADMIN_API_URL` | `.env` (client) | URL of the `/api/admin/create-user` endpoint |
 | `FAL_KEY` | Server env only | Fal.ai secret key — **never in `.env`** |
 | `STRIPE_SECRET_KEY` | Server env only | Stripe secret key — **never in `.env`** |
 

@@ -14,6 +14,7 @@ import {
 import { db, auth } from "../lib/firebase";
 import { TIERS, type TierLevel } from "../lib/tiers";
 import { isAdminEmail } from "../lib/adminUtils";
+import { resolveApiUrl } from "../lib/apiUrls";
 
 interface UserProfile {
   uid: string;
@@ -26,9 +27,10 @@ interface UserProfile {
 
 const PAGE_SIZE = 20;
 
-const ADMIN_API_URL =
-  (import.meta.env.VITE_ADMIN_API_URL as string | undefined)?.trim() ??
-  "/api/admin/create-user";
+const ADMIN_API_URL = resolveApiUrl(
+  import.meta.env.VITE_ADMIN_API_URL as string | undefined,
+  "/api/admin/create-user",
+);
 
 const TIER_LABELS: Record<string, string> = {
   free: "Free Rider",

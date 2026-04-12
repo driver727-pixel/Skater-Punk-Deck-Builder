@@ -6237,8 +6237,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 
 /* ===== Enhanced Neon Glow on Interactive Focus States ===== */
-.pill:hover,
-.nav-link:hover {
+.pill:hover {
   filter: brightness(1.08);
 }
 
@@ -6292,6 +6291,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   .page-sub {
     animation: none !important;
     -webkit-text-fill-color: var(--accent2);
+    color: var(--accent2);
     background: none;
   }
 }

@@ -1,11 +1,3 @@
-import { useState } from "react";
-import { PUNCH_SKATER_RARITY, type CardPayload } from "../lib/types";
-import { CardArt } from "./CardArt";
-import { StatBar } from "./StatBar";
-import { getDisplayedArchetype, getDisplayedCrew } from "../lib/cardIdentity";
-import { BoardComposite } from "./BoardComposite";
-import { getBoardAssetUrls } from "../lib/boardBuilder";
-import { CARD_STAT_LABELS } from "../lib/statLabels";
 
 interface PrintModalProps {
   card: CardPayload;

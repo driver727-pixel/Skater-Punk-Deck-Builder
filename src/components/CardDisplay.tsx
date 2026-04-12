@@ -524,7 +524,7 @@ export function CardDisplay({
           <StatBar label={CARD_STAT_LABELS.rep.label}     value={card.stats.rep}     color={accent} tooltip={CARD_STAT_LABELS.rep.tooltip} />
           <div className="card-worth">
             <span className="card-worth-label">Worth</span>
-            <span className="card-worth-value" style={{ color: accent }}>{computeCardWorth(card)} Ozzies</span>
+            <span className="card-worth-value" style={{ color: accent }}>${computeCardWorth(card).toFixed(2)} Ozzies</span>
           </div>
           <div className="stat-active">
             <span className="stat-label" title="Active ability">Active</span>

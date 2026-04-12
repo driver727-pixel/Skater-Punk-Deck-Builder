@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { DeckPayload, CardPayload } from "../lib/types";
 import { useDecks, DECK_CARD_LIMIT } from "../hooks/useDecks";
 import { useCollection } from "../hooks/useCollection";
@@ -40,6 +40,13 @@ export function DeckBuilder() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [decks]);
+
+  const deckTotalPowerById = useMemo(() => Object.fromEntries(
+    decks.map((deck) => [
+      deck.id,
+      Object.values(getDeckStatTotals(deck.cards)).reduce((sum, value) => sum + value, 0),
+    ]),
+  ), [decks]);
 
   // Free-tier users: see an empty gallery page with upgrade prompt
   if (!tierData.canSave) {
@@ -108,7 +115,6 @@ export function DeckBuilder() {
   );
 
   const slotsRemaining = activeDeck ? DECK_CARD_LIMIT - activeDeck.cards.length : 0;
-  const getDeckTotalPower = (deck: DeckPayload) => Object.values(getDeckStatTotals(deck.cards)).reduce((sum, value) => sum + value, 0);
 
   return (
     <div className="page">
@@ -154,7 +160,7 @@ export function DeckBuilder() {
                   ) : (
                     <div className="deck-item-info">
                       <span className="deck-name">{deck.name}</span>
-                      <span className="deck-power">⚡ {getDeckTotalPower(deck)} Total Power</span>
+                      <span className="deck-power">⚡ {deckTotalPowerById[deck.id] ?? 0} Power</span>
                     </div>
                   )}
                   <span className="deck-count">{deck.cards.length}/{DECK_CARD_LIMIT}</span>

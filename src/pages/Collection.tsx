@@ -15,6 +15,7 @@ import { exportJson } from "../lib/storage";
 import { downloadCardAsJpg } from "../services/cardDownload";
 import { useTier } from "../context/TierContext";
 import { TIERS } from "../lib/tiers";
+import { sfxClick, sfxRemove, sfxSuccess } from "../lib/sfx";
 
 type SortOption = "name-asc" | "name-desc" | "newest" | "oldest" | "rarity";
 
@@ -140,6 +141,7 @@ export function Collection() {
 
   const handleImportCards = (incoming: CardPayload[]) => {
     for (const card of incoming) addCard(card);
+    if (incoming.length > 0) sfxSuccess();
   };
 
   const handleCardUpdate = (updates: { name?: string; age?: string; flavorText?: string }) => {
@@ -334,7 +336,11 @@ export function Collection() {
               <div
                 key={card.id}
                 className={`card-thumb ${selected?.id === card.id ? "card-thumb--active" : ""}`}
-                onClick={() => setSelected(selected?.id === card.id ? null : card)}
+                onClick={() => {
+                  const next = selected?.id === card.id ? null : card;
+                  if (next) sfxClick();
+                  setSelected(next);
+                }}
               >
                 <CardThumbnail card={card} width={160} height={224} />
                 <div className="card-thumb-info">
@@ -400,6 +406,7 @@ export function Collection() {
                   <button
                     className="btn-danger btn-sm"
                     onClick={() => {
+                      sfxRemove();
                       removeCardFromAllDecks(selected.id);
                       removeCard(selected.id);
                       setSelected(null);

@@ -11,67 +11,7 @@ import {
   formatStatLabel,
 } from "../lib/battle";
 import { CardThumbnail } from "../components/CardThumbnail";
-
-// ── Tiny Web Audio SFX helpers ──────────────────────────────────────────────
-
-let _audioCtx: AudioContext | null = null;
-function getAudioCtx(): AudioContext {
-  if (!_audioCtx) _audioCtx = new AudioContext();
-  return _audioCtx;
-}
-
-function playSfx(type: "clash" | "win" | "lose" | "ready") {
-  try {
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    switch (type) {
-      case "ready":
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(660, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.25, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.3);
-        break;
-      case "clash":
-        osc.type = "sawtooth";
-        osc.frequency.setValueAtTime(200, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.5);
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.6);
-        break;
-      case "win":
-        osc.type = "square";
-        osc.frequency.setValueAtTime(523, ctx.currentTime);
-        osc.frequency.setValueAtTime(659, ctx.currentTime + 0.12);
-        osc.frequency.setValueAtTime(784, ctx.currentTime + 0.24);
-        osc.frequency.setValueAtTime(1047, ctx.currentTime + 0.36);
-        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.6);
-        break;
-      case "lose":
-        osc.type = "triangle";
-        osc.frequency.setValueAtTime(400, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.4);
-        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.5);
-        break;
-    }
-  } catch {
-    /* Audio unavailable – silently ignore */
-  }
-}
+import { sfxBattleClash, sfxBattleWin, sfxBattleLose, sfxBattleReady } from "../lib/sfx";
 
 // ── Confetti burst (simple CSS-based) ───────────────────────────────────────
 
@@ -104,7 +44,7 @@ function BattleAnimation({ challengerName, defenderName, onComplete }: BattleAni
   useEffect(() => {
     const t1 = setTimeout(() => {
       setPhase("clash");
-      playSfx("clash");
+      sfxBattleClash();
     }, 900);
     const t2 = setTimeout(() => {
       setPhase("done");
@@ -146,10 +86,10 @@ function OutcomePopup({ result, myUid, onDismiss }: OutcomePopupProps) {
 
   useEffect(() => {
     if (isWinner) {
-      playSfx("win");
+      sfxBattleWin();
       if (popupRef.current) spawnConfetti(popupRef.current);
     } else if (!isDraw) {
-      playSfx("lose");
+      sfxBattleLose();
     }
   }, [isWinner, isDraw]);
 
@@ -322,7 +262,7 @@ export function BattleArena() {
 
   const handleReady = async () => {
     if (!selectedDeck) return;
-    playSfx("ready");
+    sfxBattleReady();
     await readyDeck(selectedDeck);
   };
 

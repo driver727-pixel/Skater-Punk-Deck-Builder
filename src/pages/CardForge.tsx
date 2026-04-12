@@ -21,6 +21,7 @@ import type { BoardConfig } from "../lib/boardBuilder";
 import { calculateBoardStats } from "../lib/boardBuilder";
 import { ACTIVE_STYLES } from "../lib/styles";
 import { GeoAtlas } from "../components/GeoAtlas";
+import { sfxForge, sfxSuccess, sfxError } from "../lib/sfx";
 
 const RARITIES: Rarity[] = ["Punch Skater", "Apprentice", "Master", "Rare", "Legendary"];
 const STYLES: Style[] = ACTIVE_STYLES;
@@ -288,7 +289,7 @@ export function CardForge() {
       return;
     }
     // Play "lock it in" sound effect
-    new Audio('/assets/sounds/lock-it-in.wav').play().catch(() => { /* autoplay blocked */ });
+    sfxForge();
 
     // Cancel any in-flight generation
     abortRef.current?.abort();
@@ -478,10 +479,12 @@ export function CardForge() {
 
     try {
       await addCard(cardToSave);
+      sfxSuccess();
       setIsFirstCard(firstCard);
       setSavedCard(cardToSave);
     } catch (err) {
       console.error("Failed to save card:", err);
+      sfxError();
       setSaveError("Failed to save card. Please try again.");
     } finally {
       setSaving(false);

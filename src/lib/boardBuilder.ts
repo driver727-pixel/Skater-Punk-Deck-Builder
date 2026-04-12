@@ -5,7 +5,7 @@
  * The board acts as a "Weapon / Vehicle" loadout attached to the character.
  *
  * Categories:
- *   1. Board Type  — Street · AT · Mountain · Surf · Slider
+ *   1. Board Type  — Street · AT · Mountain · Surf
  *   2. Drivetrain  — Belt · Hub · Gear · AWD
  *   3. Wheels      — Urethane · Pneumatic · Rubber
  *   4. Battery     — SlimStealth · DoubleStack · TopPeli
@@ -73,14 +73,8 @@ export const BOARD_TYPE_OPTIONS: BoardOption<BoardType>[] = [
     description: "Spring-loaded trucks simulate the pump of a wave. Smooth roads become infinite barrels.",
     statBonuses: { stealth: 2, rep: 1 },
   },
-  {
-    value: "Slider",
-    label: "Slider",
-    icon: "🎯",
-    tagline: "Precision over power",
-    description: "Short stiff deck optimized for technical footwork, gaps, and micro-adjustments under pressure.",
-    statBonuses: { tech: 2, stealth: 1 },
-  },
+  // NOTE: Slider is not yet publicly available — omitted from this array intentionally.
+  // Add it back here when ready to reveal.
 ];
 
 // ── Drivetrain options ─────────────────────────────────────────────────────────

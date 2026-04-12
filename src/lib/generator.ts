@@ -128,7 +128,8 @@ export function normalizeLegacyCardStat(value: number): number {
     return clampCardStat(value);
   }
 
-  // Linearly interpolate the old 1–200 card scale onto the live 1–10 scale.
+  // Linearly interpolate the old [1, 200] card scale onto the live [1, 10]
+  // scale so legacy saves keep their relative strength after the rebalance.
   const scaled = MIN_SINGLE_STAT
     + ((value - MIN_SINGLE_STAT) * (MAX_SINGLE_STAT - MIN_SINGLE_STAT))
       / (LEGACY_MAX_SINGLE_STAT - MIN_SINGLE_STAT);

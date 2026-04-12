@@ -47,9 +47,8 @@ export function normalizeCardPayload(card: CardPayload): CardPayload {
   const style = normalizeStyle(rawStyle);
   const normalizedStats = normalizeCardStats(card.stats);
   const hasStyleChange = style !== rawStyle;
-  const hasStatChange = Object.entries(normalizedStats).some(
-    ([key, value]) => value !== card.stats[key as keyof typeof card.stats],
-  );
+  const hasStatChange = (Object.keys(card.stats) as Array<keyof typeof card.stats>)
+    .some((key) => normalizedStats[key] !== card.stats[key]);
 
   if (!hasStyleChange && !hasStatChange) {
     return card;

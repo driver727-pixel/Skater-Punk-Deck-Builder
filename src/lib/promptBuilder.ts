@@ -105,19 +105,27 @@ export function buildCharacterPrompt(prompts: CardPrompts, graffitiWords?: strin
     /* Non-binary */             "a non-binary person";
 
   const ageDesc =
-    prompts.ageGroup === "Young Adult" ? "young adult (20s)" :
-    prompts.ageGroup === "Adult"       ? "adult (30s)" :
-    prompts.ageGroup === "Middle-aged" ? "middle-aged (40s-50s)" :
-    /* Senior */                         "senior (60s+)";
+    prompts.ageGroup === "Young Adult" ? "young adult (20s), smooth skin, youthful energy" :
+    prompts.ageGroup === "Adult"       ? "adult (30s), slight lines around eyes" :
+    prompts.ageGroup === "Middle-aged" ? "middle-aged (late 40s-50s), prominent crow's feet, forehead wrinkles, visible laugh lines, slightly sagging jawline, greying at the temples" :
+    /* Senior */                         "elderly senior (late 60s-70s+), deep wrinkles, age spots, thinning eyebrows, weathered leathery skin, sagging jowls, visibly old and aged";
 
   const bodyDesc =
-    prompts.bodyType === "Slim"     ? "slim build" :
-    prompts.bodyType === "Athletic" ? "athletic build" :
-    prompts.bodyType === "Average"  ? "average build" :
-    prompts.bodyType === "Stocky"   ? "stocky build" :
-    /* Heavy */                       "heavy build";
+    prompts.bodyType === "Slim"            ? "slim narrow-shouldered build, thin arms and legs" :
+    prompts.bodyType === "Athletic"        ? "athletic build" :
+    prompts.bodyType === "Average"         ? "average unremarkable build, soft midsection, not muscular" :
+    prompts.bodyType === "Stocky"          ? "stocky short-limbed build, thick neck, wide torso" :
+    prompts.bodyType === "Heavy"           ? "heavy overweight build, large belly, double chin, thick limbs" :
+    prompts.bodyType === "Wiry"            ? "wiry sinewy build, lean muscles, prominent veins, no bulk" :
+    prompts.bodyType === "Pear-shaped"     ? "pear-shaped build, narrow shoulders, wide hips, heavier lower body" :
+    prompts.bodyType === "Lanky"           ? "lanky tall and gangly build, long limbs, awkward proportions" :
+    /* Barrel-chested */                     "barrel-chested build, deep round ribcage, thick waist, powerful but not lean";
 
-  const characterDesc = `Character is ${genderDesc}, ${ageDesc}, with ${bodyDesc}. `;
+  const hairDesc = buildHairDescription(prompts.hairLength, prompts.hairColor);
+  const skinDesc = buildSkinDescription(prompts.skinTone);
+  const faceDesc = buildFaceDescription(prompts.faceCharacter);
+
+  const characterDesc = `Character is ${genderDesc}, ${ageDesc}, with ${bodyDesc}. ${hairDesc}${skinDesc}${faceDesc}`;
 
   return (
     `Full-body portrait of a ${prompts.archetype} skater courier, ` +

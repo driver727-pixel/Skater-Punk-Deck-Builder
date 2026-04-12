@@ -46,9 +46,14 @@ function playFile(path: string) {
 
 // ── Public SFX catalogue ────────────────────────────────────────────────────
 
-/** Card Forge – "lock it in" stamp sound (wav file). */
-export function sfxForge() {
+/** Board Builder – "Lock It In" button stamp sound (wav file). */
+export function sfxLockItIn() {
   playFile("/assets/sounds/lock-it-in.wav");
+}
+
+/** Card Forge – forge button success ping (wav file). */
+export function sfxSuccessPing() {
+  playFile("/assets/sounds/successping.wav");
 }
 
 /** Soft click / pop – card selection, tab switches, small UI interactions. */

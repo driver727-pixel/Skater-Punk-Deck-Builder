@@ -147,8 +147,6 @@ export function Mission() {
           </button>
         </div>
 
-        <p className="mission-briefing">{activeMission.tagline}</p>
-
         <div className="mission-checks">
           {activeMission.checkTags.map((tag) => (
             <span key={tag} className="tag">

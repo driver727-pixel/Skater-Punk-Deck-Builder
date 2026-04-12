@@ -5449,11 +5449,6 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   font-size: 12px;
   line-height: 1.5;
 }
-.mission-briefing {
-  margin: 0 0 12px;
-  color: var(--text-dim);
-  line-height: 1.6;
-}
 .mission-checks {
   display: flex;
   flex-wrap: wrap;

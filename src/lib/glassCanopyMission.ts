@@ -770,10 +770,6 @@ export function runDistrictMission(missionId: string, playerDeck: MissionPlayerD
   return runMission(getMissionDefinition(missionId), playerDeck);
 }
 
-export function runGlassCanopyMission(playerDeck: MissionPlayerDeck): MissionResult {
-  return runDistrictMission(GLASS_CANOPY_MISSION.id, playerDeck);
-}
-
 function roundPreviewStat(value: number): number {
   return Number(value.toFixed(1));
 }
@@ -843,11 +839,4 @@ export function buildMissionPreview(
     runnerLoadout,
     stats: calculateStartingStats(playerDeck),
   };
-}
-
-export function buildGlassCanopyMissionPreview(
-  cards: CardPayload[],
-  runnerCardId?: string,
-): GlassCanopyMissionPreview {
-  return buildMissionPreview(cards, runnerCardId);
 }

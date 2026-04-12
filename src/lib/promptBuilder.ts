@@ -139,7 +139,7 @@ function buildBodyDescription(bodyType: string): string {
     bodyType === "Heavy"                ? "heavy overweight build, large belly, double chin, thick limbs" :
     bodyType === "Wiry"                 ? "wiry sinewy build, lean muscles, prominent veins, no bulk" :
     bodyType === "Pear-shaped"          ? "pear-shaped build, narrow shoulders, wide hips, heavier lower body" :
-    bodyType === "Lanky"                ? "lanky tall and gangly build, long limbs, adult proportions" :
+    bodyType === "Lanky"                ? "lanky tall and gangly build, long limbs" :
     /* Barrel-chested */                  "barrel-chested build, deep round ribcage, thick waist, powerful but not lean";
 }
 

@@ -1,6 +1,6 @@
 # Districts
 
-The City is divided into five major districts, each with its own culture, terrain,
+The City is divided into eight major districts, each with its own culture, terrain,
 corporate overlords, and courier ecosystem. A courier's home district shapes their
 street reputation and the kinds of runs they're known for.
 

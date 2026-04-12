@@ -235,6 +235,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   --soda-bezel: rgba(8, 8, 10, 0.96);
   --soda-bezel-highlight: rgba(210, 214, 224, 0.24);
   --soda-corner-cut: 8px;
+  --soda-flicker-duration: 12s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -294,7 +295,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   letter-spacing: 2px;
   font-weight: bold;
   text-transform: uppercase;
-  animation: soda-button-flicker 12s infinite ease-in-out;
+  animation: soda-button-flicker var(--soda-flicker-duration) infinite ease-in-out;
 }
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
@@ -337,7 +338,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   font-weight: 900;
   letter-spacing: 4px;
   --soda-corner-cut: 14px;
-  animation-duration: 4.2s;
+  --soda-flicker-duration: 4.2s;
 }
 .btn-forge:hover:not(:disabled) {
   transform: translateY(-1px);
@@ -398,9 +399,10 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   --soda-glow: rgba(255, 109, 89, 0.2);
   --soda-dead-zone: rgba(30, 8, 11, 0.52);
   --soda-corner-cut: 10px;
+  --soda-flicker-duration: 14s;
   padding: 6px 14px;
   font-size: 12px;
-  animation: soda-button-flicker 14s infinite ease-in-out;
+  animation: soda-button-flicker var(--soda-flicker-duration) infinite ease-in-out;
 }
 .btn-danger:hover:not(:disabled) { transform: translateY(-1px); }
 .btn-danger:active:not(:disabled) { transform: translateY(4px); }
@@ -1555,6 +1557,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   50%       { opacity: 0.45; }
 }
 
+/* Two brief low-amplitude brightness dips mimic aging fluorescent backlights without harsh flashing. */
 @keyframes soda-button-flicker {
   0%, 9.5%, 100% { opacity: 1; }
   10.5% { opacity: 0.992; }

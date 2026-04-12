@@ -17,6 +17,7 @@ import { CardArt } from "../components/CardArt";
 import { getDisplayedArchetype } from "../lib/cardIdentity";
 import { TradeModal } from "../components/TradeModal";
 import { useCollection } from "../hooks/useCollection";
+import { sfxSuccess, sfxRemove, sfxClick } from "../lib/sfx";
 
 type Tab = "inbox" | "outbox" | "market";
 
@@ -111,6 +112,7 @@ export function Trades() {
           updatedAt: new Date().toISOString(),
         });
       });
+      sfxSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to accept trade.");
     } finally {
@@ -127,6 +129,7 @@ export function Trades() {
         status: "declined",
         updatedAt: new Date().toISOString(),
       });
+      sfxRemove();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to decline trade.");
     } finally {
@@ -192,19 +195,19 @@ export function Trades() {
       <div className="trades-tabs">
         <button
           className={`login-tab ${tab === "inbox" ? "login-tab--active" : ""}`}
-          onClick={() => setTab("inbox")}
+          onClick={() => { sfxClick(); setTab("inbox"); }}
         >
           Inbox {inbox.length > 0 && <span className="trade-badge">{inbox.length}</span>}
         </button>
         <button
           className={`login-tab ${tab === "outbox" ? "login-tab--active" : ""}`}
-          onClick={() => setTab("outbox")}
+          onClick={() => { sfxClick(); setTab("outbox"); }}
         >
           Sent
         </button>
         <button
           className={`login-tab ${tab === "market" ? "login-tab--active" : ""}`}
-          onClick={() => setTab("market")}
+          onClick={() => { sfxClick(); setTab("market"); }}
         >
           🌐 Market {market.length > 0 && <span className="trade-badge trade-badge--market">{market.length}</span>}
         </button>

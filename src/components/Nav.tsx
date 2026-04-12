@@ -13,6 +13,7 @@ import { db } from "../lib/firebase";
 import { TierModal } from "./TierModal";
 import { isAdminEmail } from "../lib/adminUtils";
 import { useFactionDiscovery } from "../hooks/useFactionDiscovery";
+import { sfxNavigate } from "../lib/sfx";
 
 export function Nav() {
   const { tier, logout: tierLogout, showUpgradeModal, openUpgradeModal, closeUpgradeModal } = useTier();
@@ -73,50 +74,53 @@ export function Nav() {
     navigate("/");
   };
 
-  const renderNavLinks = (onClick?: () => void) => (
+  const renderNavLinks = (onClick?: () => void) => {
+    const handleNav = () => { sfxNavigate(); onClick?.(); };
+    return (
     <>
-      <NavLink to="/" end className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={onClick}>
+      <NavLink to="/" end className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={handleNav}>
         Card Forge
       </NavLink>
-      <NavLink to="/collection" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={onClick}>
+      <NavLink to="/collection" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={handleNav}>
         Collection
       </NavLink>
-      <NavLink to="/decks" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={onClick}>
+      <NavLink to="/decks" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={handleNav}>
         My Decks
       </NavLink>
       {user && (
-        <NavLink to="/mission" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={onClick}>
+        <NavLink to="/mission" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={handleNav}>
           Mission
         </NavLink>
       )}
-      <NavLink to="/trades" className={({ isActive }) => `nav-link${isActive ? " active" : ""}${pendingTrades > 0 ? " nav-link--badge" : ""}`} onClick={onClick}>
+      <NavLink to="/trades" className={({ isActive }) => `nav-link${isActive ? " active" : ""}${pendingTrades > 0 ? " nav-link--badge" : ""}`} onClick={handleNav}>
         Trades{pendingTrades > 0 && <span className="nav-badge">{pendingTrades}</span>}
       </NavLink>
       {user && (
-        <NavLink to="/arena" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={onClick}>
+        <NavLink to="/arena" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={handleNav}>
           Arena
         </NavLink>
       )}
-      <NavLink to="/lore" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={onClick}>
+      <NavLink to="/lore" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={handleNav}>
         Codex
       </NavLink>
       {discoveredFactions.length > 0 && (
-        <NavLink to="/factions" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={onClick}>
+        <NavLink to="/factions" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={handleNav}>
           Factions
         </NavLink>
       )}
       {isAdmin && (
         <>
-          <NavLink to="/admin" className={({ isActive }) => isActive ? "nav-link nav-link--admin active" : "nav-link nav-link--admin"} onClick={onClick}>
+          <NavLink to="/admin" className={({ isActive }) => isActive ? "nav-link nav-link--admin active" : "nav-link nav-link--admin"} onClick={handleNav}>
             ⚙ Admin
           </NavLink>
-          <NavLink to="/dev/asset-generator" className={({ isActive }) => isActive ? "nav-link nav-link--admin active" : "nav-link nav-link--admin"} onClick={onClick}>
+          <NavLink to="/dev/asset-generator" className={({ isActive }) => isActive ? "nav-link nav-link--admin active" : "nav-link nav-link--admin"} onClick={handleNav}>
             🎨 Assets
           </NavLink>
         </>
       )}
     </>
-  );
+    );
+  };
 
   return (
     <>

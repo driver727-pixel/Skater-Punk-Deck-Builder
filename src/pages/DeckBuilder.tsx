@@ -10,6 +10,7 @@ import { computeDeckTotalPower } from "../lib/battle";
 import { exportJson } from "../lib/storage";
 import { useTier } from "../context/TierContext";
 import { TIERS } from "../lib/tiers";
+import { sfxSuccess, sfxRemove, sfxClick } from "../lib/sfx";
 
 export function DeckBuilder() {
   const { decks, createDeck, deleteDeck, addCardToDeck, removeCardFromDeck, renameDeck, moveCardInDeck } = useDecks();
@@ -68,6 +69,7 @@ export function DeckBuilder() {
   const handleCreate = () => {
     const name = newDeckName.trim() || `Deck ${decks.length + 1}`;
     const deck = createDeck(name);
+    sfxSuccess();
     setActiveDeck(deck);
     setNewDeckName("");
   };
@@ -79,11 +81,13 @@ export function DeckBuilder() {
   const handleAddCard = (card: CardPayload) => {
     if (!activeDeck) return;
     if (activeDeck.cards.length >= DECK_CARD_LIMIT) return;
+    sfxClick();
     addCardToDeck(activeDeck.id, card);
   };
 
   const handleRemoveCard = (cardId: string) => {
     if (!activeDeck) return;
+    sfxRemove();
     removeCardFromDeck(activeDeck.id, cardId);
   };
 

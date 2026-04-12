@@ -83,11 +83,13 @@ export function useBattle() {
             ? uid
             : outcome.winnerSide === "defender"
               ? opponentEntry.uid
-              : uid; // draw goes to challenger
+              : ""; // draw — no winner
         const winningCards =
-          outcome.winnerSide === "defender"
-            ? opponentCards
-            : myDeck.cards;
+          outcome.winnerSide === "challenger"
+            ? myDeck.cards
+            : outcome.winnerSide === "defender"
+              ? opponentCards
+              : [];
 
         const result: BattleResult = {
           id: `battle-${Date.now()}`,
@@ -109,11 +111,9 @@ export function useBattle() {
           _ts: serverTimestamp(),
         });
 
-        // Remove both players from the arena
-        await Promise.all([
-          deleteDoc(doc(db, "arena", uid)),
-          deleteDoc(doc(db, "arena", opponentEntry.uid)),
-        ]);
+        // Remove the challenger from the arena (defender entry is left for their
+        // own client to clean up via onSnapshot or stand-down)
+        await deleteDoc(doc(db, "arena", uid));
 
         setBattleResult(result);
         resultRef.current = result;

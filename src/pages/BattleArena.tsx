@@ -221,7 +221,7 @@ function DeckSelector({ decks, selectedId, onSelect }: DeckSelectorProps) {
   if (eligible.length === 0) {
     return (
       <div className="arena-empty-state">
-        <p>You need at least {MIN_BATTLE_CARDS} card in a deck to enter the arena.</p>
+        <p>You need at least {MIN_BATTLE_CARDS} {MIN_BATTLE_CARDS === 1 ? "card" : "cards"} in a deck to enter the arena.</p>
         <p className="page-sub">Head to <strong>My Decks</strong> to build one.</p>
       </div>
     );

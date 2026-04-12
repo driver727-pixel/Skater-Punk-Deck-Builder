@@ -85,11 +85,7 @@ service cloud.firestore {
     match /arena/{uid} {
       allow read:  if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == uid;
-      allow delete: if request.auth != null && (
-        request.auth.uid == uid
-        // Allow the challenger to remove the defender's listing after battle
-        || request.auth.uid != uid
-      );
+      allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
     // ── Battle Results ───────────────────────────────────────────────────────

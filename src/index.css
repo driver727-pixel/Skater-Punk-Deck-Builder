@@ -6391,6 +6391,189 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   box-shadow: 0 0 8px rgba(0,255,136,0.5), 0 0 16px rgba(0,204,255,0.2);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   EXTENDED NEON — spread the glow to more surfaces
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ===== Arena Section Titles — cyan neon text + glowing underline ===== */
+.arena-section-title {
+  text-shadow:
+    0 0 8px rgba(0,255,136,0.5),
+    0 0 20px rgba(0,255,136,0.2);
+  border-image: linear-gradient(90deg, rgba(0,255,136,0.5), rgba(0,204,255,0.4), transparent) 1;
+}
+
+/* ===== Arena Ready Banner — neon border glow ===== */
+.arena-ready-banner {
+  box-shadow:
+    0 0 10px rgba(0,255,136,0.15),
+    0 0 24px rgba(0,255,136,0.08),
+    inset 0 0 12px rgba(0,255,136,0.04);
+}
+
+/* ===== Arena Deck Option — active neon highlight ===== */
+.arena-deck-option--active {
+  box-shadow:
+    0 0 8px rgba(0,255,136,0.2),
+    0 0 18px rgba(0,255,136,0.08);
+}
+
+/* ===== Battle Outcome Popup — neon frame ===== */
+.battle-outcome-popup {
+  box-shadow:
+    0 0 18px rgba(0,204,255,0.2),
+    0 0 40px rgba(0,204,255,0.08),
+    inset 0 0 24px rgba(0,0,0,0.4);
+  border-color: rgba(0,204,255,0.35);
+}
+
+/* ===== Battle Outcome Score — neon text ===== */
+.battle-outcome-score-value {
+  text-shadow:
+    0 0 10px rgba(0,204,255,0.6),
+    0 0 22px rgba(0,204,255,0.25);
+}
+
+/* ===== Battle Outcome Title — stronger glow ===== */
+.battle-outcome-title--win {
+  text-shadow:
+    0 0 12px rgba(0,255,136,0.7),
+    0 0 28px rgba(0,255,136,0.3),
+    0 0 48px rgba(0,255,136,0.1);
+}
+.battle-outcome-title--lose {
+  text-shadow:
+    0 0 12px rgba(255,68,68,0.7),
+    0 0 28px rgba(255,68,68,0.3),
+    0 0 48px rgba(255,68,68,0.1);
+}
+
+/* ===== Modal Title — enhanced neon buzz ===== */
+.modal-title {
+  text-shadow:
+    0 0 12px rgba(0,255,136,0.6),
+    0 0 28px rgba(0,255,136,0.25),
+    2px 2px 0 rgba(0,0,0,0.5),
+    -1px 0 rgba(255,0,204,0.12),
+    1px 0 rgba(0,204,255,0.12);
+  animation: neon-buzz 4s ease-in-out infinite;
+}
+
+/* ===== Tier Cards — neon border glow on active / featured ===== */
+.tier-card--active {
+  box-shadow:
+    0 0 10px rgba(0,204,255,0.2),
+    0 0 24px rgba(0,204,255,0.08);
+}
+.tier-card--featured {
+  box-shadow:
+    0 0 10px rgba(139,92,246,0.25),
+    0 0 24px rgba(139,92,246,0.1);
+}
+
+/* ===== Tier Price — neon glow ===== */
+.tier-price {
+  text-shadow:
+    0 0 8px rgba(0,255,136,0.5),
+    0 0 20px rgba(0,255,136,0.2);
+}
+
+/* ===== Trade Summary Value — neon text ===== */
+.trade-summary-value {
+  text-shadow:
+    0 0 8px rgba(0,204,255,0.4),
+    0 0 18px rgba(0,204,255,0.15);
+  color: var(--accent2);
+}
+
+/* ===== Trade Badge — neon pill glow ===== */
+.trade-badge {
+  box-shadow: 0 0 6px rgba(255,68,68,0.35), 0 0 14px rgba(255,68,68,0.12);
+}
+
+/* ===== Lore Card Name — neon green text ===== */
+.lore-card-name {
+  text-shadow: 0 0 8px rgba(0,255,136,0.4), 0 0 18px rgba(0,255,136,0.15);
+}
+
+/* ===== Lore Faction Name — neon green text ===== */
+.lore-faction-name {
+  text-shadow: 0 0 8px rgba(0,255,136,0.4), 0 0 18px rgba(0,255,136,0.15);
+}
+
+/* ===== Lore Subheading — subtle neon ===== */
+.lore-subheading {
+  text-shadow: 0 0 6px rgba(0,255,136,0.35);
+}
+
+/* ===== Lore Faction Item — hover neon border glow ===== */
+.lore-faction-item:hover {
+  box-shadow: 0 0 8px rgba(0,204,255,0.2), 0 0 18px rgba(0,204,255,0.06);
+}
+
+/* ===== Lore Card — enhanced hover neon ===== */
+.lore-card:hover {
+  box-shadow:
+    3px 3px 0 rgba(0,204,255,0.25),
+    0 0 14px rgba(0,204,255,0.12);
+}
+
+/* ===== Mission Panel — subtle neon border ===== */
+.mission-panel {
+  box-shadow: 0 0 12px rgba(0,255,136,0.04), 0 0 28px rgba(0,204,255,0.03);
+}
+
+/* ===== Mission Weather Title — neon text ===== */
+.mission-weather__title {
+  text-shadow: 0 0 6px rgba(0,255,136,0.3);
+}
+
+/* ===== Mission Weather Status Badge — neon pill glow ===== */
+.mission-weather__status {
+  box-shadow: 0 0 6px rgba(0,255,136,0.2), 0 0 14px rgba(0,255,136,0.06);
+}
+.mission-weather__status--restricted {
+  box-shadow: 0 0 6px rgba(255,68,102,0.2), 0 0 14px rgba(255,68,102,0.06);
+}
+
+/* ===== Mission Selector Card — hover neon ===== */
+.mission-selector-card:hover {
+  border-color: rgba(0,204,255,0.3);
+  box-shadow: 0 0 12px rgba(0,204,255,0.1);
+}
+
+/* ===== Login Tab Active — neon underline accent ===== */
+.login-tab--active {
+  box-shadow: inset 0 -2px 0 var(--accent), 0 2px 8px rgba(0,255,136,0.15);
+  text-shadow: 0 0 6px rgba(0,255,136,0.3);
+}
+
+/* ===== Form Input Focus — stronger neon ring ===== */
+.card-edit-input:focus {
+  box-shadow:
+    0 0 6px rgba(0,255,136,0.4),
+    0 0 16px rgba(0,255,136,0.12);
+}
+
+/* ===== Footer Link Hover — neon text glow ===== */
+.site-footer__link:hover {
+  text-shadow: 0 0 8px rgba(0,255,136,0.5), 0 0 18px rgba(0,255,136,0.2);
+}
+
+/* ===== Deck Stats Title — neon underline ===== */
+.deck-stats-title {
+  border-image: linear-gradient(90deg, rgba(0,255,136,0.5), rgba(0,204,255,0.4), transparent) 1;
+}
+
+/* ===== Trade Summary Card — subtle neon border ===== */
+.trade-summary-card {
+  box-shadow: 0 0 8px rgba(0,204,255,0.05);
+  transition: box-shadow 0.2s;
+}
+.trade-summary-card:hover {
+  box-shadow: 0 0 12px rgba(0,204,255,0.12), 0 0 24px rgba(0,204,255,0.04);
+}
+
 /* ===== prefers-reduced-motion: turn off all new animations ===== */
 @media (prefers-reduced-motion: reduce) {
   body::after,
@@ -6410,5 +6593,8 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
     -webkit-text-fill-color: var(--accent2);
     color: var(--accent2);
     background: none;
+  }
+  .modal-title {
+    animation: none !important;
   }
 }

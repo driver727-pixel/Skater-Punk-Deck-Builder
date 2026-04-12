@@ -1,6 +1,6 @@
 import type { CardPayload } from "../lib/types";
 import { MAX_SINGLE_STAT } from "../lib/generator";
-import { computeDeckTotalPower } from "../lib/battle";
+import { computeDeckTotalPower, computeDeckWorth } from "../lib/battle";
 
 interface DeckStatsPanelProps {
   cards: CardPayload[];
@@ -31,6 +31,7 @@ export function DeckStatsPanel({ cards, maxCardsInDeck }: DeckStatsPanelProps) {
   const grandTotal = computeDeckTotalPower(filledCards);
   const grandMax   = statMax * STAT_DEFS.length;
   const grandPct   = Math.min((grandTotal / grandMax) * 100, 100);
+  const deckWorth  = computeDeckWorth(filledCards);
 
   return (
     <div className="deck-stats-panel">
@@ -75,6 +76,12 @@ export function DeckStatsPanel({ cards, maxCardsInDeck }: DeckStatsPanelProps) {
           className="deck-stats-total-value"
           aria-label={`Total power ${grandTotal} of ${grandMax}`}
         >{grandTotal}<span className="deck-stats-total-max" aria-hidden="true">/{grandMax}</span></span>
+      </div>
+
+      {/* Ozzycred deck worth */}
+      <div className="deck-stats-ozzies">
+        <span className="deck-stats-ozzies-label">DECK WORTH</span>
+        <span className="deck-stats-ozzies-value" aria-label={`Deck worth ${deckWorth} Ozzies`}>{deckWorth} Ozzies</span>
       </div>
     </div>
   );

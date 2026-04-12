@@ -196,6 +196,9 @@ export function Mission() {
               <span className="mission-selector-card__district">{mission.district}</span>
               <strong className="mission-selector-card__name">{mission.name}</strong>
               <span className="mission-selector-card__tagline">{mission.tagline}</span>
+              {mission.ozziesReward != null && mission.ozziesReward > 0 && (
+                <span className="mission-selector-card__reward">💰 {mission.ozziesReward} Ozzies</span>
+              )}
             </button>
           ))}
         </div>
@@ -406,6 +409,9 @@ export function Mission() {
                     <span className="tag">Heat {missionResult.playerStats.heatLevel}</span>
                     <span className="tag">RNG {missionResult.playerStats.batteryRemaining}</span>
                     <span className="tag">Inventory {missionResult.inventory.length}</span>
+                    {missionResult.ozziesReward > 0 && (
+                      <span className="tag tag--ozzies">💰 +{missionResult.ozziesReward} Ozzies</span>
+                    )}
                   </div>
                 </div>
                 <ol className="mission-log">

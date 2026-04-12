@@ -1557,13 +1557,13 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 
 @keyframes soda-button-flicker {
   0%, 9.5%, 100% { opacity: 1; }
-  10.5% { opacity: 0.985; }
-  11% { opacity: 0.955; }
-  11.5% { opacity: 0.99; }
+  10.5% { opacity: 0.992; }
+  11% { opacity: 0.978; }
+  11.5% { opacity: 0.995; }
   34% { opacity: 1; }
-  34.5% { opacity: 0.975; }
-  35% { opacity: 0.94; }
-  35.5% { opacity: 0.99; }
+  34.5% { opacity: 0.988; }
+  35% { opacity: 0.968; }
+  35.5% { opacity: 0.994; }
 }
 
 @media (prefers-reduced-motion: reduce) {

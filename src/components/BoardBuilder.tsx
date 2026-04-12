@@ -5,10 +5,15 @@
  * belts:  Decks (top) → Drivetrains → Motors → Wheels → Batteries (bottom).
  *
  * The live BoardPreviewGrid shows real product photos for each selected
- * component from per-category folders under public/assets/boards/.
- * A PowerSwitchButton at the bottom triggers a satisfying animation sequence before
- * firing the onSave callback to commit the board config and loadout stats to the
- * character state.
+ * component from per-category folders under src/assets/boards/ (discovered
+ * at build time via Vite import.meta.glob) with a fallback to named PNGs
+ * under public/assets/boards/<category>/<value>.png.  Each time a carousel
+ * selection changes a fresh random image is chosen for that category slot so
+ * the composition box stays visually lively.
+ *
+ * A PowerSwitchButton at the bottom triggers a satisfying animation sequence
+ * before firing the onSave callback to commit the board config and loadout
+ * stats to the character state.
  *
  * Compatibility rules are enforced: when the deck type changes, incompatible
  * selections are automatically snapped to the first allowed value, and
@@ -29,6 +34,7 @@ import {
   getAllowedComponents,
   validateBoardCompatibility,
 } from "../lib/boardBuilder";
+import { getRandomCategoryImage } from "../lib/boardCategoryImages";
 import { BoardPreviewGrid } from "./BoardPreviewGrid";
 import { ConveyorCarousel } from "./ConveyorCarousel";
 import { PowerSwitchButton } from "./PowerSwitchButton";
@@ -124,7 +130,38 @@ export function BoardBuilder({ value, onChange, onSave }: BoardBuilderProps) {
     onChange(enforceCompatibility(next));
   }, [onChange]);
 
-  const componentUrls = getBoardComponentImageUrls(value);
+  /**
+   * Builds the set of preview image URLs for the composition box.
+   *
+   * For each component slot we try two sources in priority order:
+   *   1. A random PNG from `src/assets/boards/<category>/` (discovered at
+   *      build time via import.meta.glob — any file name works).
+   *   2. The named static URL `public/assets/boards/<category>/<value>.png`
+   *      (upload a file whose name matches the option value, e.g. `Standard.png`).
+   *
+   * A new random image is picked every time a carousel selection changes so the
+   * composition box stays visually lively (immersion effect).
+   */
+  const buildPreviewUrls = useCallback((cfg: BoardConfig) => {
+    const named = getBoardComponentImageUrls(cfg);
+    return {
+      deckUrl:       getRandomCategoryImage("deck")       ?? named.deckUrl,
+      drivetrainUrl: getRandomCategoryImage("drivetrain") ?? named.drivetrainUrl,
+      motorUrl:      getRandomCategoryImage("motor")      ?? named.motorUrl,
+      wheelsUrl:     getRandomCategoryImage("wheels")     ?? named.wheelsUrl,
+      batteryUrl:    getRandomCategoryImage("battery")    ?? named.batteryUrl,
+    };
+  }, []);
+
+  const [previewUrls, setPreviewUrls] = useState(() => buildPreviewUrls(value));
+
+  // Re-pick a random image whenever a carousel selection changes.
+  // Destructure so each slot's primitive value is the dep, not the object reference.
+  const { boardType, drivetrain, motor, wheels, battery } = value;
+  useEffect(() => {
+    setPreviewUrls(buildPreviewUrls({ boardType, drivetrain, motor, wheels, battery }));
+  }, [boardType, drivetrain, motor, wheels, battery, buildPreviewUrls]);
+
   const previewLabels = {
     deck:       BOARD_TYPE_OPTIONS.find((o) => o.value === value.boardType)?.label ?? value.boardType,
     drivetrain: DRIVETRAIN_OPTIONS.find((o) => o.value === value.drivetrain)?.label ?? value.drivetrain,
@@ -148,7 +185,7 @@ export function BoardBuilder({ value, onChange, onSave }: BoardBuilderProps) {
     <div className={`board-builder${shaking ? " board-builder--shake" : ""}`}>
       {/* Live board component preview — updates in real time */}
       <BoardPreviewGrid
-        urls={componentUrls}
+        urls={previewUrls}
         labels={previewLabels}
         className={`board-builder__preview${surging ? " board-preview-grid--surge" : ""}`}
       />

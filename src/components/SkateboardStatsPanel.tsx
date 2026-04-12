@@ -1,4 +1,5 @@
 import type { BoardLoadout } from "../lib/boardBuilder";
+import { BOARD_STAT_LABELS } from "../lib/statLabels";
 
 interface SkateboardStatsPanelProps {
   loadout: BoardLoadout;
@@ -33,9 +34,9 @@ export function SkateboardStatsPanel({ loadout }: SkateboardStatsPanelProps) {
     <div className="skate-stats-panel">
       <span className="skate-stats-title">BOARD STATS</span>
 
-      <NeonBar label="Speed" value={loadout.speed}        colorClass="neon-tube--cyan"    tooltip="Board top speed" />
-      <NeonBar label="Accel" value={loadout.acceleration} colorClass="neon-tube--magenta" tooltip="How quickly the board reaches top speed" />
-      <NeonBar label="Range" value={loadout.range}        colorClass="neon-tube--green"   tooltip="Battery range before recharge is needed" />
+      <NeonBar label={BOARD_STAT_LABELS.speed.label}        value={loadout.speed}        colorClass="neon-tube--cyan"    tooltip={BOARD_STAT_LABELS.speed.tooltip} />
+      <NeonBar label={BOARD_STAT_LABELS.acceleration.label} value={loadout.acceleration} colorClass="neon-tube--magenta" tooltip={BOARD_STAT_LABELS.acceleration.tooltip} />
+      <NeonBar label={BOARD_STAT_LABELS.range.label}        value={loadout.range}        colorClass="neon-tube--green"   tooltip={BOARD_STAT_LABELS.range.tooltip} />
 
       <div className="skate-text-stats">
         <div className="skate-text-row">

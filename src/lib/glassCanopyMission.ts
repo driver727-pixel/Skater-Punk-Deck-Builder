@@ -446,7 +446,7 @@ function createDistrictMission(blueprint: DistrictMissionBlueprint): DistrictMis
     briefing: blueprint.briefing,
     checkTags: [
       `P1 STEALTH ${blueprint.thresholds.stealth}`,
-      `P3 Accel ${blueprint.thresholds.acceleration} (+ Heat)`,
+      `P3 Acceleration ${blueprint.thresholds.acceleration} (+ Heat)`,
       `P4 Speed ${blueprint.thresholds.speed} (+ Heat)`,
       `P4 Range ${blueprint.thresholds.battery} (+ Heat)`,
     ],

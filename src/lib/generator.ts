@@ -87,10 +87,10 @@ export const MAX_SINGLE_STAT = 10;
 /** Historic single-stat ceiling used by older saved cards. */
 export const LEGACY_MAX_SINGLE_STAT = 200;
 
-const BASE_STAT_MIN = 2;
-const BASE_STAT_MAX = 7;
+const BASE_STAT_MIN = 3;
+const BASE_STAT_MAX = 6;
 
-// ── Stat modifiers by archetype (added on top of a 2–7 base roll) ─────────────
+// ── Stat modifiers by archetype (added on top of a 3–6 base roll) ─────────────
 
 interface StatMods { speed: number; stealth: number; tech: number; grit: number; rep: number; }
 
@@ -128,6 +128,7 @@ export function normalizeLegacyCardStat(value: number): number {
     return clampCardStat(value);
   }
 
+  // Linearly interpolate the old 1–200 card scale onto the live 1–10 scale.
   const scaled = MIN_SINGLE_STAT
     + ((value - MIN_SINGLE_STAT) * (MAX_SINGLE_STAT - MIN_SINGLE_STAT))
       / (LEGACY_MAX_SINGLE_STAT - MIN_SINGLE_STAT);

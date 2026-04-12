@@ -165,8 +165,8 @@ export function Trades() {
           <h1 className="page-title">Trades</h1>
           <p className="page-sub">Send, receive, and manage direct card offers with other players.</p>
         </div>
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button className="btn-outline" onClick={() => setRefreshKey((k) => k + 1)}>
+        <div className="page-header-actions">
+          <button className="btn-outline" onClick={() => setRefreshKey((k) => k + 1)} aria-label="Refresh trades">
             ↻ Refresh
           </button>
           <button className="btn-primary" onClick={() => setShowModal(true)} disabled={cards.length === 0}>

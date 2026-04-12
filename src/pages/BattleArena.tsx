@@ -383,7 +383,7 @@ export function BattleArena() {
             Ready your deck for battle. Each battle wagers {WAGER_POINTS} random attribute points — the winner takes {WINNER_BONUS}!
           </p>
         </div>
-        <button className="btn-outline" onClick={refresh}>
+        <button className="btn-outline" onClick={refresh} aria-label="Refresh arena entries">
           ↻ Refresh
         </button>
       </div>

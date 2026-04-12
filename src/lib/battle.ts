@@ -25,6 +25,7 @@ const STAT_LABELS: Record<StatKey, string> = {
   rep: "REP",
 };
 
+/** Count how many cards in the deck share each archetype. */
 function getArchetypeCounts(cards: CardPayload[]): Map<string, number> {
   const archetypeCounts = new Map<string, number>();
   for (const card of cards) {
@@ -34,6 +35,7 @@ function getArchetypeCounts(cards: CardPayload[]): Map<string, number> {
   return archetypeCounts;
 }
 
+/** Apply a 3% bonus per repeated-archetype pair, capped at +15%. */
 function getSynergyMultiplier(cards: CardPayload[]): number {
   const archetypeCounts = getArchetypeCounts(cards);
   let pairs = 0;
@@ -43,6 +45,7 @@ function getSynergyMultiplier(cards: CardPayload[]): number {
   return 1 + Math.min(pairs * 0.03, 0.15);
 }
 
+/** Sum total speed, stealth, tech, grit, and rep across the whole deck. */
 export function getDeckStatTotals(cards: CardPayload[]): Record<StatKey, number> {
   const totals: Record<StatKey, number> = {
     speed: 0,

@@ -21,7 +21,7 @@ import type { BoardConfig } from "../lib/boardBuilder";
 import { calculateBoardStats, buildBoardImagePrompt } from "../lib/boardBuilder";
 import { ACTIVE_STYLES } from "../lib/styles";
 import { GeoAtlas } from "../components/GeoAtlas";
-import { sfxForge, sfxSuccess, sfxError } from "../lib/sfx";
+import { sfxSuccessPing, sfxSuccess, sfxError } from "../lib/sfx";
 
 const RARITIES: Rarity[] = ["Punch Skater", "Apprentice", "Master", "Rare", "Legendary"];
 const STYLES: Style[] = ACTIVE_STYLES;
@@ -292,8 +292,8 @@ export function CardForge() {
       openUpgradeModal();
       return;
     }
-    // Play "lock it in" sound effect
-    sfxForge();
+    // Play forge success ping sound effect
+    sfxSuccessPing();
 
     // Cancel any in-flight generation
     abortRef.current?.abort();
@@ -773,10 +773,10 @@ export function CardForge() {
             {isAnyLayerLoading
               ? "✨ Generating…"
               : !canForge
-              ? "🔒 FORGE COURIER CARD — Upgrade to Unlock"
+              ? "🔒 FORGE YOUR CARD — Upgrade to Unlock"
               : generateCredits > 0
-              ? `⚡ FORGE COURIER CARD (${generateCredits} credit${generateCredits === 1 ? "" : "s"} left)`
-              : "⚡ FORGE COURIER CARD"
+              ? `⚡ FORGE YOUR CARD (${generateCredits} credit${generateCredits === 1 ? "" : "s"} left)`
+              : "⚡ FORGE YOUR CARD"
             }
           </button>
 

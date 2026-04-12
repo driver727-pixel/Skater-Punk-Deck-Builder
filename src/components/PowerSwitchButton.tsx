@@ -9,6 +9,7 @@
  * builder shake) via the `onAnimate` callback.
  */
 import { useState, useCallback } from "react";
+import { sfxLockItIn } from "../lib/sfx";
 
 interface PowerSwitchButtonProps {
   /** Fired when the button is clicked; parent sequences the full animation. */
@@ -23,6 +24,7 @@ export function PowerSwitchButton({ onAnimate, disabled }: PowerSwitchButtonProp
   const handleClick = useCallback(() => {
     if (disabled || depressed) return;
     setDepressed(true);
+    sfxLockItIn();
     // Release the button press after the depress animation completes
     setTimeout(() => setDepressed(false), 220);
     // Notify the parent to start the full animation sequence

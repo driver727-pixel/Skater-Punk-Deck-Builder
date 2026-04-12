@@ -1,9 +1,32 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { loadTier, saveTier, loadEmail, saveEmail, clearAccount, TIERS, type TierLevel } from "../lib/tiers";
+import {
+  loadTier,
+  saveTier,
+  loadEmail,
+  saveEmail,
+  clearAccount,
+  TIERS,
+  loadCheckoutSessionId,
+  saveCheckoutSessionId,
+  clearCheckoutSessionId,
+  type TierLevel,
+} from "../lib/tiers";
 import { claimReferral, REFERRAL_CREDITS_KEY } from "../services/referrals";
 import { useAuth } from "./AuthContext";
 import { db } from "../lib/firebase";
+import { resolveApiUrl } from "../lib/apiUrls";
+
+const CHECKOUT_VERIFY_API_URL = resolveApiUrl(
+  import.meta.env.VITE_CHECKOUT_VERIFY_API_URL as string | undefined,
+  "/api/verify-checkout-session",
+);
+
+interface VerifiedCheckout {
+  sessionId: string;
+  tier: Exclude<TierLevel, "free">;
+  email: string;
+}
 
 function loadStoredCredits(): number {
   const v = localStorage.getItem(REFERRAL_CREDITS_KEY);
@@ -54,6 +77,12 @@ function resolveInitialEmail(): string {
   return loadEmail();
 }
 
+/** Extracts a Stripe Checkout Session ID from the URL query string. */
+function extractCheckoutSessionId(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("checkout_session_id");
+}
+
 /** Extracts a referrer UID from the URL query string without mutating history. */
 function extractReferrerUid(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -66,25 +95,133 @@ export function TierProvider({ children }: { children: ReactNode }) {
   const [email, setEmailState] = useState<string>(resolveInitialEmail);
   const [generateCredits, setGenerateCredits] = useState<number>(loadStoredCredits);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [verifiedCheckout, setVerifiedCheckout] = useState<VerifiedCheckout | null>(null);
+
+  // ── Capture Checkout Session IDs returned from Stripe ──────────────────────
+  useEffect(() => {
+    const sessionId = extractCheckoutSessionId();
+    if (!sessionId) return;
+    saveCheckoutSessionId(sessionId);
+
+    const params = new URLSearchParams(window.location.search);
+    params.delete("checkout_session_id");
+    const newSearch = params.toString();
+    window.history.replaceState(
+      {},
+      "",
+      window.location.pathname + (newSearch ? `?${newSearch}` : "")
+    );
+  }, []);
+
+  // ── Verify pending Stripe checkout sessions before trusting tier access ────
+  useEffect(() => {
+    const sessionId = loadCheckoutSessionId();
+    if (!sessionId) return;
+    const storedEmail = loadEmail().trim();
+    if (!storedEmail) {
+      console.warn("[Tier] Checkout verification skipped because no purchase email is stored.");
+      return;
+    }
+
+    let cancelled = false;
+    const verifyUrl = new URL(CHECKOUT_VERIFY_API_URL, window.location.origin);
+    verifyUrl.searchParams.set("session_id", sessionId);
+    verifyUrl.searchParams.set("email", storedEmail);
+    fetch(verifyUrl.toString())
+      .then(async (resp) => {
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          throw new Error(
+            `Failed to verify checkout session (HTTP ${resp.status}): ${data.error ?? "Unknown error"}`,
+          );
+        }
+        if (data?.tier !== "tier2" && data?.tier !== "tier3") {
+          throw new Error("Checkout verification returned an invalid tier.");
+        }
+        return {
+          sessionId,
+          tier: data.tier,
+          email: typeof data.email === "string" ? data.email : "",
+        } as VerifiedCheckout;
+      })
+      .then((checkout) => {
+        if (cancelled) return;
+        setVerifiedCheckout(checkout);
+        // Preserve an existing tier3 grant (for example admin access or a higher
+        // paid plan already stored on the device) rather than downgrading it
+        // when a verified tier2 checkout is restored.
+        setTierState((prev) => {
+          const nextTier = prev === "tier3" ? prev : checkout.tier;
+          saveTier(nextTier);
+          return nextTier;
+        });
+        if (checkout.email) {
+          setEmailState(checkout.email);
+          saveEmail(checkout.email);
+        }
+      })
+      .catch((error) => {
+        console.warn("[Tier] Checkout verification failed:", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // ── Sync tier from Firestore when user logs in ────────────────────────────
   useEffect(() => {
     if (!user || !db) return;
+    const verifiedEmail = verifiedCheckout?.email.trim().toLowerCase();
+    const userEmail = user.email?.trim().toLowerCase() ?? "";
+
     getDoc(doc(db, "userProfiles", user.uid)).then((snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data();
+      const data = snap.exists() ? snap.data() : null;
+
       // Admin users always get tier3
-      if (data.isAdmin) {
+      if (data?.isAdmin) {
         setTierState("tier3");
         saveTier("tier3");
+        clearCheckoutSessionId();
         return;
       }
-      if (data.tier === "tier2" || data.tier === "tier3") {
+
+      if (data?.tier === "tier2" || data?.tier === "tier3") {
         setTierState(data.tier);
         saveTier(data.tier);
+        clearCheckoutSessionId();
+        return;
+      }
+
+      if (
+        verifiedCheckout &&
+        verifiedEmail &&
+        userEmail &&
+        verifiedEmail !== userEmail
+      ) {
+        setTierState("free");
+        saveTier("free");
+        return;
+      }
+
+      if (
+        verifiedCheckout &&
+        verifiedEmail &&
+        userEmail &&
+        verifiedEmail === userEmail
+      ) {
+        setTierState(verifiedCheckout.tier);
+        saveTier(verifiedCheckout.tier);
+        setDoc(
+          doc(db, "userProfiles", user.uid),
+          { tier: verifiedCheckout.tier },
+          { merge: true },
+        )
+          .then(() => clearCheckoutSessionId())
+          .catch(() => {/* non-fatal */});
       }
     }).catch(() => {/* non-fatal */});
-  }, [user]);
+  }, [user, verifiedCheckout]);
 
   // ── Handle referral link on first mount ───────────────────────────────────
   useEffect(() => {

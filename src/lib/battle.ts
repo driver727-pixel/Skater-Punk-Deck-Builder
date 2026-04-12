@@ -82,7 +82,7 @@ export function buildArenaDeckSummary(cards: CardPayload[]): ArenaDeckSummary {
   ), STAT_KEYS[0]);
   const dominantArchetypeEntry = Array.from(getArchetypeCounts(cards).entries())
     .sort((a, b) => b[1] - a[1])[0];
-  const [dominantArchetype, dominantArchetypeCount = 0] = dominantArchetypeEntry ?? [];
+  const [dominantArchetype, dominantArchetypeCount] = dominantArchetypeEntry ?? [undefined, 0];
 
   return {
     deckPower: computeDeckScore(cards),

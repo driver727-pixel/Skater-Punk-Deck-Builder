@@ -139,6 +139,9 @@ export function TierProvider({ children }: { children: ReactNode }) {
       .then((checkout) => {
         if (cancelled) return;
         setVerifiedCheckout(checkout);
+        // Preserve an existing tier3 grant (for example admin access or a higher
+        // paid plan already stored on the device) rather than downgrading it
+        // when a verified tier2 checkout is restored.
         setTierState((prev) => (prev === "tier3" ? prev : checkout.tier));
         saveTier(checkout.tier);
         if (checkout.email) {

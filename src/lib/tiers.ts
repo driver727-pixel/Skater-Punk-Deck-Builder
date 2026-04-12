@@ -122,8 +122,8 @@ export function saveEmail(email: string): void {
   localStorage.setItem(EMAIL_KEY, email);
 }
 
-export function loadCheckoutSessionId(): string {
-  return localStorage.getItem(CHECKOUT_SESSION_KEY) ?? "";
+export function loadCheckoutSessionId(): string | null {
+  return localStorage.getItem(CHECKOUT_SESSION_KEY);
 }
 
 export function saveCheckoutSessionId(sessionId: string): void {

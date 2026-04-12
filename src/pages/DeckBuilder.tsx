@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { DeckPayload, CardPayload } from "../lib/types";
 import { useDecks, DECK_CARD_LIMIT } from "../hooks/useDecks";
 import { useCollection } from "../hooks/useCollection";
@@ -6,6 +6,7 @@ import { useBattle, MIN_BATTLE_CARDS } from "../hooks/useBattle";
 import { CardThumbnail } from "../components/CardThumbnail";
 import { DeckStatsPanel } from "../components/DeckStatsPanel";
 import { getDisplayedArchetype } from "../lib/cardIdentity";
+import { computeDeckTotalPower } from "../lib/battle";
 import { exportJson } from "../lib/storage";
 import { useTier } from "../context/TierContext";
 import { TIERS } from "../lib/tiers";
@@ -39,6 +40,13 @@ export function DeckBuilder() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [decks]);
+
+  const deckTotalPowerById = useMemo(() => Object.fromEntries(
+    decks.map((deck) => [
+      deck.id,
+      computeDeckTotalPower(deck.cards),
+    ]),
+  ), [decks]);
 
   // Free-tier users: see an empty gallery page with upgrade prompt
   if (!tierData.canSave) {
@@ -150,7 +158,12 @@ export function DeckBuilder() {
                       onClick={(e) => e.stopPropagation()}
                     />
                   ) : (
-                    <span className="deck-name">{deck.name}</span>
+                    <div className="deck-item-info">
+                      <span className="deck-name">{deck.name}</span>
+                      <span className="deck-power">
+                        <span aria-hidden="true">⚡</span> {deckTotalPowerById[deck.id] ?? 0} Power
+                      </span>
+                    </div>
                   )}
                   <span className="deck-count">{deck.cards.length}/{DECK_CARD_LIMIT}</span>
                   <div className="deck-actions" onClick={(e) => e.stopPropagation()}>

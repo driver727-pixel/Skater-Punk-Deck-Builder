@@ -90,7 +90,7 @@ export const DRIVETRAIN_OPTIONS: BoardOption<Drivetrain>[] = [
   },
   {
     value: "Hub",
-    label: "Hub Motor",
+    label: "Hub Drive",
     icon: "🔇",
     tagline: "Silent operator",
     description: "Motors live inside the wheels. Near-silent operation is perfect for ghost runs and surveillance.",

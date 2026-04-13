@@ -6753,7 +6753,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   top: 50%;
   left: 50%;
   pointer-events: none;
-  box-shadow: 0 0 10px currentColor;
+  box-shadow: 0 0 10px var(--particle-glow, rgba(255,255,255,0.65));
   animation-delay: var(--delay, 0s);
   animation: confetti-pop var(--d, 0.8s) cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
 }

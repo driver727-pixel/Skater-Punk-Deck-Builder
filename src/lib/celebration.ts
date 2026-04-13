@@ -37,7 +37,7 @@ export function spawnCelebrationBurst(
     particle.style.setProperty("--delay", `${Math.random() * 0.14}s`);
     particle.style.setProperty("--s", `${5 + Math.random() * 8}px`);
     particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-    particle.style.color = particle.style.backgroundColor;
+    particle.style.setProperty("--particle-glow", particle.style.backgroundColor);
     container.appendChild(particle);
     particlesToRemove.push(particle);
   }

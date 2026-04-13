@@ -95,7 +95,7 @@ function OutcomePopup({ result, myUid, onDismiss }: OutcomePopupProps) {
         }, 520),
       ];
       return () => burstTimers.forEach((timer) => window.clearTimeout(timer));
-    } else if (!isDraw) {
+    } else {
       sfxBattleLose();
     }
   }, [isWinner, isDraw]);

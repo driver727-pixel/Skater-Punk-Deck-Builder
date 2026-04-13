@@ -56,7 +56,9 @@ const NEGATIVE_PROMPT =
   "blurry, blur, fuzzy, soft focus, out of focus, low resolution, low quality, degraded, " +
   "pixelated, jpeg artifacts, compression artifacts, watermark, signature, " +
   "photograph, photography, photorealistic, photo-realistic, realistic skin pores, live action, live-action, " +
-  "cinema still, DSLR, studio photo, stock photo, hyperreal, hyper-real, 3d render, CGI, octane render";
+  "cinema still, DSLR, studio photo, stock photo, hyperreal, hyper-real, 3d render, CGI, octane render, " +
+  "anime, manga, chibi, super-deformed, mascot costume, toy-like proportions, pixar, disney, cel shading, cel-shaded, " +
+  "watercolor, oil painting, painterly, charcoal sketch, pastel drawing, minimalist flat design";
 
 /**
  * MANDATORY positive suffix — automatically appended to every prompt inside

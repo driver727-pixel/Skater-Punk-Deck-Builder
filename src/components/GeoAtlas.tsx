@@ -104,10 +104,6 @@ function getAtlasClassName(compact: boolean, className?: string) {
   return ["geo-atlas", compact ? "geo-atlas--compact" : "", className].filter(Boolean).join(" ");
 }
 
-function isPlayableDistrict(location: WorldLocation): location is District {
-  return location !== "Electropolis" && location !== "The Roads";
-}
-
 function getAtlasNodeStatus(
   location: (typeof DISTRICT_LORE)[number],
   loading: boolean,

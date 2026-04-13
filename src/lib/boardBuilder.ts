@@ -579,6 +579,18 @@ function sanitizeBoardComponentPromptDescription(description: string): string {
     .replace(/^Art style of gouache painting\.\s*/i, "");
 }
 
+const AWD_DRIVETRAIN_VISUAL =
+  "A four-wheel-drive electric skateboard drivetrain with powered front and rear trucks, dual motor hardware on both axles, heavy-duty mounts, and visible off-road engineering.";
+
+const RUBBER_WHEEL_VISUAL =
+  "A set of four solid rubber all-terrain skateboard wheels, matte black, thick sidewalls, heavy-duty cores, and puncture-proof construction.";
+
+function getBoardCatalogPromptDescription(seedKey: string | null | undefined): string | undefined {
+  if (!seedKey) return undefined;
+  const model = BOARD_COMPONENT_CATALOG.find((item) => item.seedKey === seedKey);
+  return model ? sanitizeBoardComponentPromptDescription(model.description) : undefined;
+}
+
 /**
  * Builds a single AI-generation prompt describing the fully assembled electric
  * skateboard from the five chosen components. This prompt is used to generate
@@ -590,40 +602,28 @@ export function buildBoardImagePrompt(config: BoardConfig): string {
   const motor = MOTOR_OPTIONS.find((o) => o.value === config.motor);
   const wheel = WHEEL_OPTIONS.find((o) => o.value === config.wheels);
   const batt  = BATTERY_OPTIONS.find((o) => o.value === config.battery);
-  const deckModel = BOARD_COMPONENT_CATALOG.find((m) => m.seedKey === BOARD_TYPE_DECK_SEED[config.boardType]);
-  const driveModel = BOARD_COMPONENT_CATALOG.find((m) => m.seedKey === DRIVETRAIN_SEED[config.drivetrain]);
-  const motorModel = BOARD_COMPONENT_CATALOG.find((m) => m.seedKey === MOTOR_SEED[config.motor]);
-  const wheelModel = BOARD_COMPONENT_CATALOG.find((m) => m.seedKey === WHEEL_SEED[config.wheels]);
-  const battModel = BOARD_COMPONENT_CATALOG.find((m) => m.seedKey === BATTERY_SEED[config.battery]);
 
   const deckDesc  = deck?.description  ?? config.boardType;
   const driveDesc = drive?.description ?? config.drivetrain;
   const motorDesc = motor?.description ?? config.motor;
   const wheelDesc = wheel?.description ?? config.wheels;
   const battDesc  = batt?.description  ?? config.battery;
-  const deckVisual = deckModel
-    ? sanitizeBoardComponentPromptDescription(deckModel.description)
-    : `${deckDesc} Deck shape and stance must clearly match a ${config.boardType} setup.`;
-  const driveVisual = driveModel
-    ? sanitizeBoardComponentPromptDescription(driveModel.description)
-    : (
+  const deckVisual = getBoardCatalogPromptDescription(BOARD_TYPE_DECK_SEED[config.boardType])
+    ?? `${deckDesc} Deck shape and stance must clearly match a ${config.boardType} setup.`;
+  const driveVisual = getBoardCatalogPromptDescription(DRIVETRAIN_SEED[config.drivetrain])
+    ?? (
       config.drivetrain === "AWD"
-        ? "A four-wheel-drive electric skateboard drivetrain with powered front and rear trucks, dual motor hardware on both axles, heavy-duty mounts, and visible off-road engineering."
+        ? AWD_DRIVETRAIN_VISUAL
         : driveDesc
     );
-  const motorVisual = motorModel
-    ? sanitizeBoardComponentPromptDescription(motorModel.description)
-    : motorDesc;
-  const wheelVisual = wheelModel
-    ? sanitizeBoardComponentPromptDescription(wheelModel.description)
-    : (
+  const motorVisual = getBoardCatalogPromptDescription(MOTOR_SEED[config.motor]) ?? motorDesc;
+  const wheelVisual = getBoardCatalogPromptDescription(WHEEL_SEED[config.wheels])
+    ?? (
       config.wheels === "Rubber"
-        ? "A set of four solid rubber all-terrain skateboard wheels, matte black, thick sidewalls, heavy-duty cores, and puncture-proof construction."
+        ? RUBBER_WHEEL_VISUAL
         : wheelDesc
     );
-  const battVisual = battModel
-    ? sanitizeBoardComponentPromptDescription(battModel.description)
-    : battDesc;
+  const battVisual = getBoardCatalogPromptDescription(BATTERY_SEED[config.battery]) ?? battDesc;
   const batteryPlacement = batt?.isTopMounted
     ? "The battery must be visibly mounted on top of the deck."
     : "The battery must be visibly mounted underneath the deck.";

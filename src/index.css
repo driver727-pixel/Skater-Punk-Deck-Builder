@@ -5927,6 +5927,56 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   gap: 16px;
 }
 
+/* ===== Frame Preview (/dev/frame-preview) ===== */
+.frame-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+.frame-preview-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,0.06), transparent 36%),
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+}
+
+.frame-preview-canvas {
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.06), transparent 50%),
+    #06080d;
+}
+
+.frame-preview-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5 / 7;
+}
+
+.frame-preview-meta h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.frame-preview-meta p {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
 /* ===== Mission ===== */
 
 .mission-panel {

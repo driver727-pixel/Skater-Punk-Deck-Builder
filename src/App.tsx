@@ -48,6 +48,7 @@ const AccountSettings = lazy(() => import("./pages/AccountSettings").then(m => (
 const Admin           = lazy(() => import("./pages/Admin").then(m => ({ default: m.Admin })));
 const AssetGenerator  = lazy(() => import("./pages/AssetGenerator").then(m => ({ default: m.AssetGenerator })));
 const BattleArena     = lazy(() => import("./pages/BattleArena").then(m => ({ default: m.BattleArena })));
+const FramePreview    = lazy(() => import("./pages/FramePreview").then(m => ({ default: m.FramePreview })));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
@@ -120,6 +121,7 @@ function App() {
                       <Route path="/dev/asset-generator" element={
                         <AdminRoute><AssetGenerator /></AdminRoute>
                       } />
+                      <Route path="/dev/frame-preview" element={<FramePreview />} />
                     </Routes>
                   </Suspense>
                 </main>

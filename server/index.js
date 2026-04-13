@@ -90,8 +90,8 @@ const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || process.env.VITE_FIREBA
 const FIREBASE_AUTH_URL = 'https://identitytoolkit.googleapis.com/v1/accounts';
 const FAL_URL = process.env.FAL_IMAGE_MODEL_URL || 'https://fal.run/fal-ai/flux-lora';
 const FAL_LORA_PATH = process.env.FAL_LORA_PATH || 'https://v3b.fal.media/files/b/0a961b80/LZYfVjdfVXWWb7gMl4kL2_pytorch_lora_weights.safetensors';
-const parsedFalLoraScale = Number.parseFloat(process.env.FAL_LORA_SCALE || '1');
-const FAL_LORA_SCALE = Number.isFinite(parsedFalLoraScale) ? parsedFalLoraScale : 1;
+const rawFalLoraScale = Number.parseFloat(process.env.FAL_LORA_SCALE || '1');
+const FAL_LORA_SCALE = Number.isFinite(rawFalLoraScale) ? rawFalLoraScale : 1;
 const DEFAULT_FAL_LORAS = FAL_LORA_PATH
   ? [{ path: FAL_LORA_PATH, scale: FAL_LORA_SCALE }]
   : [];
@@ -197,7 +197,7 @@ function buildFallbackDistrictWeatherPayload() {
 }
 
 function buildFalImageRequest(body = {}) {
-  const hasOwnLoras = Object.prototype.hasOwnProperty.call(body, 'loras');
+  const hasOwnLoras = Object.hasOwn(body, 'loras');
   return {
     ...body,
     image_size: body.image_size ?? DEFAULT_FAL_IMAGE_SIZE,

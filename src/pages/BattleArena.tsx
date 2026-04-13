@@ -11,24 +11,14 @@ import {
   formatStatLabel,
 } from "../lib/battle";
 import { CardThumbnail } from "../components/CardThumbnail";
-import { sfxBattleClash, sfxBattleWin, sfxBattleLose, sfxBattleReady } from "../lib/sfx";
-
-// ── Confetti burst (simple CSS-based) ───────────────────────────────────────
-
-function spawnConfetti(container: HTMLElement) {
-  const colors = ["#00ff88", "#00ccff", "#cc44ff", "#ffdd00", "#ff6644", "#ff44aa"];
-  for (let i = 0; i < 60; i++) {
-    const dot = document.createElement("span");
-    dot.className = "confetti-particle";
-    dot.style.setProperty("--x", `${(Math.random() - 0.5) * 320}px`);
-    dot.style.setProperty("--y", `${-Math.random() * 260 - 40}px`);
-    dot.style.setProperty("--r", `${Math.random() * 720 - 360}deg`);
-    dot.style.setProperty("--d", `${0.6 + Math.random() * 0.6}s`);
-    dot.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-    container.appendChild(dot);
-    setTimeout(() => dot.remove(), 1400);
-  }
-}
+import {
+  sfxBattleClash,
+  sfxBattleWin,
+  sfxBattleLose,
+  sfxBattleReady,
+  sfxRewardShower,
+} from "../lib/sfx";
+import { spawnCelebrationBurst } from "../lib/celebration";
 
 // ── Battle animation overlay ────────────────────────────────────────────────
 
@@ -85,9 +75,26 @@ function OutcomePopup({ result, myUid, onDismiss }: OutcomePopupProps) {
   const popupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (isDraw) return;
+
     if (isWinner) {
       sfxBattleWin();
-      if (popupRef.current) spawnConfetti(popupRef.current);
+      sfxRewardShower();
+      if (!popupRef.current) return;
+      spawnCelebrationBurst(popupRef.current, { particles: 86, spreadX: 420, spreadY: 320 });
+      const burstTimers = [
+        window.setTimeout(() => {
+          if (popupRef.current) {
+            spawnCelebrationBurst(popupRef.current, { particles: 54, spreadX: 300, spreadY: 220 });
+          }
+        }, 220),
+        window.setTimeout(() => {
+          if (popupRef.current) {
+            spawnCelebrationBurst(popupRef.current, { particles: 42, spreadX: 260, spreadY: 200 });
+          }
+        }, 520),
+      ];
+      return () => burstTimers.forEach((timer) => window.clearTimeout(timer));
     } else if (!isDraw) {
       sfxBattleLose();
     }
@@ -99,7 +106,21 @@ function OutcomePopup({ result, myUid, onDismiss }: OutcomePopupProps) {
 
   return (
     <div className="battle-outcome-overlay" onClick={onDismiss}>
-      <div className="battle-outcome-popup" ref={popupRef} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`battle-outcome-popup${isWinner && !isDraw ? " battle-outcome-popup--win" : ""}`}
+        ref={popupRef}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {isWinner && !isDraw && (
+          <>
+            <div className="battle-outcome-spotlight" aria-hidden="true" />
+            <div className="battle-outcome-lasers" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+          </>
+        )}
         {isWinner && !isDraw && (
           <div className="battle-outcome-congrats">
             <span className="battle-outcome-trophy">🏆</span>
@@ -133,6 +154,19 @@ function OutcomePopup({ result, myUid, onDismiss }: OutcomePopupProps) {
             <span className="battle-outcome-score-value">{theirScore}</span>
           </div>
         </div>
+
+        {isWinner && !isDraw && (
+          <div className="battle-outcome-rewards">
+            <div className="battle-outcome-reward-card battle-outcome-reward-card--primary">
+              <span className="battle-outcome-reward-label">Wager collected</span>
+              <strong className="battle-outcome-reward-value">+{result.wagerPoints} stats</strong>
+            </div>
+            <div className="battle-outcome-reward-card">
+              <span className="battle-outcome-reward-label">Deck powered up</span>
+              <strong className="battle-outcome-reward-value">{result.winningDeckCardIds.length} winners juiced</strong>
+            </div>
+          </div>
+        )}
 
         {isWinner && !isDraw && (
           <p className="battle-outcome-bonus">

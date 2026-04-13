@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CardThumbnail } from "../components/CardThumbnail";
 import { GeoAtlas } from "../components/GeoAtlas";
@@ -35,6 +35,8 @@ import {
 } from "../lib/roadCorridors";
 import { MISSION_STAT_LABELS } from "../lib/statLabels";
 import type { District, RoadCorridor } from "../lib/types";
+import { spawnCelebrationBurst } from "../lib/celebration";
+import { sfxError, sfxRewardShower, sfxSuccess, sfxSuccessPing } from "../lib/sfx";
 
 const MISSION_MARKER_OFFSET_Y = -76;
 const DISTRICT_MARKER_OFFSETS = [
@@ -105,6 +107,7 @@ export function Mission() {
   const [pendingFork, setPendingFork] = useState<MissionForkPrompt | null>(null);
   const [forkChoices, setForkChoices] = useState<Record<string, ForkChoice>>({});
   const [claimedPartsRewardId, setClaimedPartsRewardId] = useState<string | null>(null);
+  const missionResultRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!activeDeckId && decks.length > 0) {
@@ -294,6 +297,46 @@ export function Mission() {
     updateCardInDecks(upgradedCard);
     setClaimedPartsRewardId(reward.id);
   };
+
+  useEffect(() => {
+    if (!missionResult) return;
+
+    if (!missionResult.success) {
+      sfxError();
+      return;
+    }
+
+    sfxSuccess();
+    const pingTimer = window.setTimeout(() => {
+      sfxSuccessPing();
+      if (missionResult.ozziesReward > 0 || missionResult.partsReward) {
+        sfxRewardShower();
+      }
+    }, 120);
+
+    if (!missionResultRef.current) {
+      return () => window.clearTimeout(pingTimer);
+    }
+
+    spawnCelebrationBurst(missionResultRef.current, { particles: 82, spreadX: 420, spreadY: 320 });
+    const burstTimers = [
+      window.setTimeout(() => {
+        if (missionResultRef.current) {
+          spawnCelebrationBurst(missionResultRef.current, { particles: 50, spreadX: 280, spreadY: 220 });
+        }
+      }, 240),
+      window.setTimeout(() => {
+        if (missionResultRef.current) {
+          spawnCelebrationBurst(missionResultRef.current, { particles: 40, spreadX: 240, spreadY: 180 });
+        }
+      }, 520),
+    ];
+
+    return () => {
+      window.clearTimeout(pingTimer);
+      burstTimers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [missionResult]);
 
   return (
     <div className="page">
@@ -590,8 +633,53 @@ export function Mission() {
             )}
 
             {missionResult && (
-              <section className="mission-panel">
-                <h3>{missionResult.success ? "Mission Complete" : "Mission Failed"}</h3>
+              <section
+                ref={missionResultRef}
+                className={`mission-panel mission-result-panel${missionResult.success ? " mission-result-panel--success" : " mission-result-panel--fail"}`}
+              >
+                {missionResult.success && (
+                  <div className="mission-result-panel__beams" aria-hidden="true">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                )}
+                <div className="mission-result">
+                  <span className={`mission-result__badge ${missionResult.success ? "mission-result__badge--success" : "mission-result__badge--fail"}`}>
+                    {missionResult.success ? "MISSION CLEARED" : "MISSION FAILED"}
+                  </span>
+                  <div className="mission-result__hero">
+                    <div>
+                      <h3>{missionResult.success ? "Mission Complete" : "Mission Failed"}</h3>
+                      <p className="page-sub">
+                        {missionResult.success
+                          ? missionResult.ozziesReward > 0 || missionResult.partsReward
+                            ? "Runner touched down with fresh loot and a whole lot of swagger."
+                            : "Runner made it back clean."
+                          : "The route fought back harder than your crew could handle."}
+                      </p>
+                    </div>
+                    {missionResult.success && (missionResult.ozziesReward > 0 || missionResult.partsReward) && (
+                      <span className="mission-result__headline">JACKPOT</span>
+                    )}
+                  </div>
+                  {missionResult.success && (missionResult.ozziesReward > 0 || missionResult.partsReward) && (
+                    <div className="mission-result__rewards">
+                      {missionResult.ozziesReward > 0 && (
+                        <div className="mission-result__reward-card mission-result__reward-card--ozzies">
+                          <span className="mission-result__reward-label">Ozzies haul</span>
+                          <strong className="mission-result__reward-value">💰 {missionResult.ozziesReward}</strong>
+                        </div>
+                      )}
+                      {missionResult.partsReward && (
+                        <div className="mission-result__reward-card mission-result__reward-card--parts">
+                          <span className="mission-result__reward-label">Parts upgrade</span>
+                          <strong className="mission-result__reward-value">🧩 {missionResult.partsReward.rewardLabel}</strong>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <div className="mission-stats">
                   <div className="mission-stat-row">
                     <span className="mission-stat-label">Outcome</span>

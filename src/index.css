@@ -6058,6 +6058,69 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   gap: 12px;
   margin-bottom: 12px;
 }
+.mission-result__hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+.mission-result__headline {
+  display: inline-flex;
+  align-self: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,221,0,0.5);
+  background: linear-gradient(135deg, rgba(255,221,0,0.24), rgba(255,120,68,0.2));
+  color: #fff3a1;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  box-shadow: 0 0 20px rgba(255,221,0,0.2);
+}
+.mission-result__rewards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.mission-result__reward-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.24);
+}
+.mission-result__reward-card::after {
+  content: "";
+  position: absolute;
+  inset: -30% auto -30% -45%;
+  width: 42%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transform: rotate(18deg);
+  animation: reward-sheen 2.4s ease-in-out infinite;
+}
+.mission-result__reward-card--ozzies {
+  border-color: rgba(255,221,0,0.42);
+  background: linear-gradient(180deg, rgba(255,221,0,0.14), rgba(0,0,0,0.28));
+}
+.mission-result__reward-card--parts {
+  border-color: rgba(0,204,255,0.36);
+  background: linear-gradient(180deg, rgba(0,204,255,0.12), rgba(0,0,0,0.28));
+}
+.mission-result__reward-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.mission-result__reward-value {
+  font-size: 18px;
+  letter-spacing: 0.03em;
+}
 .mission-weather {
   margin-top: 14px;
   padding: 12px 14px;
@@ -6135,6 +6198,49 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .mission-result__badge--fail {
   background: rgba(255,68,102,0.14);
   color: var(--danger);
+}
+.mission-result-panel {
+  position: relative;
+  overflow: hidden;
+}
+.mission-result-panel--success {
+  border-color: rgba(255,221,0,0.3);
+  background:
+    radial-gradient(circle at top, rgba(255,221,0,0.12), transparent 42%),
+    linear-gradient(180deg, rgba(0,255,136,0.06), rgba(255,255,255,0.015));
+  box-shadow:
+    0 0 24px rgba(255,221,0,0.08),
+    0 0 36px rgba(0,255,136,0.08);
+}
+.mission-result-panel--fail {
+  border-color: rgba(255,68,102,0.22);
+}
+.mission-result-panel__beams {
+  position: absolute;
+  inset: -20% -10% auto;
+  display: flex;
+  justify-content: center;
+  gap: 14%;
+  pointer-events: none;
+}
+.mission-result-panel__beams span {
+  width: 20%;
+  height: 220px;
+  background: linear-gradient(180deg, rgba(255,221,0,0.28), rgba(0,204,255,0));
+  filter: blur(12px);
+  transform: rotate(var(--beam-rotate, 0deg));
+  animation: reward-beam-pulse 2.6s ease-in-out infinite;
+}
+.mission-result-panel__beams span:nth-child(1) {
+  --beam-rotate: -16deg;
+}
+.mission-result-panel__beams span:nth-child(2) {
+  --beam-rotate: 0deg;
+  animation-delay: 0.25s;
+}
+.mission-result-panel__beams span:nth-child(3) {
+  --beam-rotate: 16deg;
+  animation-delay: 0.5s;
 }
 .mission-log {
   margin: 0;
@@ -6222,6 +6328,12 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
     grid-template-columns: 1fr;
   }
   .mission-fork__options {
+    grid-template-columns: 1fr;
+  }
+  .mission-result__hero {
+    flex-direction: column;
+  }
+  .battle-outcome-rewards {
     grid-template-columns: 1fr;
   }
 }
@@ -6545,6 +6657,12 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   text-align: center;
   overflow: visible;
 }
+.battle-outcome-popup--win {
+  border-color: rgba(255,221,0,0.42);
+  background:
+    radial-gradient(circle at top, rgba(255,221,0,0.12), transparent 46%),
+    var(--bg2);
+}
 
 .battle-outcome-congrats { margin-bottom: 18px; }
 .battle-outcome-trophy { font-size: 52px; display: block; margin-bottom: 8px; }
@@ -6570,6 +6688,46 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .battle-outcome-score-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
 .battle-outcome-score-value { font-size: 28px; font-weight: 700; color: var(--accent2); }
 .battle-outcome-score-vs { font-size: 16px; color: var(--text-dim); }
+.battle-outcome-rewards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.battle-outcome-reward-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+}
+.battle-outcome-reward-card::after {
+  content: "";
+  position: absolute;
+  inset: -25% auto -25% -40%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+  transform: rotate(20deg);
+  animation: reward-sheen 2.6s ease-in-out infinite;
+}
+.battle-outcome-reward-card--primary {
+  border-color: rgba(255,221,0,0.42);
+  background: linear-gradient(180deg, rgba(255,221,0,0.12), rgba(255,255,255,0.03));
+}
+.battle-outcome-reward-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+.battle-outcome-reward-value {
+  font-size: 15px;
+  color: var(--text);
+}
 
 .battle-outcome-bonus {
   font-size: 13px;
@@ -6587,17 +6745,63 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 /* ===== Confetti Particles ===== */
 .confetti-particle {
   position: absolute;
-  width: 8px;
-  height: 8px;
+  width: var(--s, 8px);
+  height: var(--s, 8px);
   border-radius: 2px;
   top: 50%;
   left: 50%;
   pointer-events: none;
+  box-shadow: 0 0 10px currentColor;
+  animation-delay: var(--delay, 0s);
   animation: confetti-pop var(--d, 0.8s) cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
 }
 @keyframes confetti-pop {
   0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
   100% { transform: translate(var(--x, 0), var(--y, -100px)) rotate(var(--r, 180deg)); opacity: 0; }
+}
+@keyframes reward-sheen {
+  0% { transform: translateX(0) rotate(20deg); opacity: 0; }
+  20%, 80% { opacity: 0.8; }
+  100% { transform: translateX(340%) rotate(20deg); opacity: 0; }
+}
+@keyframes reward-beam-pulse {
+  0%, 100% { opacity: 0.2; transform: rotate(var(--beam-rotate, 0deg)) scaleY(0.82); }
+  50% { opacity: 0.55; transform: rotate(var(--beam-rotate, 0deg)) scaleY(1.04); }
+}
+.battle-outcome-spotlight {
+  position: absolute;
+  inset: -28% 10% auto;
+  height: 220px;
+  background: radial-gradient(circle, rgba(255,221,0,0.24), rgba(255,221,0,0) 72%);
+  filter: blur(14px);
+  pointer-events: none;
+}
+.battle-outcome-lasers {
+  position: absolute;
+  inset: 12px 0 auto;
+  display: flex;
+  justify-content: center;
+  gap: 18%;
+  pointer-events: none;
+}
+.battle-outcome-lasers span {
+  width: 16%;
+  height: 180px;
+  background: linear-gradient(180deg, rgba(0,204,255,0.25), rgba(255,0,204,0));
+  filter: blur(10px);
+  transform: rotate(var(--beam-rotate, 0deg));
+  animation: reward-beam-pulse 2.2s ease-in-out infinite;
+}
+.battle-outcome-lasers span:nth-child(1) {
+  --beam-rotate: -15deg;
+}
+.battle-outcome-lasers span:nth-child(2) {
+  --beam-rotate: 0deg;
+  animation-delay: 0.2s;
+}
+.battle-outcome-lasers span:nth-child(3) {
+  --beam-rotate: 15deg;
+  animation-delay: 0.4s;
 }
 
 /* ===== Build Number ===== */

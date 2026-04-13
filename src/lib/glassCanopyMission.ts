@@ -615,11 +615,11 @@ export const ROAD_EVENTS: RoadEventDefinition[] = [
   },
 ];
 
-function getRoadEventDefinition(roadEventId: string, missionId: string): RoadEventDefinition | null {
+function getRoadEventDefinition(roadEventId: string, contextMissionId: string): RoadEventDefinition | null {
   const roadEvent = ROAD_EVENTS.find((entry) => entry.id === roadEventId) ?? null;
   if (!roadEvent) {
     console.warn(
-      `[Mission] Unknown road event referenced: ${roadEventId} in mission ${missionId}. Check roadEventIds on that mission blueprint.`,
+      `[Mission] Unknown road event referenced: ${roadEventId} in mission ${contextMissionId}. Check roadEventIds on that mission blueprint.`,
     );
   }
   return roadEvent;

@@ -261,7 +261,7 @@ export function GeoAtlas({ compact = false, className, markers = [], corridors =
             const artery = DISTRICT_ARTERIES.find((route) => route.label === marker.corridor);
             if (!artery) {
               console.warn(
-                `[GeoAtlas] Unknown corridor marker route: ${marker.corridor}. Add it to DISTRICT_ARTERIES or check the corridor id for typos.`,
+                `[GeoAtlas] Unknown corridor marker route: ${marker.corridor}. Add it to DISTRICT_ARTERIES or check the corridor ID for typos.`,
               );
               return null;
             }

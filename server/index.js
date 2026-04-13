@@ -92,6 +92,9 @@ const FAL_URL = process.env.FAL_IMAGE_MODEL_URL || 'https://fal.run/fal-ai/flux-
 const FAL_LORA_PATH = process.env.FAL_LORA_PATH || 'https://v3b.fal.media/files/b/0a961b80/LZYfVjdfVXWWb7gMl4kL2_pytorch_lora_weights.safetensors';
 const rawFalLoraScale = Number.parseFloat(process.env.FAL_LORA_SCALE || '1');
 const FAL_LORA_SCALE = Number.isFinite(rawFalLoraScale) ? rawFalLoraScale : 1;
+if (process.env.FAL_LORA_SCALE && !Number.isFinite(rawFalLoraScale)) {
+  console.warn('⚠️  FAL_LORA_SCALE is invalid — falling back to 1.');
+}
 const DEFAULT_FAL_LORAS = FAL_LORA_PATH
   ? [{ path: FAL_LORA_PATH, scale: FAL_LORA_SCALE }]
   : [];
@@ -197,7 +200,7 @@ function buildFallbackDistrictWeatherPayload() {
 }
 
 function buildFalImageRequest(body = {}) {
-  const hasOwnLoras = Object.hasOwn(body, 'loras');
+  const requestedLoras = Array.isArray(body.loras) ? body.loras : undefined;
   return {
     ...body,
     image_size: body.image_size ?? DEFAULT_FAL_IMAGE_SIZE,
@@ -206,7 +209,7 @@ function buildFalImageRequest(body = {}) {
     num_images: body.num_images ?? DEFAULT_FAL_NUM_IMAGES,
     enable_safety_checker: body.enable_safety_checker ?? DEFAULT_FAL_ENABLE_SAFETY_CHECKER,
     output_format: body.output_format ?? DEFAULT_FAL_OUTPUT_FORMAT,
-    loras: hasOwnLoras ? body.loras : DEFAULT_FAL_LORAS,
+    loras: requestedLoras ?? DEFAULT_FAL_LORAS,
   };
 }
 

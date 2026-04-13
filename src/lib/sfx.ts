@@ -34,6 +34,34 @@ function osc(
   }
 }
 
+/**
+ * Schedules a single musical layer relative to the current AudioContext time.
+ * Unlike `osc`, this helper handles delayed starts plus the standard fade-out
+ * envelope so higher-level fanfares can stack several tones at once.
+ */
+function layeredTone(
+  type: OscillatorType,
+  startAt: number,
+  duration: number,
+  frequency: number,
+  gain: number,
+  endFrequency?: number,
+) {
+  osc(type, (o, g, c) => {
+    const now = c.currentTime;
+    const t = now + startAt;
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.setValueAtTime(gain, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    o.frequency.setValueAtTime(frequency, t);
+    if (endFrequency && endFrequency !== frequency) {
+      o.frequency.exponentialRampToValueAtTime(endFrequency, t + duration);
+    }
+    o.start(t);
+    o.stop(t + duration);
+  });
+}
+
 // ── Play a wav file from the public/assets/sounds directory ─────────────────
 
 function playFile(path: string) {
@@ -138,17 +166,12 @@ export function sfxBattleClash() {
 
 /** Battle win – ascending fanfare. */
 export function sfxBattleWin() {
-  osc("square", (o, g, c) => {
-    const t = c.currentTime;
-    o.frequency.setValueAtTime(523, t);
-    o.frequency.setValueAtTime(659, t + 0.12);
-    o.frequency.setValueAtTime(784, t + 0.24);
-    o.frequency.setValueAtTime(1047, t + 0.36);
-    g.gain.setValueAtTime(0.2, t);
-    g.gain.exponentialRampToValueAtTime(0.01, t + 0.6);
-    o.start(t);
-    o.stop(t + 0.6);
-  });
+  layeredTone("square", 0, 0.18, 523, 0.12);
+  layeredTone("square", 0.12, 0.18, 659, 0.11);
+  layeredTone("square", 0.24, 0.2, 784, 0.11);
+  layeredTone("triangle", 0, 0.58, 262, 0.08, 392);
+  layeredTone("triangle", 0.36, 0.38, 1047, 0.12, 1319);
+  layeredTone("sine", 0.44, 0.3, 1568, 0.05, 1760);
 }
 
 /** Battle lose – descending bummer tone. */
@@ -176,4 +199,12 @@ export function sfxError() {
     o.start(t);
     o.stop(t + 0.18);
   });
+}
+
+/** Reward shower – bright pings for Ozzies, loot, and upgrades. */
+export function sfxRewardShower() {
+  layeredTone("triangle", 0, 0.18, 988, 0.09, 1175);
+  layeredTone("sine", 0.1, 0.16, 1319, 0.07, 1568);
+  layeredTone("triangle", 0.2, 0.2, 1760, 0.08, 2093);
+  layeredTone("sine", 0.28, 0.12, 2637, 0.04);
 }

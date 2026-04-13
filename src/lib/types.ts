@@ -18,7 +18,11 @@ export type Faction =
   | "The Wooders"
   | "Punch Skaters";
 
-export type District = "Airaway" | "The Roads" | "Batteryville" | "The Grid" | "Electropolis" | "Nightshade" | "The Forest" | "Glass City";
+export type District = "Airaway" | "Batteryville" | "The Grid" | "Nightshade" | "The Forest" | "Glass City";
+export type HiddenDistrict = "Electropolis";
+export type CorridorHub = "The Roads";
+export type WorldLocation = District | HiddenDistrict | CorridorHub;
+export type RoadCorridor = "Surface Corridor" | "Freight Artery" | "Underpass Tunnel" | "Timber Route";
 export type Archetype =
   | "The Knights Technarchy"
   | "Qu111s"
@@ -45,11 +49,12 @@ export type Style =
   | "Olympic";
 export type Gender = "Woman" | "Man" | "Non-binary";
 export type AgeGroup = "Young Adult" | "Adult" | "Middle-aged" | "Senior";
-export type BodyType = "Slim" | "Athletic" | "Average" | "Stocky" | "Heavy" | "Wiry" | "Pear-shaped" | "Lanky" | "Barrel-chested";
-export type HairLength = "Bald" | "Buzzcut" | "Short" | "Medium" | "Long" | "Very Long";
+export type BodyType = "Slim" | "Athletic" | "Average" | "Stocky" | "Heavy";
+export type HairLength = "Bald" | "Short" | "Medium" | "Long";
 export type HairColor = "Black" | "Brown" | "Blonde" | "Red" | "Gray" | "White" | "Auburn" | "Dyed Bright";
 export type SkinTone = "Very Light" | "Light" | "Medium Light" | "Medium" | "Medium Dark" | "Dark" | "Very Dark";
 export type FaceCharacter = "Conventional" | "Weathered" | "Scarred" | "Asymmetric" | "Rugged" | "Baby-faced" | "Gaunt" | "Round-faced";
+export type ShoeStyle = "Skate Shoes" | "High Tops" | "Chunky Sneakers" | "Work Boots" | "Trail Runners";
 
 export interface CardPrompts {
   archetype: Archetype;
@@ -66,6 +71,7 @@ export interface CardPrompts {
   hairColor?: HairColor;
   skinTone?: SkinTone;
   faceCharacter?: FaceCharacter;
+  shoeStyle?: ShoeStyle;
 }
 
 // ── Conlang overlay (CraftLingua integration) ─────────────────────────────────
@@ -164,6 +170,19 @@ export interface DeckPayload {
 /** Stat keys used for wager deduction and battle resolution. */
 export type StatKey = "speed" | "stealth" | "tech" | "grit" | "rep";
 
+/** Minimal public card snapshot used for readying decks and resolving battles. */
+export interface BattleCardSnapshot {
+  id: string;
+  archetype: Archetype;
+  stats: CardPayload["stats"];
+}
+
+/** Exact post-battle stats to apply to a player's affected cards. */
+export interface BattleCardResolution {
+  id: string;
+  stats: CardPayload["stats"];
+}
+
 /** Public scouting data shown for battle-ready decks in the arena. */
 export interface ArenaDeckSummary {
   deckPower: number;
@@ -181,6 +200,7 @@ export interface ArenaEntry {
   deckName: string;
   cardCount: number;
   battleSummary?: ArenaDeckSummary;
+  battleDeck?: BattleCardSnapshot[];
   /** Timestamp when the deck was readied. */
   readiedAt: string;
 }
@@ -189,8 +209,10 @@ export interface ArenaEntry {
 export interface BattleResult {
   id: string;
   challengerUid: string;
+  challengerDeckId: string;
   challengerDeckName: string;
   defenderUid: string;
+  defenderDeckId: string;
   defenderDeckName: string;
   winnerUid: string;
   challengerScore: number;
@@ -198,6 +220,8 @@ export interface BattleResult {
   wagerPoints: number;
   /** Card IDs in the winning deck that can receive bonus points. */
   winningDeckCardIds: string[];
+  challengerCardResolutions: BattleCardResolution[];
+  defenderCardResolutions: BattleCardResolution[];
   createdAt: string;
 }
 

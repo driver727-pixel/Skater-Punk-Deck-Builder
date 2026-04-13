@@ -278,8 +278,8 @@ export interface BoardComponentModel {
   speed?: number;
   /** Acceleration rating 1–10 (Drivetrains only). */
   acceleration?: number;
-  /** Ideal terrain district (Wheels only). */
-  district?: string;
+  /** Terrain / district access profile (Wheels only). */
+  accessProfile?: string;
   /** Range rating 1–10 (Batteries only). */
   range?: number;
   /** Whether the battery mounts on top of the deck (Batteries only). */
@@ -333,7 +333,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
       "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. A 100mm electric skateboard wheel, high-rebound translucent orange urethane, smooth surface, precision bearing seat, 80A durometer texture, realistic lighting.",
     seedKey: "wheel-100mm-urethane-street",
     icon: "🟡",
-    district: "Electropolis",
+    accessProfile: "Urban district access",
   },
   {
     category: "Wheel",
@@ -342,7 +342,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
       "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. A 7-inch pneumatic all-terrain rubber tire for a skateboard, deep knobby tread pattern, black nylon hub, 3-spoke design, industrial look.",
     seedKey: "wheel-175mm-pneumatic-at",
     icon: "🟢",
-    district: "The Forest",
+    accessProfile: "Off-grid forest access",
   },
   {
     category: "Wheel",
@@ -351,7 +351,7 @@ export const BOARD_COMPONENT_CATALOG: BoardComponentModel[] = [
       "Isometric view 45 degree angle top down. Product photography shot. Art style of gouache painting. 120mm semi-transparent foamies skateboard wheels, honeycomb core pattern, curved contact patch, rubberized texture, teal color.",
     seedKey: "wheel-120mm-cloud-sliders",
     icon: "⚪",
-    district: "The Roads",
+    accessProfile: "Broken-corridor access",
   },
 
   // ── Drivetrains ────────────────────────────────────────────────────────────
@@ -574,9 +574,28 @@ export function getBoardComponentImageUrls(config: BoardConfig): BoardComponentI
 
 // ── Board image prompt builder ─────────────────────────────────────────────────
 
+function sanitizeBoardComponentPromptDescription(description: string): string {
+  return description
+    .replace(/^Isometric view 45 degree angle top down\.\s*/i, "")
+    .replace(/^Product photography shot\.\s*/i, "")
+    .replace(/^Art style of gouache painting\.\s*/i, "");
+}
+
+const FOUR_WHEEL_DRIVE_VISUAL =
+  "A four-wheel-drive electric skateboard drivetrain with powered front and rear trucks, dual motor hardware on both axles, heavy-duty mounts, and visible off-road engineering.";
+
+const RUBBER_WHEEL_VISUAL =
+  "A set of four solid rubber all-terrain skateboard wheels, matte black, thick sidewalls, heavy-duty cores, and puncture-proof construction.";
+
+function getBoardCatalogPromptDescription(seedKey: string | null | undefined): string | undefined {
+  if (!seedKey) return undefined;
+  const model = BOARD_COMPONENT_CATALOG.find((item) => item.seedKey === seedKey);
+  return model ? sanitizeBoardComponentPromptDescription(model.description) : undefined;
+}
+
 /**
  * Builds a single AI-generation prompt describing the fully assembled electric
- * skateboard from the four chosen components.  This prompt is used to generate
+ * skateboard from the five chosen components. This prompt is used to generate
  * the skateboard image that appears on the player card.
  */
 export function buildBoardImagePrompt(config: BoardConfig): string {
@@ -592,15 +611,47 @@ export function buildBoardImagePrompt(config: BoardConfig): string {
   const motorDesc = motor?.description ?? normalizedConfig.motor;
   const wheelDesc = wheel?.description ?? normalizedConfig.wheels;
   const battDesc  = batt?.description  ?? normalizedConfig.battery;
+  const deckVisual = getBoardCatalogPromptDescription(BOARD_TYPE_DECK_SEED[normalizedConfig.boardType])
+    ?? `${deckDesc} Deck shape and stance must clearly match a ${normalizedConfig.boardType} setup.`;
+  const driveVisual = getBoardCatalogPromptDescription(DRIVETRAIN_SEED[normalizedConfig.drivetrain])
+    ?? (
+      normalizedConfig.drivetrain === "4WD"
+        ? FOUR_WHEEL_DRIVE_VISUAL
+        : driveDesc
+    );
+  const motorVisual = getBoardCatalogPromptDescription(MOTOR_SEED[normalizedConfig.motor]) ?? motorDesc;
+  const wheelVisual = getBoardCatalogPromptDescription(WHEEL_SEED[normalizedConfig.wheels])
+    ?? (
+      normalizedConfig.wheels === "Rubber"
+        ? RUBBER_WHEEL_VISUAL
+        : wheelDesc
+    );
+  const battVisual = getBoardCatalogPromptDescription(BATTERY_SEED[normalizedConfig.battery]) ?? battDesc;
+  const batteryPlacement = batt?.isTopMounted
+    ? "The battery must be visibly mounted on top of the deck."
+    : "The battery must be visibly mounted underneath the deck.";
+  const drivetrainConstraint =
+    normalizedConfig.drivetrain === "Hub"
+      ? "No exposed belts, pulleys, chains, or external gearboxes anywhere on the board."
+      : normalizedConfig.drivetrain === "Gear"
+        ? "Show enclosed gear-drive housings instead of belts."
+        : normalizedConfig.drivetrain === "Belt"
+          ? "Show exposed belts, pulleys, and rear motor mounts."
+          : "Show powered front and rear axles for a true 4WD setup.";
 
   return (
     `Isometric 45-degree hero illustration of a fully assembled ` +
     `DIY electric skateboard on a clean white studio background. ` +
-    `Deck: ${deckDesc} ` +
-    `Drivetrain: ${driveDesc} ` +
-    `Motor: ${motorDesc} ` +
-    `Wheels: ${wheelDesc} ` +
-    `Battery: ${battDesc} ` +
+    `Build one coherent board using exactly these selected parts with no substitutions: ` +
+    `Deck — ${deckVisual} ` +
+    `Drivetrain — ${driveVisual} ` +
+    `Motor — ${motorVisual} ` +
+    `Wheels — ${wheelVisual} ` +
+    `Battery — ${battVisual} ` +
+    `The assembled board must clearly preserve the selected deck shape, drivetrain hardware, motor size, wheel type, and battery form factor. ` +
+    `${batteryPlacement} ` +
+    `${drivetrainConstraint} ` +
+    `Single complete skateboard only, no rider, no extra loose parts, no exploded diagram, no duplicate components. ` +
     `Bold non-photoreal 1990s X-Men-era superhero comic-book rendering with crisp inked outlines, halftone texture, painted highlights, graphic shadows, ` +
     `vibrant saturated colors, sharp detail, clearly illustrated not photographed, not a product photo, not live-action, not a 3D render, isolated on white background.`
   );
@@ -608,7 +659,7 @@ export function buildBoardImagePrompt(config: BoardConfig): string {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-const LEGACY_FOUR_WHEEL_DRIVE = `A${"WD"}`;
+const LEGACY_FOUR_WHEEL_DRIVE = "A" + "WD";
 
 function normalizeDrivetrain(drivetrain: string): Drivetrain {
   return drivetrain === LEGACY_FOUR_WHEEL_DRIVE ? "4WD" : drivetrain as Drivetrain;
@@ -666,11 +717,17 @@ export const DEFAULT_BOARD_CONFIG: BoardConfig = {
 
 // ── Loadout stat defaults (used when a component has no catalog entry) ─────────
 
-const DEFAULT_STYLE    = "Custom";
-const DEFAULT_SPEED    = 5;
-const DEFAULT_ACCEL    = 5;
-const DEFAULT_DISTRICT = "The Roads";
-const DEFAULT_RANGE    = 5;
+const DEFAULT_STYLE = "Custom";
+const DEFAULT_SPEED = 5;
+const DEFAULT_ACCEL = 5;
+const DEFAULT_RANGE = 5;
+const WHEEL_ACCESS_PROFILES: Record<WheelType, string> = {
+  Urethane: "Urban district access",
+  Pneumatic: "Off-grid district access",
+  Rubber: "Heavy-duty district access",
+  Cloud: "Corridor glide access",
+};
+const DEFAULT_ACCESS_PROFILE = "General district access";
 
 
 /**
@@ -684,8 +741,8 @@ export interface BoardLoadout {
   speed: number;
   /** Acceleration rating determined by the motor (1–10). */
   acceleration: number;
-  /** Ideal terrain district from the selected wheel. */
-  district: string;
+  /** Wheel-driven district / corridor access profile. */
+  accessProfile: string;
   /** Battery range rating (1–10). */
   range: number;
 }
@@ -697,7 +754,7 @@ export interface BoardLoadout {
  *   Top Speed    ← Drivetrain
  *   Acceleration ← Motor
  *   Range        ← Battery
- *   District     ← Wheels
+ *   Access       ← Wheels
  *   Style        ← Deck
  */
 export function calculateBoardStats(config: BoardConfig): BoardLoadout {
@@ -718,7 +775,7 @@ export function calculateBoardStats(config: BoardConfig): BoardLoadout {
     style:        deckModel?.style         ?? DEFAULT_STYLE,
     speed:        driveModel?.speed        ?? DEFAULT_SPEED,
     acceleration: motorModel?.acceleration ?? DEFAULT_ACCEL,
-    district:     wheelModel?.district     ?? DEFAULT_DISTRICT,
+    accessProfile: wheelModel?.accessProfile ?? WHEEL_ACCESS_PROFILES[normalizedConfig.wheels] ?? DEFAULT_ACCESS_PROFILE,
     range:        batteryModel?.range      ?? DEFAULT_RANGE,
   };
 }

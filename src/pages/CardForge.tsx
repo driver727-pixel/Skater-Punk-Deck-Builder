@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import type { CardPrompts, CardPayload, Rarity, Style, District, Gender, AgeGroup, BodyType, Faction, HairLength, HairColor, SkinTone, FaceCharacter } from "../lib/types";
+import type { CardPrompts, CardPayload, Rarity, Style, District, Gender, AgeGroup, BodyType, Faction, HairLength, HairColor, SkinTone, FaceCharacter, ShoeStyle } from "../lib/types";
 import { generateCard } from "../lib/generator";
 import { CardDisplay } from "../components/CardDisplay";
 import { CardViewer3D } from "../components/CardViewer3D";
@@ -9,7 +9,7 @@ import { ReferralPanel } from "../components/ReferralPanel";
 import { generateImage, removeBackground, isImageGenConfigured, getImageDimensions, type ImageGenOptions } from "../services/imageGen";
 import { getCachedImage, setCachedImage } from "../services/imageCache";
 import { getStaticBackgroundUrl, getStaticBackgroundSmallUrl, getStaticFrameUrl } from "../services/staticAssets";
-import { buildCharacterPrompt, buildFramePrompt } from "../lib/promptBuilder";
+import { buildBackgroundPrompt, buildCharacterPrompt, buildFramePrompt } from "../lib/promptBuilder";
 import { useTier } from "../context/TierContext";
 import { useCollection } from "../hooks/useCollection";
 import { useFactionDiscovery } from "../hooks/useFactionDiscovery";
@@ -28,11 +28,12 @@ const STYLES: Style[] = ACTIVE_STYLES;
 const DISTRICTS: District[] = ["Airaway", "Nightshade", "Batteryville", "The Grid", "The Forest", "Glass City"];
 const GENDERS: Gender[] = ["Woman", "Man", "Non-binary"];
 const AGE_GROUPS: AgeGroup[] = ["Young Adult", "Adult", "Middle-aged", "Senior"];
-const BODY_TYPES: BodyType[] = ["Slim", "Athletic", "Average", "Stocky", "Heavy", "Wiry", "Pear-shaped", "Lanky", "Barrel-chested"];
-const HAIR_LENGTHS: HairLength[] = ["Bald", "Buzzcut", "Short", "Medium", "Long", "Very Long"];
+const BODY_TYPES: BodyType[] = ["Slim", "Athletic", "Average", "Stocky", "Heavy"];
+const HAIR_LENGTHS: HairLength[] = ["Bald", "Short", "Medium", "Long"];
 const HAIR_COLORS: HairColor[] = ["Black", "Brown", "Blonde", "Red", "Gray", "White", "Auburn", "Dyed Bright"];
 const SKIN_TONES: SkinTone[] = ["Very Light", "Light", "Medium Light", "Medium", "Medium Dark", "Dark", "Very Dark"];
 const FACE_CHARACTERS: FaceCharacter[] = ["Conventional", "Weathered", "Scarred", "Asymmetric", "Rugged", "Baby-faced", "Gaunt", "Round-faced"];
+const SHOE_STYLES: ShoeStyle[] = ["Skate Shoes", "High Tops", "Chunky Sneakers", "Work Boots", "Trail Runners"];
 
 const ACCENT_PRESETS = ["#00ff88", "#00ccff", "#ff4444", "#ffaa00", "#8b5cf6", "#ff66cc"];
 
@@ -42,11 +43,14 @@ const ACCENT_PRESETS = ["#00ff88", "#00ccff", "#ff4444", "#ffaa00", "#8b5cf6", "
 const MAX_LAYER_RETRIES = 1;
 const CHARACTER_CACHE_VERSION = "v3-adult-realism";
 const CHARACTER_GENERATION_OPTIONS: ImageGenOptions = {
-  imageSize: { width: 1024, height: 1536 },
+  imageSize: { width: 1088, height: 1536 },
   numInferenceSteps: 45,
   guidanceScale: 4,
 };
-const CHARACTER_MIN_DIMENSIONS = { width: 900, height: 1300 };
+const NON_LORA_GENERATION_OPTIONS: ImageGenOptions = {
+  loras: [],
+};
+const CHARACTER_MIN_DIMENSIONS = { width: 1088, height: 1536 };
 const CHARACTER_SEED_VARIANTS = ["hq-a", "hq-b"];
 
 /** Converts a display name to a kebab-case filename stem (e.g. "The Grid" → "the-grid"). */
@@ -91,7 +95,7 @@ export function CardForge() {
     archetype: "The Knights Technarchy", rarity: "Punch Skater", style: "Street",
     district: "Nightshade", accentColor: "#00ff88",
     gender: "Non-binary", ageGroup: "Adult", bodyType: "Athletic",
-    hairLength: "Short", hairColor: "Black", skinTone: "Medium", faceCharacter: "Conventional",
+    hairLength: "Short", hairColor: "Black", skinTone: "Medium", faceCharacter: "Conventional", shoeStyle: "Skate Shoes",
   });
   const [boardConfig, setBoardConfig] = useState<BoardConfig>(DEFAULT_BOARD_CONFIG);
   const [generated, setGenerated] = useState<CardPayload | null>(null);
@@ -344,7 +348,7 @@ export function CardForge() {
     }
 
     // Kick off all three layers in parallel
-    const bgPrompt    = "";
+    const bgPrompt    = buildBackgroundPrompt(prompts.district);
     const charPrompt  = buildCharacterPrompt(generationPrompts);
     const framePrompt = buildFramePrompt(prompts.rarity);
 
@@ -385,7 +389,12 @@ export function CardForge() {
         validateResult: validateCharacterLayer,
         generationOptions: CHARACTER_GENERATION_OPTIONS,
       },
-      frame:      { key: frameKey, prompt: framePrompt, seed: frameSeed  },
+      frame:      {
+        key: frameKey,
+        prompt: framePrompt,
+        seed: frameSeed,
+        generationOptions: NON_LORA_GENERATION_OPTIONS,
+      },
     };
 
     // Background layer
@@ -423,7 +432,10 @@ export function CardForge() {
           return;
         }
 
-        const result = await generateImage(boardPrompt, boardSeed, { imageSize: "square_hd" });
+        const result = await generateImage(boardPrompt, boardSeed, {
+          imageSize: "square_hd",
+          ...NON_LORA_GENERATION_OPTIONS,
+        });
         if (signal.aborted) return;
 
         await setCachedImage(boardCacheKey, result.imageUrl);
@@ -544,7 +556,7 @@ export function CardForge() {
     <div className="page">
       <span className="build-number">{__BUILD_NUMBER__}</span>
       <h1 className="page-title">CARD FORGE</h1>
-      <p className="page-sub">Configure your courier and forge a unique card</p>
+      <p className="page-sub">Configure your Sk8r and forge a unique card</p>
 
       <div className="forge-layout">
         {/* ── Left column: form controls ── */}
@@ -708,6 +720,21 @@ export function CardForge() {
                   key={opt}
                   className={`pill${prompts.faceCharacter === opt ? " selected" : ""}`}
                   onClick={() => set("faceCharacter", opt)}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Shoes</label>
+            <div className="pill-group">
+              {SHOE_STYLES.map((opt) => (
+                <button
+                  key={opt}
+                  className={`pill${prompts.shoeStyle === opt ? " selected" : ""}`}
+                  onClick={() => set("shoeStyle", opt)}
                 >
                   {opt}
                 </button>

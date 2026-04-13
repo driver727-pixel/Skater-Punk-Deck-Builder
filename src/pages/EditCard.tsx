@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { CardPayload, Rarity, Style, District, CardPrompts, Gender, AgeGroup, BodyType, HairLength, HairColor, SkinTone, FaceCharacter } from "../lib/types";
+import type { CardPayload, Rarity, Style, District, CardPrompts, Gender, AgeGroup, BodyType, HairLength, HairColor, SkinTone, FaceCharacter, ShoeStyle } from "../lib/types";
 import { generateCard } from "../lib/generator";
 import { CardDisplay } from "../components/CardDisplay";
 import { useCollection } from "../hooks/useCollection";
@@ -16,14 +16,36 @@ const STYLES: Style[] = ACTIVE_STYLES;
 const DISTRICTS: District[] = ["Airaway", "Nightshade", "Batteryville", "The Grid", "The Forest", "Glass City"];
 const GENDERS: Gender[] = ["Woman", "Man", "Non-binary"];
 const AGE_GROUPS: AgeGroup[] = ["Young Adult", "Adult", "Middle-aged", "Senior"];
-const BODY_TYPES: BodyType[] = ["Slim", "Athletic", "Average", "Stocky", "Heavy", "Wiry", "Pear-shaped", "Lanky", "Barrel-chested"];
-const HAIR_LENGTHS: HairLength[] = ["Bald", "Buzzcut", "Short", "Medium", "Long", "Very Long"];
+const BODY_TYPES: BodyType[] = ["Slim", "Athletic", "Average", "Stocky", "Heavy"];
+const HAIR_LENGTHS: HairLength[] = ["Bald", "Short", "Medium", "Long"];
 const HAIR_COLORS: HairColor[] = ["Black", "Brown", "Blonde", "Red", "Gray", "White", "Auburn", "Dyed Bright"];
 const SKIN_TONES: SkinTone[] = ["Very Light", "Light", "Medium Light", "Medium", "Medium Dark", "Dark", "Very Dark"];
 const FACE_CHARACTERS: FaceCharacter[] = ["Conventional", "Weathered", "Scarred", "Asymmetric", "Rugged", "Baby-faced", "Gaunt", "Round-faced"];
+const SHOE_STYLES: ShoeStyle[] = ["Skate Shoes", "High Tops", "Chunky Sneakers", "Work Boots", "Trail Runners"];
 const DEFAULT_AGE_GROUP: AgeGroup = "Adult";
 const DEFAULT_BODY_TYPE: BodyType = "Athletic";
+const DEFAULT_SHOE_STYLE: ShoeStyle = "Skate Shoes";
 const ACCENT_PRESETS = ["#00ff88", "#00ccff", "#ff4444", "#ffaa00", "#8b5cf6", "#ff66cc"];
+const LEGACY_BODY_TYPE_MAP: Record<string, BodyType> = {
+  Wiry: "Slim",
+  "Pear-shaped": "Average",
+  Lanky: "Slim",
+  "Barrel-chested": "Stocky",
+};
+const LEGACY_HAIR_LENGTH_MAP: Record<string, HairLength> = {
+  Buzzcut: "Short",
+  "Very Long": "Long",
+};
+
+function normalizeBodyType(bodyType?: string): BodyType {
+  if (bodyType && BODY_TYPES.includes(bodyType as BodyType)) return bodyType as BodyType;
+  return LEGACY_BODY_TYPE_MAP[bodyType ?? ""] ?? DEFAULT_BODY_TYPE;
+}
+
+function normalizeHairLength(hairLength?: string): HairLength {
+  if (hairLength && HAIR_LENGTHS.includes(hairLength as HairLength)) return hairLength as HairLength;
+  return LEGACY_HAIR_LENGTH_MAP[hairLength ?? ""] ?? "Short";
+}
 
 export function EditCard() {
   const { cardId } = useParams<{ cardId: string }>();
@@ -51,11 +73,12 @@ export function EditCard() {
         accentColor: original.prompts.accentColor,
         gender: (original.prompts.gender as Gender) ?? "Non-binary",
         ageGroup: (original.prompts.ageGroup as AgeGroup) ?? DEFAULT_AGE_GROUP,
-        bodyType: (original.prompts.bodyType as BodyType) ?? DEFAULT_BODY_TYPE,
-        hairLength: (original.prompts.hairLength as HairLength) ?? "Short",
+        bodyType: normalizeBodyType(original.prompts.bodyType),
+        hairLength: normalizeHairLength(original.prompts.hairLength),
         hairColor: (original.prompts.hairColor as HairColor) ?? "Black",
         skinTone: (original.prompts.skinTone as SkinTone) ?? "Medium",
         faceCharacter: (original.prompts.faceCharacter as FaceCharacter) ?? "Conventional",
+        shoeStyle: (original.prompts.shoeStyle as ShoeStyle) ?? DEFAULT_SHOE_STYLE,
       });
       if (original.board) setBoardConfig(normalizeBoardConfig({ ...DEFAULT_BOARD_CONFIG, ...original.board }));
       // Show the original card as starting preview
@@ -212,6 +235,15 @@ export function EditCard() {
             <div className="pill-group">
               {FACE_CHARACTERS.map((opt) => (
                 <button key={opt} className={`pill${prompts.faceCharacter === opt ? " selected" : ""}`} onClick={() => set("faceCharacter", opt)}>{opt}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Shoes</label>
+            <div className="pill-group">
+              {SHOE_STYLES.map((opt) => (
+                <button key={opt} className={`pill${prompts.shoeStyle === opt ? " selected" : ""}`} onClick={() => set("shoeStyle", opt)}>{opt}</button>
               ))}
             </div>
           </div>

@@ -304,6 +304,8 @@ export function Mission() {
   useEffect(() => {
     if (!missionResult) return;
 
+    const burstTimers: number[] = [];
+
     if (!missionResult.success) {
       sfxError();
       return;
@@ -317,23 +319,21 @@ export function Mission() {
       }
     }, 120);
 
-    if (!missionResultRef.current) {
-      return () => window.clearTimeout(pingTimer);
+    if (missionResultRef.current) {
+      spawnCelebrationBurst(missionResultRef.current, { particles: 82, spreadX: 420, spreadY: 320 });
+      burstTimers.push(
+        window.setTimeout(() => {
+          if (missionResultRef.current) {
+            spawnCelebrationBurst(missionResultRef.current, { particles: 50, spreadX: 280, spreadY: 220 });
+          }
+        }, 240),
+        window.setTimeout(() => {
+        if (missionResultRef.current) {
+            spawnCelebrationBurst(missionResultRef.current, { particles: 40, spreadX: 240, spreadY: 180 });
+          }
+        }, 520),
+      );
     }
-
-    spawnCelebrationBurst(missionResultRef.current, { particles: 82, spreadX: 420, spreadY: 320 });
-    const burstTimers = [
-      window.setTimeout(() => {
-        if (missionResultRef.current) {
-          spawnCelebrationBurst(missionResultRef.current, { particles: 50, spreadX: 280, spreadY: 220 });
-        }
-      }, 240),
-      window.setTimeout(() => {
-        if (missionResultRef.current) {
-          spawnCelebrationBurst(missionResultRef.current, { particles: 40, spreadX: 240, spreadY: 180 });
-        }
-      }, 520),
-    ];
 
     return () => {
       window.clearTimeout(pingTimer);

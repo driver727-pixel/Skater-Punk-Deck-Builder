@@ -75,14 +75,18 @@ function OutcomePopup({ result, myUid, onDismiss }: OutcomePopupProps) {
   const popupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isDraw) return;
+    const burstTimers: number[] = [];
+
+    if (isDraw) {
+      return () => burstTimers.forEach((timer) => window.clearTimeout(timer));
+    }
 
     if (isWinner) {
       sfxBattleWin();
       sfxRewardShower();
       if (!popupRef.current) return;
       spawnCelebrationBurst(popupRef.current, { particles: 86, spreadX: 420, spreadY: 320 });
-      const burstTimers = [
+      burstTimers.push(
         window.setTimeout(() => {
           if (popupRef.current) {
             spawnCelebrationBurst(popupRef.current, { particles: 54, spreadX: 300, spreadY: 220 });
@@ -93,11 +97,12 @@ function OutcomePopup({ result, myUid, onDismiss }: OutcomePopupProps) {
             spawnCelebrationBurst(popupRef.current, { particles: 42, spreadX: 260, spreadY: 200 });
           }
         }, 520),
-      ];
-      return () => burstTimers.forEach((timer) => window.clearTimeout(timer));
+      );
     } else {
       sfxBattleLose();
     }
+
+    return () => burstTimers.forEach((timer) => window.clearTimeout(timer));
   }, [isWinner, isDraw]);
 
   const iAmChallenger = result.challengerUid === myUid;

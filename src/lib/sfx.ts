@@ -34,6 +34,11 @@ function osc(
   }
 }
 
+/**
+ * Schedules a single musical layer relative to the current AudioContext time.
+ * Unlike `osc`, this helper handles delayed starts plus the standard fade-out
+ * envelope so higher-level fanfares can stack several tones at once.
+ */
 function layeredTone(
   type: OscillatorType,
   startAt: number,

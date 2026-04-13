@@ -320,7 +320,7 @@ export function buildImagePrompt(prompts: CardPrompts): string {
     `Environment: the background is ${district}.`,
     `Performance note: character is alert and ready to move.`,
     `Character is ${genderDesc}, ${ageDesc}, with ${bodyDesc}.`,
-    `${hairDesc}${skinDesc}${faceDesc}`,
+    `${hairDesc}${skinDesc}${faceDesc}${shoeDesc}`,
     `Mood: ${mood}.`,
     AGE_RESTRICTION,
     `Render goals: premium 1990s trading-card illustration energy, cinematic lighting, crisp detail, no cartoon, childlike, or simplified mascot proportions, 4K.`,

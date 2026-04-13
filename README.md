@@ -74,16 +74,10 @@ npm run test:e2e
 - [ ] Audit district backgrounds so each live forge district has both print and small variants
 - [ ] Review card/share/download flows and replace remaining generated stable layers with static assets where possible
 
-### If Electropolis and The Roads become forgeable districts
+### Future content decisions already locked
 
-- [ ] Add large backgrounds in `/home/runner/work/Punch-Skater/Punch-Skater/public/assets/backgrounds/`
-- [ ] Add matching small backgrounds in `/home/runner/work/Punch-Skater/Punch-Skater/public/assets/backgrounds/small/`
-- [ ] Register both sizes in `/home/runner/work/Punch-Skater/Punch-Skater/src/services/staticAssets.ts`
-
-### If the staged board-composite pipeline is kept
-
-- [ ] Upload the missing composite overlays in `/home/runner/work/Punch-Skater/Punch-Skater/public/assets/boards/`
-- [ ] Decide whether the motor layer should render in the composite output
+- [ ] Keep Electropolis as a lore/mission reveal only until its later playable rollout
+- [ ] Treat The Roads as a corridor gameplay layer where route events spawn, not as a forgeable district or standalone mission
 
 ### Nice-to-have immersion uploads
 
@@ -95,5 +89,5 @@ npm run test:e2e
 
 ## Known Follow-Ups
 
-- `useBoardLayerUrls` and `BoardComposite` are still staged systems and should be either wired into live card rendering or formally retired.
-- Electropolis and The Roads still need a product decision before they are exposed in the forge flow.
+- The retired BoardComposite pipeline should stay out of the live card flow unless it is deliberately rebuilt from scratch later.
+- Electropolis stays non-forgeable for now, while The Roads remain a separate route-event layer rather than a district selector.

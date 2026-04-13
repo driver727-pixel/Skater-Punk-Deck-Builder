@@ -142,16 +142,15 @@ export const DISTRICT_LORE: DistrictLoreEntry[] = [
   },
   {
     name: "The Roads",
-    controlledBy: "Uncontrolled — open courier territory",
+    controlledBy: "Corridor layer — open courier territory",
     australianAnalogue: "Nullarbor Plain / Stuart Highway",
-    tagline: "The cars left. We moved in. Nobody asked for permission.",
+    tagline: "Transit is its own battlefield.",
     description:
-      "When flying drone transport made ground vehicles obsolete, the UCA simply " +
-      "decommissioned the roads. In the Australian theatre that means the Nullarbor and the " +
-      "Stuart Highway: cracked asphalt, mirage heat, and straightaways that run for " +
-      "thousands of kilometres beyond reliable corporate reach. Courier networks run their " +
-      "most visible operations here. Speed is everything on the Roads, and the crews who " +
-      "survive them treat distance like a weapon.",
+      "The Roads are not a district or a mission hub. They are a separate gameplay layer: " +
+      "the cracked transit corridors between destinations where hijackings, raids, weather " +
+      "disasters, and other route events erupt mid-run. In the Australian theatre that means " +
+      "the Nullarbor and Stuart Highway: mirage heat, broken asphalt, and straightaways " +
+      "that run for thousands of kilometres beyond reliable corporate reach.",
     atmosphere: "Cracked asphalt, faded lane markings, open sky, Nullarbor wind, endless straightaways.",
     crews: ["Road Runners", "Asphalt Angels"],
     flavorTexts: [
@@ -205,11 +204,11 @@ export const DISTRICT_LORE: DistrictLoreEntry[] = [
   },
   {
     name: "Electropolis",
-    controlledBy: "City Security — the Fuzz",
+    controlledBy: "City Security — the Fuzz (future playable reveal)",
     australianAnalogue: "Brisbane CBD / Gold Coast surveillance strip",
     tagline: "Move along. Designated transit corridors only.",
     description:
-      "The city's law-and-order showcase — the polished corridor that plays like Brisbane " +
+      "The city's law-and-order showcase — a future playable corridor district that reads like Brisbane " +
       "CBD bleeding into the Gold Coast's holo-gloss strip. Wide boulevards glow under " +
       "Prism Media Group displays while city security known as the Fuzz keeps the " +
       "tourist-friendly frontage pristine. Skaters are tolerated only in designated " +

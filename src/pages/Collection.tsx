@@ -69,11 +69,8 @@ export function Collection() {
       }
       return changed ? next : prev;
     });
-
-    if (selected && !validIds.has(selected.id)) {
-      setSelected(null);
-    }
-  }, [cards, selected]);
+    setSelected((prev) => (prev && !validIds.has(prev.id) ? null : prev));
+  }, [cards]);
 
   // Derive unique values from actual cards for filter dropdowns
   const filterOptions = useMemo(() => {
@@ -294,7 +291,7 @@ export function Collection() {
               Import JSON
             </button>
             <button className="btn-outline" onClick={() => handleExport()} disabled={cards.length === 0}>
-              Export All JSON
+              Export All
             </button>
         </div>
       </div>

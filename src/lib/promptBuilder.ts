@@ -88,7 +88,37 @@ function joinPromptBlocks(...blocks: Array<string | undefined>): string {
 
 // ── Appearance helpers ──────────────────────────────────────────────────────────
 
-function buildHairDescription(hairLength?: string, hairColor?: string): string {
+function describeAccentColor(accentColor?: string): string {
+  const hex = accentColor?.trim();
+  if (!hex || !/^#?[0-9a-fA-F]{6}$/.test(hex)) return "bright unnatural colour";
+  const normalized = hex.startsWith("#") ? hex : `#${hex}`;
+  const red = Number.parseInt(normalized.slice(1, 3), 16) / 255;
+  const green = Number.parseInt(normalized.slice(3, 5), 16) / 255;
+  const blue = Number.parseInt(normalized.slice(5, 7), 16) / 255;
+  const max = Math.max(red, green, blue);
+  const min = Math.min(red, green, blue);
+  const delta = max - min;
+
+  if (delta < 0.08) return "bright silver-gray";
+
+  let hue = 0;
+  if (max === red) hue = ((green - blue) / delta) % 6;
+  else if (max === green) hue = (blue - red) / delta + 2;
+  else hue = (red - green) / delta + 4;
+  hue = Math.round(hue * 60);
+  if (hue < 0) hue += 360;
+
+  if (hue < 15 || hue >= 345) return "vivid red";
+  if (hue < 40) return "bright orange";
+  if (hue < 70) return "electric yellow";
+  if (hue < 160) return "neon green";
+  if (hue < 200) return "electric cyan";
+  if (hue < 255) return "electric blue";
+  if (hue < 290) return "electric violet";
+  return "hot pink";
+}
+
+function buildHairDescription(hairLength?: string, hairColor?: string, accentColor?: string): string {
   if (!hairLength && !hairColor) return "";
   if (hairLength === "Bald") return "Completely bald, clean-shaven head, no hair at all. ";
   const length =
@@ -106,8 +136,10 @@ function buildHairDescription(hairLength?: string, hairColor?: string): string {
     hairColor === "Gray"        ? "salt-and-pepper gray" :
     hairColor === "White"       ? "stark white" :
     hairColor === "Auburn"      ? "deep auburn" :
-    hairColor === "Dyed Bright" ? "vividly dyed unnatural colour (pink, blue, green, or purple)" :
     /* fallback */                "";
+  if (hairColor === "Dyed Bright") {
+    return `${length} dyed in a ${describeAccentColor(accentColor)} tone matching the selected accent color. `;
+  }
   return color ? `${color} ${length}. ` : `${length}. `;
 }
 
@@ -194,7 +226,7 @@ export function buildCharacterPrompt(prompts: CardPrompts, graffitiWords?: strin
   const ageDesc = buildAgeDescription(prompts.ageGroup);
   const bodyDesc = buildBodyDescription(prompts.bodyType);
 
-  const hairDesc = buildHairDescription(prompts.hairLength, prompts.hairColor);
+  const hairDesc = buildHairDescription(prompts.hairLength, prompts.hairColor, prompts.accentColor);
   const skinDesc = buildSkinDescription(prompts.skinTone);
   const faceDesc = buildFaceDescription(prompts.faceCharacter);
   const shoeDesc = buildShoeDescription(prompts.shoeStyle);
@@ -329,7 +361,7 @@ export function buildImagePrompt(prompts: CardPrompts): string {
   const ageDesc = buildAgeDescription(prompts.ageGroup);
   const bodyDesc = buildBodyDescription(prompts.bodyType);
 
-  const hairDesc = buildHairDescription(prompts.hairLength, prompts.hairColor);
+  const hairDesc = buildHairDescription(prompts.hairLength, prompts.hairColor, prompts.accentColor);
   const skinDesc = buildSkinDescription(prompts.skinTone);
   const faceDesc = buildFaceDescription(prompts.faceCharacter);
   const shoeDesc = buildShoeDescription(prompts.shoeStyle);

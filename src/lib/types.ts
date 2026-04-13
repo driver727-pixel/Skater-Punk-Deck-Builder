@@ -49,8 +49,8 @@ export type Style =
   | "Olympic";
 export type Gender = "Woman" | "Man" | "Non-binary";
 export type AgeGroup = "Young Adult" | "Adult" | "Middle-aged" | "Senior";
-export type BodyType = "Slim" | "Athletic" | "Average" | "Stocky" | "Heavy" | "Wiry" | "Pear-shaped" | "Lanky" | "Barrel-chested";
-export type HairLength = "Bald" | "Buzzcut" | "Short" | "Medium" | "Long" | "Very Long";
+export type BodyType = "Slim" | "Athletic" | "Average" | "Stocky" | "Heavy";
+export type HairLength = "Bald" | "Short" | "Medium" | "Long";
 export type HairColor = "Black" | "Brown" | "Blonde" | "Red" | "Gray" | "White" | "Auburn" | "Dyed Bright";
 export type SkinTone = "Very Light" | "Light" | "Medium Light" | "Medium" | "Medium Dark" | "Dark" | "Very Dark";
 export type FaceCharacter = "Conventional" | "Weathered" | "Scarred" | "Asymmetric" | "Rugged" | "Baby-faced" | "Gaunt" | "Round-faced";

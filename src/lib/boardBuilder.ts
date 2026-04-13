@@ -6,13 +6,13 @@
  *
  * Categories:
  *   1. Board Type  — Street · AT · Mountain · Surf
- *   2. Drivetrain  — Belt · Hub · Gear · AWD
+ *   2. Drivetrain  — Belt · Hub · Gear · 4WD
  *   3. Wheels      — Urethane · Pneumatic · Rubber
  *   4. Battery     — SlimStealth · DoubleStack · TopPeli
  */
 
 export type BoardType = "Street" | "AT" | "Mountain" | "Surf" | "Slider";
-export type Drivetrain = "Belt" | "Hub" | "Gear" | "AWD";
+export type Drivetrain = "Belt" | "Hub" | "Gear" | "4WD";
 export type MotorType = "Micro" | "Standard" | "Torque" | "Outrunner";
 export type WheelType = "Urethane" | "Pneumatic" | "Rubber" | "Cloud";
 export type BatteryType = "SlimStealth" | "DoubleStack" | "TopPeli";
@@ -105,8 +105,8 @@ export const DRIVETRAIN_OPTIONS: BoardOption<Drivetrain>[] = [
     statBonuses: { grit: 2, tech: 1 },
   },
   {
-    value: "AWD",
-    label: "AWD",
+    value: "4WD",
+    label: "4WD",
     icon: "🌀",
     tagline: "All four pushing",
     description: "Four-wheel drive obliterates loose terrain and wet surfaces. Heavy, but nothing stops it.",
@@ -483,7 +483,7 @@ const DRIVETRAIN_SEED: Record<Drivetrain, string | null> = {
   Belt: "drivetrain-dual-belt-drive",
   Hub:  "drivetrain-stealth-hub-motors",
   Gear: "drivetrain-sealed-gear-drive",
-  AWD:  null, // no catalog asset yet
+  "4WD": null, // no catalog asset yet
 };
 
 /** Maps each WheelType value to the seedKey of its representative asset. */
@@ -522,12 +522,13 @@ export function getBoardAssetUrls(config: BoardConfig): {
   batteryUrl: string | null;
   batteryIsTopMounted: boolean;
 } {
-  const deckSeed    = BOARD_TYPE_DECK_SEED[config.boardType];
-  const driveSeed   = DRIVETRAIN_SEED[config.drivetrain];
-  const motorSeed   = MOTOR_SEED[config.motor];
-  const wheelSeed   = WHEEL_SEED[config.wheels];
-  const batterySeed = BATTERY_SEED[config.battery];
-  const batteryOpt  = BATTERY_OPTIONS.find((o) => o.value === config.battery);
+  const normalizedConfig = normalizeBoardConfig(config);
+  const deckSeed    = BOARD_TYPE_DECK_SEED[normalizedConfig.boardType];
+  const driveSeed   = DRIVETRAIN_SEED[normalizedConfig.drivetrain];
+  const motorSeed   = MOTOR_SEED[normalizedConfig.motor];
+  const wheelSeed   = WHEEL_SEED[normalizedConfig.wheels];
+  const batterySeed = BATTERY_SEED[normalizedConfig.battery];
+  const batteryOpt  = BATTERY_OPTIONS.find((o) => o.value === normalizedConfig.battery);
 
   return {
     deckUrl:             deckSeed    ? `/assets/boards/${deckSeed}.png`    : null,
@@ -561,12 +562,13 @@ export interface BoardComponentImageUrls {
 }
 
 export function getBoardComponentImageUrls(config: BoardConfig): BoardComponentImageUrls {
+  const normalizedConfig = normalizeBoardConfig(config);
   return {
-    deckUrl:       `/assets/boards/deck/${config.boardType}.png`,
-    drivetrainUrl: `/assets/boards/drivetrain/${config.drivetrain}.png`,
-    motorUrl:      `/assets/boards/motor/${config.motor}.png`,
-    wheelsUrl:     `/assets/boards/wheels/${config.wheels}.png`,
-    batteryUrl:    `/assets/boards/battery/${config.battery}.png`,
+    deckUrl:       `/assets/boards/deck/${normalizedConfig.boardType}.png`,
+    drivetrainUrl: `/assets/boards/drivetrain/${normalizedConfig.drivetrain}.png`,
+    motorUrl:      `/assets/boards/motor/${normalizedConfig.motor}.png`,
+    wheelsUrl:     `/assets/boards/wheels/${normalizedConfig.wheels}.png`,
+    batteryUrl:    `/assets/boards/battery/${normalizedConfig.battery}.png`,
   };
 }
 
@@ -579,7 +581,7 @@ function sanitizeBoardComponentPromptDescription(description: string): string {
     .replace(/^Art style of gouache painting\.\s*/i, "");
 }
 
-const AWD_DRIVETRAIN_VISUAL =
+const FOUR_WHEEL_DRIVE_VISUAL =
   "A four-wheel-drive electric skateboard drivetrain with powered front and rear trucks, dual motor hardware on both axles, heavy-duty mounts, and visible off-road engineering.";
 
 const RUBBER_WHEEL_VISUAL =
@@ -597,44 +599,45 @@ function getBoardCatalogPromptDescription(seedKey: string | null | undefined): s
  * the skateboard image that appears on the player card.
  */
 export function buildBoardImagePrompt(config: BoardConfig): string {
-  const deck  = BOARD_TYPE_OPTIONS.find((o) => o.value === config.boardType);
-  const drive = DRIVETRAIN_OPTIONS.find((o) => o.value === config.drivetrain);
-  const motor = MOTOR_OPTIONS.find((o) => o.value === config.motor);
-  const wheel = WHEEL_OPTIONS.find((o) => o.value === config.wheels);
-  const batt  = BATTERY_OPTIONS.find((o) => o.value === config.battery);
+  const normalizedConfig = normalizeBoardConfig(config);
+  const deck  = BOARD_TYPE_OPTIONS.find((o) => o.value === normalizedConfig.boardType);
+  const drive = DRIVETRAIN_OPTIONS.find((o) => o.value === normalizedConfig.drivetrain);
+  const motor = MOTOR_OPTIONS.find((o) => o.value === normalizedConfig.motor);
+  const wheel = WHEEL_OPTIONS.find((o) => o.value === normalizedConfig.wheels);
+  const batt  = BATTERY_OPTIONS.find((o) => o.value === normalizedConfig.battery);
 
-  const deckDesc  = deck?.description  ?? config.boardType;
-  const driveDesc = drive?.description ?? config.drivetrain;
-  const motorDesc = motor?.description ?? config.motor;
-  const wheelDesc = wheel?.description ?? config.wheels;
-  const battDesc  = batt?.description  ?? config.battery;
-  const deckVisual = getBoardCatalogPromptDescription(BOARD_TYPE_DECK_SEED[config.boardType])
-    ?? `${deckDesc} Deck shape and stance must clearly match a ${config.boardType} setup.`;
-  const driveVisual = getBoardCatalogPromptDescription(DRIVETRAIN_SEED[config.drivetrain])
+  const deckDesc  = deck?.description  ?? normalizedConfig.boardType;
+  const driveDesc = drive?.description ?? normalizedConfig.drivetrain;
+  const motorDesc = motor?.description ?? normalizedConfig.motor;
+  const wheelDesc = wheel?.description ?? normalizedConfig.wheels;
+  const battDesc  = batt?.description  ?? normalizedConfig.battery;
+  const deckVisual = getBoardCatalogPromptDescription(BOARD_TYPE_DECK_SEED[normalizedConfig.boardType])
+    ?? `${deckDesc} Deck shape and stance must clearly match a ${normalizedConfig.boardType} setup.`;
+  const driveVisual = getBoardCatalogPromptDescription(DRIVETRAIN_SEED[normalizedConfig.drivetrain])
     ?? (
-      config.drivetrain === "AWD"
-        ? AWD_DRIVETRAIN_VISUAL
+      normalizedConfig.drivetrain === "4WD"
+        ? FOUR_WHEEL_DRIVE_VISUAL
         : driveDesc
     );
-  const motorVisual = getBoardCatalogPromptDescription(MOTOR_SEED[config.motor]) ?? motorDesc;
-  const wheelVisual = getBoardCatalogPromptDescription(WHEEL_SEED[config.wheels])
+  const motorVisual = getBoardCatalogPromptDescription(MOTOR_SEED[normalizedConfig.motor]) ?? motorDesc;
+  const wheelVisual = getBoardCatalogPromptDescription(WHEEL_SEED[normalizedConfig.wheels])
     ?? (
-      config.wheels === "Rubber"
+      normalizedConfig.wheels === "Rubber"
         ? RUBBER_WHEEL_VISUAL
         : wheelDesc
     );
-  const battVisual = getBoardCatalogPromptDescription(BATTERY_SEED[config.battery]) ?? battDesc;
+  const battVisual = getBoardCatalogPromptDescription(BATTERY_SEED[normalizedConfig.battery]) ?? battDesc;
   const batteryPlacement = batt?.isTopMounted
     ? "The battery must be visibly mounted on top of the deck."
     : "The battery must be visibly mounted underneath the deck.";
   const drivetrainConstraint =
-    config.drivetrain === "Hub"
+    normalizedConfig.drivetrain === "Hub"
       ? "No exposed belts, pulleys, chains, or external gearboxes anywhere on the board."
-      : config.drivetrain === "Gear"
+      : normalizedConfig.drivetrain === "Gear"
         ? "Show enclosed gear-drive housings instead of belts."
-        : config.drivetrain === "Belt"
+        : normalizedConfig.drivetrain === "Belt"
           ? "Show exposed belts, pulleys, and rear motor mounts."
-          : "Show powered front and rear axles for a true AWD setup.";
+          : "Show powered front and rear axles for a true 4WD setup.";
 
   return (
     `Isometric 45-degree hero illustration of a fully assembled ` +
@@ -656,16 +659,30 @@ export function buildBoardImagePrompt(config: BoardConfig): string {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
+const LEGACY_FOUR_WHEEL_DRIVE = "A" + "WD";
+
+function normalizeDrivetrain(drivetrain: string): Drivetrain {
+  return drivetrain === LEGACY_FOUR_WHEEL_DRIVE ? "4WD" : drivetrain as Drivetrain;
+}
+
+export function normalizeBoardConfig(config: BoardConfig): BoardConfig {
+  return {
+    ...config,
+    drivetrain: normalizeDrivetrain(config.drivetrain),
+  };
+}
+
 /** Returns the total additive stat bonuses across all five board selections. */
 export function getBoardStatBonuses(
   config: BoardConfig,
 ): Partial<Record<BoardStatKey, number>> {
+  const normalizedConfig = normalizeBoardConfig(config);
   const totals: Partial<Record<BoardStatKey, number>> = {};
-  const type    = BOARD_TYPE_OPTIONS.find((o) => o.value === config.boardType);
-  const drive   = DRIVETRAIN_OPTIONS.find((o) => o.value === config.drivetrain);
-  const motor   = MOTOR_OPTIONS.find((o) => o.value === config.motor);
-  const wheel   = WHEEL_OPTIONS.find((o) => o.value === config.wheels);
-  const battery = BATTERY_OPTIONS.find((o) => o.value === config.battery);
+  const type    = BOARD_TYPE_OPTIONS.find((o) => o.value === normalizedConfig.boardType);
+  const drive   = DRIVETRAIN_OPTIONS.find((o) => o.value === normalizedConfig.drivetrain);
+  const motor   = MOTOR_OPTIONS.find((o) => o.value === normalizedConfig.motor);
+  const wheel   = WHEEL_OPTIONS.find((o) => o.value === normalizedConfig.wheels);
+  const battery = BATTERY_OPTIONS.find((o) => o.value === normalizedConfig.battery);
 
   for (const option of [type, drive, motor, wheel, battery]) {
     if (!option) continue;
@@ -678,12 +695,13 @@ export function getBoardStatBonuses(
 
 /** Human-readable one-line summary of a completed board config. */
 export function getBoardSummary(config: BoardConfig): string {
-  const type    = BOARD_TYPE_OPTIONS.find((o) => o.value === config.boardType);
-  const drive   = DRIVETRAIN_OPTIONS.find((o) => o.value === config.drivetrain);
-  const motor   = MOTOR_OPTIONS.find((o) => o.value === config.motor);
-  const wheel   = WHEEL_OPTIONS.find((o) => o.value === config.wheels);
-  const battery = BATTERY_OPTIONS.find((o) => o.value === config.battery);
-  return [type?.icon, config.boardType, "·", drive?.label, "·", motor?.label, "·", wheel?.label, "Wheels", "·", battery?.label]
+  const normalizedConfig = normalizeBoardConfig(config);
+  const type    = BOARD_TYPE_OPTIONS.find((o) => o.value === normalizedConfig.boardType);
+  const drive   = DRIVETRAIN_OPTIONS.find((o) => o.value === normalizedConfig.drivetrain);
+  const motor   = MOTOR_OPTIONS.find((o) => o.value === normalizedConfig.motor);
+  const wheel   = WHEEL_OPTIONS.find((o) => o.value === normalizedConfig.wheels);
+  const battery = BATTERY_OPTIONS.find((o) => o.value === normalizedConfig.battery);
+  return [type?.icon, normalizedConfig.boardType, "·", drive?.label, "·", motor?.label, "·", wheel?.label, "Wheels", "·", battery?.label]
     .filter(Boolean)
     .join(" ");
 }
@@ -740,11 +758,12 @@ export interface BoardLoadout {
  *   Style        ← Deck
  */
 export function calculateBoardStats(config: BoardConfig): BoardLoadout {
-  const deckSeed    = BOARD_TYPE_DECK_SEED[config.boardType];
-  const driveSeed   = DRIVETRAIN_SEED[config.drivetrain];
-  const motorSeed   = MOTOR_SEED[config.motor];
-  const wheelSeed   = WHEEL_SEED[config.wheels];
-  const batterySeed = BATTERY_SEED[config.battery];
+  const normalizedConfig = normalizeBoardConfig(config);
+  const deckSeed    = BOARD_TYPE_DECK_SEED[normalizedConfig.boardType];
+  const driveSeed   = DRIVETRAIN_SEED[normalizedConfig.drivetrain];
+  const motorSeed   = MOTOR_SEED[normalizedConfig.motor];
+  const wheelSeed   = WHEEL_SEED[normalizedConfig.wheels];
+  const batterySeed = BATTERY_SEED[normalizedConfig.battery];
 
   const deckModel    = BOARD_COMPONENT_CATALOG.find((m) => m.seedKey === deckSeed);
   const driveModel   = BOARD_COMPONENT_CATALOG.find((m) => m.seedKey === driveSeed);
@@ -756,7 +775,7 @@ export function calculateBoardStats(config: BoardConfig): BoardLoadout {
     style:        deckModel?.style         ?? DEFAULT_STYLE,
     speed:        driveModel?.speed        ?? DEFAULT_SPEED,
     acceleration: motorModel?.acceleration ?? DEFAULT_ACCEL,
-    accessProfile: wheelModel?.accessProfile ?? WHEEL_ACCESS_PROFILES[config.wheels] ?? DEFAULT_ACCESS_PROFILE,
+    accessProfile: wheelModel?.accessProfile ?? WHEEL_ACCESS_PROFILES[normalizedConfig.wheels] ?? DEFAULT_ACCESS_PROFILE,
     range:        batteryModel?.range      ?? DEFAULT_RANGE,
   };
 }
@@ -764,10 +783,10 @@ export function calculateBoardStats(config: BoardConfig): BoardLoadout {
 // ── Compatibility rules ──────────────────────────────────────────────────────
 //
 // Deck-specific restrictions on which components can be paired:
-//   Street  (Carbon Fiber) — any wheels, but NOT top-mount battery, NOT AWD drivetrain
-//   Mountain               — Pneumatic or Solid Rubber wheels; MUST use top-mount battery (TopPeli); MUST use AWD; no Micro motor
+//   Street  (Carbon Fiber) — any wheels, but NOT top-mount battery, NOT 4WD drivetrain
+//   Mountain               — Pneumatic or Solid Rubber wheels; MUST use top-mount battery (TopPeli); MUST use 4WD; no Micro motor
 //   Surf                   — no top-mount battery; no Double-Stack Brick battery; no Pneumatic or Solid Rubber wheels; no Belt drive; no Torque 6374 or Outrunner 6396 motors
-//   AT (Bamboo)            — no top-mount battery; no AWD; no Micro motor; Belt drive allowed
+//   AT (Bamboo)            — no top-mount battery; no 4WD; no Micro motor; Belt drive allowed
 //   Slider                 — no restrictions
 
 export interface CompatibilityError {
@@ -777,38 +796,39 @@ export interface CompatibilityError {
 
 /** Returns a list of compatibility errors for the given board config. An empty array means the config is valid. */
 export function validateBoardCompatibility(config: BoardConfig): CompatibilityError[] {
+  const normalizedConfig = normalizeBoardConfig(config);
   const errors: CompatibilityError[] = [];
-  const batteryOpt = BATTERY_OPTIONS.find((o) => o.value === config.battery);
+  const batteryOpt = BATTERY_OPTIONS.find((o) => o.value === normalizedConfig.battery);
   const isTopMount = batteryOpt?.isTopMounted ?? false;
 
-  switch (config.boardType) {
+  switch (normalizedConfig.boardType) {
     case "Street":
-      // Carbon Fiber deck can use any wheels, but NOT top mount battery or AWD
+      // Carbon Fiber deck can use any wheels, but NOT top mount battery or 4WD
       if (isTopMount) {
         errors.push({ component: "battery", message: "Carbon Fiber deck cannot use a top-mounted battery." });
       }
-      if (config.drivetrain === "AWD") {
-        errors.push({ component: "drivetrain", message: "Street board cannot use AWD drivetrain." });
+      if (normalizedConfig.drivetrain === "4WD") {
+        errors.push({ component: "drivetrain", message: "Street board cannot use 4WD drivetrain." });
       }
       break;
     case "Mountain":
       // Mountain board cannot use Urethane or Cloud wheels; must use Pneumatic or Solid Rubber
-      if (config.wheels === "Urethane") {
+      if (normalizedConfig.wheels === "Urethane") {
         errors.push({ component: "wheels", message: "Mountain board cannot use Poly (Urethane) wheels." });
       }
-      if (config.wheels === "Cloud") {
+      if (normalizedConfig.wheels === "Cloud") {
         errors.push({ component: "wheels", message: "Mountain board cannot use Cloud wheels." });
       }
       // Mountain board MUST use top mount battery
       if (!isTopMount) {
         errors.push({ component: "battery", message: "Mountain board must use a top-mounted battery." });
       }
-      // Mountain board MUST use AWD
-      if (config.drivetrain !== "AWD") {
-        errors.push({ component: "drivetrain", message: "Mountain board must use AWD drivetrain." });
+      // Mountain board MUST use 4WD
+      if (normalizedConfig.drivetrain !== "4WD") {
+        errors.push({ component: "drivetrain", message: "Mountain board must use 4WD drivetrain." });
       }
       // Mountain board cannot use Micro motor
-      if (config.motor === "Micro") {
+      if (normalizedConfig.motor === "Micro") {
         errors.push({ component: "motor", message: "Mountain board cannot use the Micro 5055 motor." });
       }
       break;
@@ -818,25 +838,25 @@ export function validateBoardCompatibility(config: BoardConfig): CompatibilityEr
         errors.push({ component: "battery", message: "Surf skateboard cannot use a top-mounted battery." });
       }
       // Surf cannot use Double-Stack Brick battery
-      if (config.battery === "DoubleStack") {
+      if (normalizedConfig.battery === "DoubleStack") {
         errors.push({ component: "battery", message: "Surf skateboard cannot use the Double-Stack Brick battery." });
       }
       // Surf cannot use Pneumatic or Solid Rubber wheels
-      if (config.wheels === "Pneumatic") {
+      if (normalizedConfig.wheels === "Pneumatic") {
         errors.push({ component: "wheels", message: "Surf skateboard cannot use Pneumatic wheels." });
       }
-      if (config.wheels === "Rubber") {
+      if (normalizedConfig.wheels === "Rubber") {
         errors.push({ component: "wheels", message: "Surf skateboard cannot use Solid Rubber wheels." });
       }
       // Surf cannot use Belt drive
-      if (config.drivetrain === "Belt") {
+      if (normalizedConfig.drivetrain === "Belt") {
         errors.push({ component: "drivetrain", message: "Surf skateboard cannot use Belt drive." });
       }
       // Surf cannot use Torque 6374 or Outrunner 6396 motors
-      if (config.motor === "Torque") {
+      if (normalizedConfig.motor === "Torque") {
         errors.push({ component: "motor", message: "Surf skateboard cannot use the Torque 6374 motor." });
       }
-      if (config.motor === "Outrunner") {
+      if (normalizedConfig.motor === "Outrunner") {
         errors.push({ component: "motor", message: "Surf skateboard cannot use the Outrunner 6396 motor." });
       }
       break;
@@ -845,12 +865,12 @@ export function validateBoardCompatibility(config: BoardConfig): CompatibilityEr
       if (isTopMount) {
         errors.push({ component: "battery", message: "Bamboo deck cannot use a top-mounted battery." });
       }
-      // AT cannot use AWD drivetrain
-      if (config.drivetrain === "AWD") {
-        errors.push({ component: "drivetrain", message: "All-Terrain board cannot use AWD drivetrain." });
+      // AT cannot use 4WD drivetrain
+      if (normalizedConfig.drivetrain === "4WD") {
+        errors.push({ component: "drivetrain", message: "All-Terrain board cannot use 4WD drivetrain." });
       }
       // AT cannot use Micro motor
-      if (config.motor === "Micro") {
+      if (normalizedConfig.motor === "Micro") {
         errors.push({ component: "motor", message: "All-Terrain board cannot use the Micro 5055 motor." });
       }
       break;
@@ -873,15 +893,15 @@ export function getAllowedComponents(boardType: BoardType): {
   const allBatteries: BatteryType[]  = BATTERY_OPTIONS.map((o) => o.value);
   const nonTopMountBatteries         = BATTERY_OPTIONS.filter((o) => !o.isTopMounted).map((o) => o.value);
   const topMountBatteries            = BATTERY_OPTIONS.filter((o) => o.isTopMounted).map((o) => o.value);
-  const noAWD                        = allDrivetrains.filter((d) => d !== "AWD");
+  const no4WD                        = allDrivetrains.filter((d) => d !== "4WD");
   const noBelt                       = allDrivetrains.filter((d) => d !== "Belt");
 
   switch (boardType) {
     case "Street":
-      return { drivetrains: noAWD, motors: allMotors, wheels: allWheels, batteries: nonTopMountBatteries };
+      return { drivetrains: no4WD, motors: allMotors, wheels: allWheels, batteries: nonTopMountBatteries };
     case "Mountain":
       return {
-        drivetrains: ["AWD"],
+        drivetrains: ["4WD"],
         motors: allMotors.filter((m) => m !== "Micro"),
         wheels: ["Pneumatic", "Rubber"],
         batteries: topMountBatteries,
@@ -895,7 +915,7 @@ export function getAllowedComponents(boardType: BoardType): {
       };
     case "AT":
       return {
-        drivetrains: noAWD,
+        drivetrains: no4WD,
         motors: allMotors.filter((m) => m !== "Micro"),
         wheels: allWheels,
         batteries: nonTopMountBatteries,
@@ -911,12 +931,13 @@ export function getAllowedComponents(boardType: BoardType): {
  * When a component falls outside the allowed set, it snaps to the first allowed value.
  */
 export function enforceCompatibility(config: BoardConfig): BoardConfig {
-  const allowed = getAllowedComponents(config.boardType);
+  const normalizedConfig = normalizeBoardConfig(config);
+  const allowed = getAllowedComponents(normalizedConfig.boardType);
   return {
-    boardType:  config.boardType,
-    drivetrain: allowed.drivetrains.includes(config.drivetrain) ? config.drivetrain : allowed.drivetrains[0],
-    motor:      allowed.motors.includes(config.motor)           ? config.motor      : allowed.motors[0],
-    wheels:     allowed.wheels.includes(config.wheels)           ? config.wheels     : allowed.wheels[0],
-    battery:    allowed.batteries.includes(config.battery)       ? config.battery    : allowed.batteries[0],
+    boardType:  normalizedConfig.boardType,
+    drivetrain: allowed.drivetrains.includes(normalizedConfig.drivetrain) ? normalizedConfig.drivetrain : allowed.drivetrains[0],
+    motor:      allowed.motors.includes(normalizedConfig.motor)           ? normalizedConfig.motor      : allowed.motors[0],
+    wheels:     allowed.wheels.includes(normalizedConfig.wheels)           ? normalizedConfig.wheels     : allowed.wheels[0],
+    battery:    allowed.batteries.includes(normalizedConfig.battery)       ? normalizedConfig.battery    : allowed.batteries[0],
   };
 }

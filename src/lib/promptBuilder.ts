@@ -3,7 +3,10 @@ import { PUNCH_SKATER_RARITY, type CardPrompts, type Rarity } from "./types";
 // ── Lookup tables ──────────────────────────────────────────────────────────────
 
 /**
- * Brief district description used inside the combined (single-image) prompt.
+ * Brief district description used for the **background layer** prompt only.
+ *
+ * District descriptions are intentionally excluded from character and skateboard
+ * prompts to prevent the environment language from bleeding into those layers.
  */
 const DISTRICT_DESCRIPTIONS: Record<string, string> = {
   Airaway:      "a floating sky city with clouds and levitating platforms",
@@ -284,6 +287,28 @@ export function buildCardBackPrompt(rarity: Rarity): string {
   );
 }
 
+// ── Background layer prompt ─────────────────────────────────────────────────────
+
+/**
+ * Builds a prompt for the **background layer** of a card.
+ *
+ * District descriptions are applied here — and **only** here — so that
+ * environment language never leaks into character or skateboard prompts.
+ * The background layer is keyed by district, so changing district
+ * regenerates only this layer.
+ */
+export function buildBackgroundPrompt(district: string): string {
+  const desc = DISTRICT_DESCRIPTIONS[district] ?? district;
+  return joinPromptBlocks(
+    CORE_COMIC_BOOK_STYLE,
+    `Scene: a wide establishing shot of ${desc}.`,
+    `No people, no characters, no text, no logos.`,
+    `Mood: atmospheric, immersive, cinematic depth of field.`,
+    `Render goals: premium 1990s comic-book environment splash page, rich detail, dramatic lighting, 4K.`,
+    `SFW, family friendly, PG rated, LGBTQIA+.`,
+  );
+}
+
 // ── Combined (single-image) prompt builder ─────────────────────────────────────
 
 /**
@@ -297,7 +322,6 @@ export function buildCardBackPrompt(rarity: Rarity): string {
 export function buildImagePrompt(prompts: CardPrompts): string {
   const clothing = STYLE_CLOTHING[prompts.style]    ?? prompts.style;
   const pose     = ARCHETYPE_POSES[prompts.archetype] ?? `striking a dramatic comic book action pose, dynamic and powerful`;
-  const district = DISTRICT_DESCRIPTIONS[prompts.district] ?? prompts.district;
   const mood     = RARITY_MOOD[prompts.rarity]       ?? "bold";
   const genderDesc =
     prompts.gender === "Woman" ? "a woman" :
@@ -317,7 +341,6 @@ export function buildImagePrompt(prompts: CardPrompts): string {
     `Subject: premium trading-card illustration of a clearly adult ${prompts.archetype} skater courier.`,
     `Composition: facing directly toward the viewer, front-facing, looking at the camera, wearing ${clothing}, ${pose}.`,
     `Props: carrying courier gear, riding an all-terrain electric skateboard with big off-road wheels, lights and gear.`,
-    `Environment: the background is ${district}.`,
     `Performance note: character is alert and ready to move.`,
     `Character is ${genderDesc}, ${ageDesc}, with ${bodyDesc}.`,
     `${hairDesc}${skinDesc}${faceDesc}${shoeDesc}`,

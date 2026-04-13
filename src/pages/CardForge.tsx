@@ -28,8 +28,8 @@ const STYLES: Style[] = ACTIVE_STYLES;
 const DISTRICTS: District[] = ["Airaway", "Nightshade", "Batteryville", "The Grid", "The Forest", "Glass City"];
 const GENDERS: Gender[] = ["Woman", "Man", "Non-binary"];
 const AGE_GROUPS: AgeGroup[] = ["Young Adult", "Adult", "Middle-aged", "Senior"];
-const BODY_TYPES: BodyType[] = ["Slim", "Athletic", "Average", "Stocky", "Heavy", "Wiry", "Pear-shaped", "Lanky", "Barrel-chested"];
-const HAIR_LENGTHS: HairLength[] = ["Bald", "Buzzcut", "Short", "Medium", "Long", "Very Long"];
+const BODY_TYPES: BodyType[] = ["Slim", "Athletic", "Average", "Stocky", "Heavy"];
+const HAIR_LENGTHS: HairLength[] = ["Bald", "Short", "Medium", "Long"];
 const HAIR_COLORS: HairColor[] = ["Black", "Brown", "Blonde", "Red", "Gray", "White", "Auburn", "Dyed Bright"];
 const SKIN_TONES: SkinTone[] = ["Very Light", "Light", "Medium Light", "Medium", "Medium Dark", "Dark", "Very Dark"];
 const FACE_CHARACTERS: FaceCharacter[] = ["Conventional", "Weathered", "Scarred", "Asymmetric", "Rugged", "Baby-faced", "Gaunt", "Round-faced"];
@@ -43,11 +43,14 @@ const ACCENT_PRESETS = ["#00ff88", "#00ccff", "#ff4444", "#ffaa00", "#8b5cf6", "
 const MAX_LAYER_RETRIES = 1;
 const CHARACTER_CACHE_VERSION = "v3-adult-realism";
 const CHARACTER_GENERATION_OPTIONS: ImageGenOptions = {
-  imageSize: { width: 1024, height: 1536 },
+  imageSize: { width: 1500, height: 2100 },
   numInferenceSteps: 45,
   guidanceScale: 4,
 };
-const CHARACTER_MIN_DIMENSIONS = { width: 900, height: 1300 };
+const NON_LORA_GENERATION_OPTIONS: ImageGenOptions = {
+  loras: [],
+};
+const CHARACTER_MIN_DIMENSIONS = { width: 1200, height: 1680 };
 const CHARACTER_SEED_VARIANTS = ["hq-a", "hq-b"];
 
 /** Converts a display name to a kebab-case filename stem (e.g. "The Grid" → "the-grid"). */
@@ -386,7 +389,12 @@ export function CardForge() {
         validateResult: validateCharacterLayer,
         generationOptions: CHARACTER_GENERATION_OPTIONS,
       },
-      frame:      { key: frameKey, prompt: framePrompt, seed: frameSeed  },
+      frame:      {
+        key: frameKey,
+        prompt: framePrompt,
+        seed: frameSeed,
+        generationOptions: NON_LORA_GENERATION_OPTIONS,
+      },
     };
 
     // Background layer
@@ -424,7 +432,10 @@ export function CardForge() {
           return;
         }
 
-        const result = await generateImage(boardPrompt, boardSeed, { imageSize: "square_hd" });
+        const result = await generateImage(boardPrompt, boardSeed, {
+          imageSize: "square_hd",
+          ...NON_LORA_GENERATION_OPTIONS,
+        });
         if (signal.aborted) return;
 
         await setCachedImage(boardCacheKey, result.imageUrl);

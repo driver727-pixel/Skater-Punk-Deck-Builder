@@ -345,6 +345,11 @@ function formatNarrativeText(
   return typeof value === "function" ? value(buildNarrativeContext(state)) : value;
 }
 
+function capitalizeLabel(value: string): string {
+  if (value.length === 0) return value;
+  return `${value[0].toUpperCase()}${value.slice(1)}`;
+}
+
 const PARTS_REWARD_COMPONENT_LABELS: Record<MissionPartsRewardComponent, string> = {
   drivetrain: "Drivetrain",
   motor: "Motor",
@@ -529,7 +534,7 @@ function buildMissionPartsReward(
     rewardValue: String(bestReward.candidateValue),
     currentLabel,
     rewardLabel,
-    reason: `${focusLabel[0].toUpperCase()}${focusLabel.slice(1)} is the biggest gap on this run, so this payout upgrades your ${PARTS_REWARD_COMPONENT_LABELS[bestReward.component].toLowerCase()} from ${currentLabel} to ${rewardLabel}.`,
+    reason: `${capitalizeLabel(focusLabel)} is the biggest gap on this run, so this payout upgrades your ${PARTS_REWARD_COMPONENT_LABELS[bestReward.component].toLowerCase()} from ${currentLabel} to ${rewardLabel}.`,
   };
 }
 

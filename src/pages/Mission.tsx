@@ -64,7 +64,7 @@ const WHEEL_BADGES: Record<WheelType, { icon: string; label: string; shortLabel:
   Rubber: { icon: "🧱", label: "Solid rubber wheels", shortLabel: "Rubber" },
   Cloud: { icon: "☁️", label: "Cloud wheels", shortLabel: "Cloud" },
 };
-const DEFAULT_ATLAS_FILTER = ATLAS_FILTERS[0].id;
+const DEFAULT_ATLAS_FILTER: AtlasFilter = "all";
 
 type AtlasFilter = (typeof ATLAS_FILTERS)[number]["id"];
 
@@ -113,10 +113,23 @@ function resolveMissionAccessReason(params: {
   return null;
 }
 
-function getMissionWheelTypes(originDistrict: District, corridor?: RoadCorridor): WheelType[] {
-  return corridor
-    ? getRoadCorridor(corridor).allowedWheelTypes
-    : getDistrictWheelAccessRule(originDistrict).allowedWheelTypes;
+function intersectWheelTypes(primary: WheelType[], secondary: WheelType[]): WheelType[] {
+  return primary.filter((wheelType) => secondary.includes(wheelType));
+}
+
+function getMissionWheelTypes(
+  originDistrict: District,
+  destinationDistrict: District,
+  corridor?: RoadCorridor,
+): WheelType[] {
+  const districtWheelTypes = intersectWheelTypes(
+    getDistrictWheelAccessRule(originDistrict).allowedWheelTypes,
+    getDistrictWheelAccessRule(destinationDistrict).allowedWheelTypes,
+  );
+  if (!corridor) {
+    return districtWheelTypes;
+  }
+  return intersectWheelTypes(districtWheelTypes, getRoadCorridor(corridor).allowedWheelTypes);
 }
 
 function getMissionStateLabel(
@@ -278,7 +291,7 @@ export function Mission() {
         accessible,
         blocked,
         corridorBlocked: corridorBlockedForMission,
-        wheelTypes: getMissionWheelTypes(mission.originDistrict, mission.corridor),
+        wheelTypes: getMissionWheelTypes(mission.originDistrict, mission.destinationDistrict, mission.corridor),
       };
     }),
     [hasRunner, runnerBoardType, runnerWheelType, weatherByDistrict],
@@ -528,7 +541,7 @@ export function Mission() {
                   resetMissionSession();
                 }}
                 onMouseEnter={() => setHoveredMissionId(mission.id)}
-                onMouseLeave={() => setHoveredMissionId((current) => (current === mission.id ? null : current))}
+                onMouseLeave={() => setHoveredMissionId(null)}
               >
                 <div className="mission-selector-card__topline">
                   <span className="mission-selector-card__district">

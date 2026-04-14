@@ -89,7 +89,7 @@ export async function signUp(page: Page, email: string) {
   await page.goto('/login');
   await page.locator('.login-tabs').getByRole('button', { name: /create account/i }).click();
   await page.getByPlaceholder(/your@email.com/i).fill(email);
-  await page.getByPlaceholder(/min\. 6 characters/i).fill(PASSWORD);
+  await page.getByPlaceholder(/^password$/i).fill(PASSWORD);
   await page.getByPlaceholder(/repeat password/i).fill(PASSWORD);
   await page.locator('.login-form').getByRole('button', { name: /create account/i }).click();
   await expect(page).toHaveURL('/');

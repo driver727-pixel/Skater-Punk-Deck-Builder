@@ -53,7 +53,7 @@ const CORRIDOR_MARKER_OFFSETS = [
   { offsetX: 40, offsetY: -22 },
 ];
 const ATLAS_FILTERS = [
-  { id: "all", label: "All ops" },
+  { id: "all", label: "All operations" },
   { id: "districts", label: "District hubs" },
   { id: "corridors", label: "Corridor lines" },
   { id: "rideable", label: "Rideable now" },
@@ -139,7 +139,7 @@ function getMissionStateLabel(
 ): string {
   if (accessible) return "Rideable";
   if (!hasRunner) return "Needs runner";
-  if (corridorBlocked) return "Wheel lock";
+  if (corridorBlocked) return "Wheel restricted";
   return "Restricted";
 }
 
@@ -507,7 +507,7 @@ export function Mission() {
           </div>
           <p className="mission-atlas-toolbar__summary">
             Showing {visibleMissionCatalog.length} of {DISTRICT_MISSIONS.length} operations
-            {atlasFilter === "rideable" && hasRunner ? ` for ${missionPreview.runnerCard?.name ?? "current runner"}` : ""}.
+            {atlasFilter === "rideable" && hasRunner ? ` for ${missionPreview.runnerCard?.name}` : ""}.
           </p>
         </div>
         <div className="mission-atlas-layout">

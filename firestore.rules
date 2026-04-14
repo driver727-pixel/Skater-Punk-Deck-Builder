@@ -91,14 +91,13 @@ service cloud.firestore {
     }
 
     // ── Battle Results ───────────────────────────────────────────────────────
-    // Any participant can read their own results; only authenticated users can create.
+    // Any participant can read their own results; writes are server-only.
     match /battleResults/{resultId} {
       allow read:  if request.auth != null && (
         resource.data.challengerUid == request.auth.uid ||
         resource.data.defenderUid == request.auth.uid
       );
-      allow create: if request.auth != null;
-      allow update, delete: if false;
+      allow create, update, delete: if false;
     }
 
     // ── Leaderboard ──────────────────────────────────────────────────────────

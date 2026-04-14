@@ -162,9 +162,13 @@ export function normalizeCardStats<T extends Record<string, number>>(stats: T): 
   ) as T;
 }
 
+interface GenerateCardOptions {
+  idNonce?: string;
+}
+
 // ── Main generator ─────────────────────────────────────────────────────────────
 
-export const generateCard = (prompts: CardPrompts): CardPayload => {
+export const generateCard = (prompts: CardPrompts, options: GenerateCardOptions = {}): CardPayload => {
   // ── Seeds ──────────────────────────────────────────────────────────────────
   const characterSeed  = `${prompts.archetype}|${prompts.style}|${prompts.gender}|${prompts.ageGroup}|${prompts.bodyType}|${prompts.hairLength ?? ""}|${prompts.hairColor ?? ""}|${prompts.skinTone ?? ""}|${prompts.faceCharacter ?? ""}|${prompts.shoeStyle ?? ""}`;
   const backgroundSeed = prompts.district;
@@ -213,8 +217,11 @@ export const generateCard = (prompts: CardPrompts): CardPayload => {
   const ozzies = Math.round(charRng.range(ozzMin, ozzMax)) / 100;
 
   // ── Card ID (deterministic per full prompt set) ────────────────────────────
-  const idNum = Math.abs(seedFromString(masterSeed)) % 1_000_000;
-  const id    = `forge-${String(idNum).padStart(6, "0")}`;
+  const idNonce = options.idNonce ?? crypto.randomUUID();
+  const idSeed = `${masterSeed}::${idNonce}`;
+  const idHash = Math.abs(seedFromString(idSeed)).toString(36).padStart(7, "0");
+  const nonceSuffix = idNonce.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() || crypto.randomUUID().replace(/-/g, "");
+  const id = `forge-${idHash}-${nonceSuffix}`;
 
   return {
     id,

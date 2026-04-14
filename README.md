@@ -9,7 +9,7 @@ A dense cyberpunk courier card game built with React, TypeScript, Vite, Firebase
 - Vite 6
 - React Router 7
 - Firebase Auth + Firestore
-- Express proxy for Fal.ai, Stripe, admin, and weather endpoints
+- Express proxy for Fal.ai, Stripe, admin, weather, and battle endpoints
 - Playwright for end-to-end coverage
 
 ## Core Game Systems
@@ -31,6 +31,7 @@ Copy `.env.example` to `.env` for local client config.
 - `VITE_IMAGE_API_URL`
 - `VITE_CHECKOUT_API_URL`
 - `VITE_ADMIN_API_URL`
+- `VITE_BATTLE_API_URL`
 - `VITE_DISTRICT_WEATHER_API_URL`
 
 ### Server-only variables
@@ -47,6 +48,7 @@ Copy `.env.example` to `.env` for local client config.
 - `STRIPE_SECRET_KEY`
 - `FIREBASE_API_KEY`
 - `ADMIN_EMAILS`
+- `FIREBASE_SERVICE_ACCOUNT_JSON` or (`FIREBASE_PROJECT_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, `FIREBASE_ADMIN_PRIVATE_KEY`)
 
 Do not commit server secrets.
 

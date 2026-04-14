@@ -5,7 +5,6 @@ import {
   where,
   onSnapshot,
   doc,
-  updateDoc,
   runTransaction,
   orderBy,
   limit,
@@ -78,9 +77,10 @@ export function Trades() {
     setActionLoading(trade.id);
     setError("");
     try {
+      const offeredCardId = trade.offeredCardId ?? trade.offeredCard.id;
       const tradeRef = doc(db, "trades", trade.id);
-      const fromCardRef = doc(db, "users", trade.fromUid, "cards", trade.offeredCard.id);
-      const toCardRef = doc(db, "users", trade.toUid, "cards", trade.offeredCard.id);
+      const fromCardRef = doc(db, "users", trade.fromUid, "cards", offeredCardId);
+      const toCardRef = doc(db, "users", trade.toUid, "cards", offeredCardId);
 
       await runTransaction(db, async (tx) => {
         const [tradeSnap, fromCardSnap, toCardSnap] = await Promise.all([
@@ -128,15 +128,47 @@ export function Trades() {
     }
   };
 
+  const updatePendingTradeStatus = async (
+    trade: TradePayload,
+    nextStatus: "declined" | "cancelled",
+    expectedActorUid: string,
+    ownershipError: string,
+  ) => {
+    const tradeRef = doc(db, "trades", trade.id);
+    await runTransaction(db, async (tx) => {
+      const tradeSnap = await tx.get(tradeRef);
+      if (!tradeSnap.exists()) {
+        throw new Error("This offer no longer exists.");
+      }
+
+      const currentTrade = tradeSnap.data() as TradePayload;
+      if (currentTrade.status !== "pending") {
+        throw new Error("This offer is no longer pending.");
+      }
+
+      const actorUid = nextStatus === "declined" ? currentTrade.toUid : currentTrade.fromUid;
+      if (actorUid !== expectedActorUid) {
+        throw new Error(ownershipError);
+      }
+
+      tx.update(tradeRef, {
+        status: nextStatus,
+        updatedAt: new Date().toISOString(),
+      });
+    });
+  };
+
   const handleDecline = async (trade: TradePayload) => {
     if (!user) return;
     setActionLoading(trade.id);
     setError("");
     try {
-      await updateDoc(doc(db, "trades", trade.id), {
-        status: "declined",
-        updatedAt: new Date().toISOString(),
-      });
+      await updatePendingTradeStatus(
+        trade,
+        "declined",
+        user.uid,
+        "This offer is no longer assigned to your account.",
+      );
       sfxRemove();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to decline trade.");
@@ -150,10 +182,12 @@ export function Trades() {
     setActionLoading(trade.id);
     setError("");
     try {
-      await updateDoc(doc(db, "trades", trade.id), {
-        status: "cancelled",
-        updatedAt: new Date().toISOString(),
-      });
+      await updatePendingTradeStatus(
+        trade,
+        "cancelled",
+        user.uid,
+        "This offer is no longer owned by your account.",
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to cancel trade.");
     } finally {

@@ -7,7 +7,6 @@ import {
   deleteDoc,
   onSnapshot,
   type QuerySnapshot,
-  serverTimestamp,
   getDocs,
   query,
   where,
@@ -26,15 +25,19 @@ import {
   buildArenaDeckSummary,
   createBattleCardSnapshot,
   deductWager,
-  resolveBattleWithEffects,
   WAGER_POINTS,
   WINNER_BONUS,
 } from "../lib/battle";
+import { resolveApiUrl } from "../lib/apiUrls";
 
 /** Minimum cards required in a deck to ready for battle. */
 export const MIN_BATTLE_CARDS = 1;
 
 const SEEN_BATTLE_RESULTS_KEY_PREFIX = "skpd_seen_battle_results_";
+const BATTLE_API_URL = resolveApiUrl(
+  (import.meta.env.VITE_BATTLE_API_URL as string | undefined)?.trim(),
+  "/api/resolve-battle",
+);
 
 function loadSeenBattleResults(uid: string): Set<string> {
   try {
@@ -266,55 +269,40 @@ export function useBattle() {
   // ── Challenge an opponent ─────────────────────────────────────────────────
   const challenge = useCallback(
     async (opponentEntry: ArenaEntry, myDeck: DeckPayload) => {
-      if (!uid || !db || battling) return;
+      if (!uid || !user || !db || battling) return;
       if (!opponentEntry.battleDeck || opponentEntry.battleDeck.length < MIN_BATTLE_CARDS) return;
 
       setBattling(true);
 
       try {
-        const battleId = `battle-${Date.now()}`;
-        const battleSeed = `${battleId}:${uid}:${myDeck.id}:${opponentEntry.uid}:${opponentEntry.deckId}`;
-        const resolution = resolveBattleWithEffects(
-          myDeck.cards.map(createBattleCardSnapshot),
-          opponentEntry.battleDeck,
-          battleSeed,
-        );
-        const winnerUid =
-          resolution.winnerSide === "challenger"
-            ? uid
-            : resolution.winnerSide === "defender"
-              ? opponentEntry.uid
-              : "";
-
-        const result: BattleResult = {
-          id: battleId,
-          challengerUid: uid,
-          challengerDeckId: myDeck.id,
-          challengerDeckName: myDeck.name,
-          defenderUid: opponentEntry.uid,
-          defenderDeckId: opponentEntry.deckId,
-          defenderDeckName: opponentEntry.deckName,
-          winnerUid,
-          challengerScore: resolution.challengerScore,
-          defenderScore: resolution.defenderScore,
-          wagerPoints: resolution.wagerPoints,
-          winningDeckCardIds: resolution.winningDeckCardIds,
-          challengerCardResolutions: resolution.challengerCardResolutions,
-          defenderCardResolutions: resolution.defenderCardResolutions,
-          createdAt: new Date().toISOString(),
-        };
-
-        await setDoc(doc(db, "battleResults", result.id), {
-          ...result,
-          _ts: serverTimestamp(),
+        const idToken = await user.getIdToken();
+        const response = await fetch(BATTLE_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({
+            challengerDeckId: myDeck.id,
+            defenderUid: opponentEntry.uid,
+            defenderDeckId: opponentEntry.deckId,
+          }),
         });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(
+            typeof payload.error === "string"
+              ? payload.error
+              : "Failed to resolve battle.",
+          );
+        }
 
-        await handleResolvedBattle(result);
+        await handleResolvedBattle(payload as BattleResult);
       } finally {
         setBattling(false);
       }
     },
-    [uid, battling, handleResolvedBattle],
+    [uid, user, battling, handleResolvedBattle],
   );
 
   const dismissResult = useCallback(() => {

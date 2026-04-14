@@ -556,6 +556,9 @@ export function CardForge() {
   return (
     <div className="page">
       <span className="build-number">{__BUILD_NUMBER__}</span>
+      <div className="forge-hero-overmap" aria-label="Neon world map overview">
+        <GeoAtlas compact section="neon" className="forge-hero-neon-map" />
+      </div>
       <h1 className="page-title">CARD FORGE</h1>
       <p className="page-sub">Configure your Sk8r and forge a unique card</p>
 
@@ -779,15 +782,12 @@ export function CardForge() {
               🗺 Open Australia map
             </button>
              <div className="forge-board-layout">
-              <aside className="forge-board-map-shell" aria-label="Punch Skater Australia map">
-                <GeoAtlas compact section="australia" />
-              </aside>
-              <div className="forge-board-neon-shell">
-                <GeoAtlas compact section="neon" className="forge-board-neon-map" />
-              </div>
-              <div className="forge-board-builder-shell">
-                <BoardBuilder
-                  value={boardConfig}
+               <aside className="forge-board-map-shell" aria-label="Punch Skater Australia map">
+                 <GeoAtlas compact section="australia" className="forge-board-australia-map" />
+               </aside>
+               <div className="forge-board-builder-shell">
+                 <BoardBuilder
+                   value={boardConfig}
                   onChange={setBoardConfig}
                   onSave={(config) => { setBoardConfig(config); }}
                 />

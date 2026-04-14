@@ -46,6 +46,7 @@ const CHARACTER_GENERATION_OPTIONS: ImageGenOptions = {
   imageSize: { width: 1088, height: 1536 },
   numInferenceSteps: 45,
   guidanceScale: 4,
+  falProfile: "character",
 };
 const NON_LORA_GENERATION_OPTIONS: ImageGenOptions = {
   loras: [],

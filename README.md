@@ -40,6 +40,10 @@ Copy `.env.example` to `.env` for local client config.
 - `FAL_CONFIG_URL` (optional; remote JSON defaults for Fal image requests)
 - `FAL_LORA_PATH` (optional; server-side default LoRA path)
 - `FAL_LORA_SCALE` (optional; server-side default LoRA scale)
+- `FAL_CHARACTER_IMAGE_MODEL_URL` (optional; defaults to `https://fal.run/fal-ai/flux-2/lora`)
+- `FAL_CHARACTER_CONFIG_URL` (optional; remote JSON defaults for character image requests)
+- `FAL_CHARACTER_LORA_PATH` (optional; server-side default character LoRA path)
+- `FAL_CHARACTER_LORA_SCALE` (optional; server-side default character LoRA scale)
 - `STRIPE_SECRET_KEY`
 - `FIREBASE_API_KEY`
 - `ADMIN_EMAILS`

@@ -48,6 +48,7 @@ export interface ImageGenOptions {
   numInferenceSteps?: number;
   guidanceScale?: number;
   loras?: FalLoraConfig[];
+  falProfile?: "default" | "character";
 }
 
 /**
@@ -88,7 +89,7 @@ export interface ImageDimensions {
 // ── Service ────────────────────────────────────────────────────────────────────
 
 /**
- * Generate a card illustration via the Fal.ai FLUX.1 model.
+ * Generate a card illustration via the Fal.ai proxy.
  *
  * @param prompt     - Text description built by `buildImagePrompt()`.
  * @param masterSeed - The card's string master seed; hashed to a 32-bit int so
@@ -123,6 +124,7 @@ export async function generateImage(
     num_inference_steps: options.numInferenceSteps ?? INFERENCE_STEPS,
     guidance_scale: options.guidanceScale ?? GUIDANCE_SCALE,
     loras: options.loras,
+    fal_profile: options.falProfile,
     num_images: NUM_IMAGES,
     enable_safety_checker: SAFETY_CHECKER,
     output_format: OUTPUT_FORMAT,

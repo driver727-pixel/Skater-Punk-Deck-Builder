@@ -88,16 +88,27 @@ const FAL_KEY = process.env.FAL_KEY || '';
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || process.env.VITE_FIREBASE_API_KEY || '';
 const FIREBASE_AUTH_URL = 'https://identitytoolkit.googleapis.com/v1/accounts';
-const FAL_URL = process.env.FAL_IMAGE_MODEL_URL || 'https://fal.run/fal-ai/flux-lora';
-const FAL_CONFIG_URL = process.env.FAL_CONFIG_URL || process.env.FAL_LORA_CONFIG_URL || '';
-const FAL_LORA_PATH = process.env.FAL_LORA_PATH || 'https://v3b.fal.media/files/b/0a961b80/LZYfVjdfVXWWb7gMl4kL2_pytorch_lora_weights.safetensors';
+const DEFAULT_FAL_URL = process.env.FAL_IMAGE_MODEL_URL || 'https://fal.run/fal-ai/flux-lora';
+const DEFAULT_FAL_CONFIG_URL = process.env.FAL_CONFIG_URL || process.env.FAL_LORA_CONFIG_URL || '';
+const DEFAULT_FAL_LORA_PATH = process.env.FAL_LORA_PATH || 'https://v3b.fal.media/files/b/0a961b80/LZYfVjdfVXWWb7gMl4kL2_pytorch_lora_weights.safetensors';
 const rawFalLoraScale = Number.parseFloat(process.env.FAL_LORA_SCALE || '1');
-const FAL_LORA_SCALE = Number.isFinite(rawFalLoraScale) ? rawFalLoraScale : 1;
+const DEFAULT_FAL_LORA_SCALE = Number.isFinite(rawFalLoraScale) ? rawFalLoraScale : 1;
 if (process.env.FAL_LORA_SCALE && !Number.isFinite(rawFalLoraScale)) {
   console.warn('⚠️  FAL_LORA_SCALE is invalid — falling back to 1.');
 }
-const DEFAULT_FAL_LORAS = FAL_LORA_PATH
-  ? [{ path: FAL_LORA_PATH, scale: FAL_LORA_SCALE }]
+const DEFAULT_FAL_LORAS = DEFAULT_FAL_LORA_PATH
+  ? [{ path: DEFAULT_FAL_LORA_PATH, scale: DEFAULT_FAL_LORA_SCALE }]
+  : [];
+const CHARACTER_FAL_URL = process.env.FAL_CHARACTER_IMAGE_MODEL_URL || 'https://fal.run/fal-ai/flux-2/lora';
+const CHARACTER_FAL_CONFIG_URL = process.env.FAL_CHARACTER_CONFIG_URL || 'https://v3b.fal.media/files/b/0a962cdb/GvvgV0ByFDT7TB0SNb9Dc_config_cf867d1b-1b55-45d1-a4a4-fe5e223ec932.json';
+const CHARACTER_FAL_LORA_PATH = process.env.FAL_CHARACTER_LORA_PATH || 'https://v3b.fal.media/files/b/0a962cda/rW-WL7L6NIqULjsRzuyV7_pytorch_lora_weights.safetensors';
+const rawCharacterFalLoraScale = Number.parseFloat(process.env.FAL_CHARACTER_LORA_SCALE || '1');
+const CHARACTER_FAL_LORA_SCALE = Number.isFinite(rawCharacterFalLoraScale) ? rawCharacterFalLoraScale : 1;
+if (process.env.FAL_CHARACTER_LORA_SCALE && !Number.isFinite(rawCharacterFalLoraScale)) {
+  console.warn('⚠️  FAL_CHARACTER_LORA_SCALE is invalid — falling back to 1.');
+}
+const CHARACTER_FAL_LORAS = CHARACTER_FAL_LORA_PATH
+  ? [{ path: CHARACTER_FAL_LORA_PATH, scale: CHARACTER_FAL_LORA_SCALE }]
   : [];
 const DEFAULT_FAL_IMAGE_SIZE = { width: 750, height: 1050 };
 const DEFAULT_FAL_NUM_INFERENCE_STEPS = 28;
@@ -130,10 +141,7 @@ let districtWeatherCache = {
   fetchedAt: 0,
 };
 
-let falRequestConfigCache = {
-  payload: null,
-  fetchedAt: 0,
-};
+const falRequestConfigCache = new Map();
 
 // Allowed Stripe price IDs — derived from src/lib/tierPricing.json so that
 // updating prices only requires editing that one file.
@@ -313,22 +321,39 @@ function sanitizeFalRequestConfig(candidate) {
   return Object.keys(config).length ? config : null;
 }
 
-async function getRemoteFalRequestConfig() {
-  if (!FAL_CONFIG_URL) return null;
+function resolveFalProfile(profile) {
+  if (profile === 'character') {
+    return {
+      modelUrl: CHARACTER_FAL_URL,
+      configUrl: CHARACTER_FAL_CONFIG_URL,
+      defaultLoras: CHARACTER_FAL_LORAS,
+    };
+  }
+
+  return {
+    modelUrl: DEFAULT_FAL_URL,
+    configUrl: DEFAULT_FAL_CONFIG_URL,
+    defaultLoras: DEFAULT_FAL_LORAS,
+  };
+}
+
+async function getRemoteFalRequestConfig(configUrl) {
+  if (!configUrl) return null;
 
   const now = Date.now();
+  const cachedEntry = falRequestConfigCache.get(configUrl);
   const hasFreshCache =
-    falRequestConfigCache.payload &&
-    now - falRequestConfigCache.fetchedAt < FAL_CONFIG_CACHE_TTL_MS;
+    cachedEntry?.payload &&
+    now - cachedEntry.fetchedAt < FAL_CONFIG_CACHE_TTL_MS;
 
   if (hasFreshCache) {
-    return falRequestConfigCache.payload;
+    return cachedEntry.payload;
   }
 
   try {
-    const upstream = await fetch(FAL_CONFIG_URL);
+    const upstream = await fetch(configUrl);
     if (!upstream.ok) {
-      throw new Error(`Remote Fal config fetch from ${FAL_CONFIG_URL} failed with ${upstream.status} ${upstream.statusText}.`);
+      throw new Error(`Remote Fal config fetch from ${configUrl} failed with ${upstream.status} ${upstream.statusText}.`);
     }
 
     const payload = await upstream.json();
@@ -338,17 +363,17 @@ async function getRemoteFalRequestConfig() {
       throw new Error('Remote config JSON did not contain supported Fal request fields.');
     }
 
-    falRequestConfigCache = {
+    falRequestConfigCache.set(configUrl, {
       payload: config,
       fetchedAt: now,
-    };
+    });
 
     return config;
   } catch (err) {
-    console.error(`Fal config refresh failed for ${FAL_CONFIG_URL}:`, err);
+    console.error(`Fal config refresh failed for ${configUrl}:`, err);
 
-    if (falRequestConfigCache.payload) {
-      return falRequestConfigCache.payload;
+    if (cachedEntry?.payload) {
+      return cachedEntry.payload;
     }
 
     return null;
@@ -356,19 +381,23 @@ async function getRemoteFalRequestConfig() {
 }
 
 async function buildFalImageRequest(body = {}) {
-  const remoteConfig = await getRemoteFalRequestConfig();
+  const profile = typeof body.fal_profile === 'string' ? body.fal_profile.trim() : '';
+  const profileSettings = resolveFalProfile(profile);
+  const remoteConfig = await getRemoteFalRequestConfig(profileSettings.configUrl);
   const requestedLoras = Array.isArray(body.loras) ? body.loras : undefined;
   const remoteDefaults = remoteConfig ?? {};
+  const upstreamBody = { ...body };
+  delete upstreamBody.fal_profile;
 
   return {
-    ...body,
+    ...upstreamBody,
     image_size: body.image_size ?? remoteDefaults.image_size ?? DEFAULT_FAL_IMAGE_SIZE,
     num_inference_steps: body.num_inference_steps ?? remoteDefaults.num_inference_steps ?? DEFAULT_FAL_NUM_INFERENCE_STEPS,
     guidance_scale: body.guidance_scale ?? remoteDefaults.guidance_scale ?? DEFAULT_FAL_GUIDANCE_SCALE,
     num_images: body.num_images ?? remoteDefaults.num_images ?? DEFAULT_FAL_NUM_IMAGES,
     enable_safety_checker: body.enable_safety_checker ?? remoteDefaults.enable_safety_checker ?? DEFAULT_FAL_ENABLE_SAFETY_CHECKER,
     output_format: body.output_format ?? remoteDefaults.output_format ?? DEFAULT_FAL_OUTPUT_FORMAT,
-    loras: requestedLoras ?? remoteDefaults.loras ?? DEFAULT_FAL_LORAS,
+    loras: requestedLoras ?? remoteDefaults.loras ?? profileSettings.defaultLoras,
   };
 }
 
@@ -461,7 +490,9 @@ async function getDistrictWeatherPayload() {
 // this server forwards the request to Fal.ai, attaching the secret key.
 app.post('/api/generate-image', imageRateLimit, async (req, res) => {
   try {
-    const upstream = await fetch(FAL_URL, {
+    const profile = typeof req.body?.fal_profile === 'string' ? req.body.fal_profile.trim() : '';
+    const profileSettings = resolveFalProfile(profile);
+    const upstream = await fetch(profileSettings.modelUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

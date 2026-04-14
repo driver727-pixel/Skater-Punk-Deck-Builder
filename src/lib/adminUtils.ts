@@ -1,4 +1,4 @@
-/** Returns the list of admin email addresses from the environment variable. */
+/** Returns admin emails from the environment, or an empty list when unset. */
 export function getAdminEmails(): string[] {
   const env = (import.meta.env.VITE_ADMIN_EMAILS ?? "").trim();
   if (!env) return [];

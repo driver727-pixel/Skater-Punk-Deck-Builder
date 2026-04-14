@@ -63,6 +63,10 @@ function createAuthUnavailableError() {
   return new Error(firebaseUnavailableMessage);
 }
 
+function getProfileString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
 async function upsertUserProfile(user: User) {
   if (!db) return;
   await setDoc(
@@ -128,8 +132,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = snap.exists() ? (snap.data() as Partial<UserProfile>) : {};
         setUserProfile({
           uid: user.uid,
-          email: data.email ?? user.email ?? "",
-          displayName: data.displayName ?? user.displayName ?? user.email?.split("@")[0] ?? "Skater",
+          email: getProfileString(data.email) ?? user.email ?? "",
+          displayName:
+            getProfileString(data.displayName)
+            ?? user.displayName
+            ?? user.email?.split("@")[0]
+            ?? "Skater",
           isAdmin: data.isAdmin === true,
         });
       },

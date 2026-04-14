@@ -55,10 +55,6 @@ interface TierContextValue {
 
 const TierContext = createContext<TierContextValue | null>(null);
 
-function resolveInitialTier(): TierLevel {
-  return "free";
-}
-
 function resolveInitialEmail(): string {
   const params = new URLSearchParams(window.location.search);
   const emailParam = params.get("email");
@@ -80,7 +76,7 @@ function extractReferrerUid(): string | null {
 
 export function TierProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [tier, setTierState] = useState<TierLevel>(resolveInitialTier);
+  const [tier, setTierState] = useState<TierLevel>("free");
   const [email, setEmailState] = useState<string>(resolveInitialEmail);
   const [generateCredits, setGenerateCredits] = useState<number>(loadStoredCredits);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);

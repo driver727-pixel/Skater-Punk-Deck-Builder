@@ -321,6 +321,10 @@ function sanitizeFalRequestConfig(candidate) {
   return Object.keys(config).length ? config : null;
 }
 
+function normalizeFalProfile(value) {
+  return value === 'character' ? 'character' : 'default';
+}
+
 function resolveFalProfile(profile) {
   if (profile === 'character') {
     return {
@@ -381,7 +385,7 @@ async function getRemoteFalRequestConfig(configUrl) {
 }
 
 async function buildFalImageRequest(body = {}) {
-  const profile = typeof body.fal_profile === 'string' ? body.fal_profile.trim() : '';
+  const profile = normalizeFalProfile(typeof body.fal_profile === 'string' ? body.fal_profile.trim() : '');
   const profileSettings = resolveFalProfile(profile);
   const remoteConfig = await getRemoteFalRequestConfig(profileSettings.configUrl);
   const requestedLoras = Array.isArray(body.loras) ? body.loras : undefined;
@@ -490,7 +494,7 @@ async function getDistrictWeatherPayload() {
 // this server forwards the request to Fal.ai, attaching the secret key.
 app.post('/api/generate-image', imageRateLimit, async (req, res) => {
   try {
-    const profile = typeof req.body?.fal_profile === 'string' ? req.body.fal_profile.trim() : '';
+    const profile = normalizeFalProfile(typeof req.body?.fal_profile === 'string' ? req.body.fal_profile.trim() : '');
     const profileSettings = resolveFalProfile(profile);
     const upstream = await fetch(profileSettings.modelUrl, {
       method: 'POST',

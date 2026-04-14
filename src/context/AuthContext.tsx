@@ -27,13 +27,20 @@ import {
   type ConfirmationResult,
   type ApplicationVerifier,
 } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, firebaseUnavailableMessage } from "../lib/firebase";
 import { syncReferralCredits } from "../services/referrals";
-import { isAdminEmail } from "../lib/adminUtils";
+
+interface UserProfile {
+  uid: string;
+  email: string;
+  displayName: string;
+  isAdmin?: boolean;
+}
 
 interface AuthContextValue {
   user: User | null;
+  userProfile: UserProfile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
@@ -56,11 +63,12 @@ function createAuthUnavailableError() {
   return new Error(firebaseUnavailableMessage);
 }
 
+function getProfileString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
 async function upsertUserProfile(user: User) {
   if (!db) return;
-  const adminFields = isAdminEmail(user.email ?? "")
-    ? { isAdmin: true, tier: "tier3" as const }
-    : {};
   await setDoc(
     doc(db, "userProfiles", user.uid),
     {
@@ -68,7 +76,6 @@ async function upsertUserProfile(user: User) {
       email: user.email ?? "",
       displayName: user.displayName ?? user.email?.split("@")[0] ?? "Skater",
       updatedAt: serverTimestamp(),
-      ...adminFields,
     },
     { merge: true }
   );
@@ -76,6 +83,7 @@ async function upsertUserProfile(user: User) {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -93,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       setUser(u);
+      setUserProfile(null);
       setLoading(false);
       if (u) {
         await upsertUserProfile(u).catch(() => {/* non-fatal */});
@@ -101,6 +110,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setUserProfile(null);
+      return;
+    }
+    if (!db) {
+      setUserProfile({
+        uid: user.uid,
+        email: user.email ?? "",
+        displayName: user.displayName ?? user.email?.split("@")[0] ?? "Skater",
+        isAdmin: false,
+      });
+      return;
+    }
+
+    return onSnapshot(
+      doc(db, "userProfiles", user.uid),
+      (snap) => {
+        const data = snap.exists() ? (snap.data() as Partial<UserProfile>) : {};
+        setUserProfile({
+          uid: user.uid,
+          email: getProfileString(data.email) ?? user.email ?? "",
+          displayName:
+            getProfileString(data.displayName)
+            ?? user.displayName
+            ?? user.email?.split("@")[0]
+            ?? "Skater",
+          isAdmin: data.isAdmin === true,
+        });
+      },
+      () => {
+        setUserProfile({
+          uid: user.uid,
+          email: user.email ?? "",
+          displayName: user.displayName ?? user.email?.split("@")[0] ?? "Skater",
+          isAdmin: false,
+        });
+      },
+    );
+  }, [user]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     if (!auth) throw createAuthUnavailableError();
@@ -185,7 +235,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, signInWithGoogle, sendPasswordReset, signInWithPhone, changePassword, changeDisplayName, deleteAccount }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, signIn, signUp, signOut, signInWithGoogle, sendPasswordReset, signInWithPhone, changePassword, changeDisplayName, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );

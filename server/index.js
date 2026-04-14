@@ -253,7 +253,8 @@ async function authenticateFirebaseUser(req) {
 
   try {
     return await adminAuth.verifyIdToken(idToken);
-  } catch {
+  } catch (error) {
+    console.error('Firebase ID token verification failed:', error);
     throw Object.assign(new Error('Invalid or expired ID token.'), { statusCode: 401 });
   }
 }

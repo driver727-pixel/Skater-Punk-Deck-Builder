@@ -4,6 +4,11 @@ import rateLimit from 'express-rate-limit';
 import Stripe from 'stripe';
 import 'dotenv/config';
 import { createRequire } from 'module';
+import { randomUUID } from 'node:crypto';
+import { cert, getApps, initializeApp as initializeAdminApp } from 'firebase-admin/app';
+import { getAuth as getAdminAuth } from 'firebase-admin/auth';
+import { FieldValue, getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
+import { createBattleCardSnapshot, resolveBattleWithEffects } from './battle.js';
 
 // Load the shared pricing config — the single source of truth for Stripe
 // price IDs, buy URLs, and display prices.  Update src/lib/tierPricing.json
@@ -84,9 +89,21 @@ const weatherRateLimit = rateLimit({
   message: { error: 'Too many weather requests — please wait a moment and try again.' },
 });
 
+const battleRateLimit = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Too many battle requests — please wait a moment and try again.' },
+});
+
 const FAL_KEY = process.env.FAL_KEY || '';
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || process.env.VITE_FIREBASE_API_KEY || '';
+const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID || '';
+const FIREBASE_ADMIN_CLIENT_EMAIL = process.env.FIREBASE_ADMIN_CLIENT_EMAIL || '';
+const FIREBASE_ADMIN_PRIVATE_KEY = process.env.FIREBASE_ADMIN_PRIVATE_KEY || '';
+const FIREBASE_SERVICE_ACCOUNT_JSON = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '';
 const FIREBASE_AUTH_URL = 'https://identitytoolkit.googleapis.com/v1/accounts';
 const DEFAULT_FAL_URL = process.env.FAL_IMAGE_MODEL_URL || 'https://fal.run/fal-ai/flux-lora';
 const DEFAULT_FAL_CONFIG_URL = process.env.FAL_CONFIG_URL || process.env.FAL_LORA_CONFIG_URL || '';
@@ -169,6 +186,79 @@ if (!stripe) {
 }
 if (!FIREBASE_API_KEY) {
   console.warn('⚠️  FIREBASE_API_KEY environment variable is not set — admin user creation will be unavailable.');
+}
+
+function getFirebaseServiceAccount() {
+  if (FIREBASE_SERVICE_ACCOUNT_JSON) {
+    try {
+      const parsed = JSON.parse(FIREBASE_SERVICE_ACCOUNT_JSON);
+      return {
+        projectId: parsed.project_id ?? parsed.projectId ?? FIREBASE_PROJECT_ID,
+        clientEmail: parsed.client_email ?? parsed.clientEmail,
+        privateKey: typeof parsed.private_key === 'string'
+          ? parsed.private_key.replace(/\\n/g, '\n')
+          : typeof parsed.privateKey === 'string'
+            ? parsed.privateKey.replace(/\\n/g, '\n')
+            : '',
+      };
+    } catch (error) {
+      console.error('Firebase service-account JSON is invalid:', error);
+      return null;
+    }
+  }
+
+  if (!FIREBASE_PROJECT_ID || !FIREBASE_ADMIN_CLIENT_EMAIL || !FIREBASE_ADMIN_PRIVATE_KEY) {
+    return null;
+  }
+
+  return {
+    projectId: FIREBASE_PROJECT_ID,
+    clientEmail: FIREBASE_ADMIN_CLIENT_EMAIL,
+    privateKey: FIREBASE_ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n'),
+  };
+}
+
+function createFirebaseAdminServices() {
+  const serviceAccount = getFirebaseServiceAccount();
+  if (!serviceAccount?.projectId || !serviceAccount.clientEmail || !serviceAccount.privateKey) {
+    return { adminAuth: null, adminDb: null };
+  }
+
+  const app = getApps()[0] ?? initializeAdminApp({
+    credential: cert(serviceAccount),
+  });
+
+  return {
+    adminAuth: getAdminAuth(app),
+    adminDb: getAdminFirestore(app),
+  };
+}
+
+const { adminAuth, adminDb } = createFirebaseAdminServices();
+
+if (!adminAuth || !adminDb) {
+  console.warn(
+    '⚠️  Firebase Admin credentials are not set — set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, and FIREBASE_ADMIN_PRIVATE_KEY to enable secure battle resolution.',
+  );
+}
+
+async function authenticateFirebaseUser(req) {
+  if (!adminAuth) {
+    throw Object.assign(new Error('Firebase Admin authentication is not configured.'), { statusCode: 503 });
+  }
+
+  const authHeader = req.headers.authorization ?? '';
+  const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  if (!idToken) {
+    throw Object.assign(new Error('Missing Authorization header.'), { statusCode: 401 });
+  }
+
+  try {
+    return await adminAuth.verifyIdToken(idToken);
+  } catch (error) {
+    console.error('Firebase ID token verification failed:', error);
+    throw Object.assign(new Error('Invalid or expired ID token.'), { statusCode: 401 });
+  }
 }
 
 function roundWeatherMetric(value) {
@@ -640,6 +730,121 @@ app.post('/api/import', importRateLimit, (req, res) => {
 app.get('/api/district-weather', weatherRateLimit, async (_req, res) => {
   const payload = await getDistrictWeatherPayload();
   res.json(payload);
+});
+
+app.post('/api/resolve-battle', battleRateLimit, async (req, res) => {
+  if (!adminDb) {
+    res.status(503).json({ error: 'Battle resolution is not configured on this server.' });
+    return;
+  }
+
+  let caller;
+  try {
+    caller = await authenticateFirebaseUser(req);
+  } catch (error) {
+    res.status(error.statusCode ?? 500).json({ error: error.message ?? 'Authentication failed.' });
+    return;
+  }
+
+  const challengerUid = caller.uid;
+  const challengerDeckId = typeof req.body?.challengerDeckId === 'string' ? req.body.challengerDeckId.trim() : '';
+  const defenderUid = typeof req.body?.defenderUid === 'string' ? req.body.defenderUid.trim() : '';
+  const defenderDeckId = typeof req.body?.defenderDeckId === 'string' ? req.body.defenderDeckId.trim() : '';
+
+  if (!challengerDeckId || !defenderUid || !defenderDeckId) {
+    res.status(400).json({ error: 'challengerDeckId, defenderUid, and defenderDeckId are required.' });
+    return;
+  }
+
+  if (challengerUid === defenderUid) {
+    res.status(400).json({ error: 'You cannot challenge yourself.' });
+    return;
+  }
+
+  try {
+    const result = await adminDb.runTransaction(async (tx) => {
+      const challengerArenaRef = adminDb.collection('arena').doc(challengerUid);
+      const defenderArenaRef = adminDb.collection('arena').doc(defenderUid);
+      const challengerDeckRef = adminDb.collection('users').doc(challengerUid).collection('decks').doc(challengerDeckId);
+      const defenderDeckRef = adminDb.collection('users').doc(defenderUid).collection('decks').doc(defenderDeckId);
+      const [challengerArenaSnap, defenderArenaSnap, challengerDeckSnap, defenderDeckSnap] = await Promise.all([
+        tx.get(challengerArenaRef),
+        tx.get(defenderArenaRef),
+        tx.get(challengerDeckRef),
+        tx.get(defenderDeckRef),
+      ]);
+
+      if (!challengerArenaSnap.exists || !defenderArenaSnap.exists) {
+        throw Object.assign(new Error('One of the arena entries is no longer available.'), { statusCode: 409 });
+      }
+
+      const challengerArena = challengerArenaSnap.data();
+      const defenderArena = defenderArenaSnap.data();
+      if (challengerArena.deckId !== challengerDeckId || defenderArena.deckId !== defenderDeckId) {
+        throw Object.assign(new Error('One of the selected decks is no longer readied for battle.'), { statusCode: 409 });
+      }
+
+      if (!challengerDeckSnap.exists || !defenderDeckSnap.exists) {
+        throw Object.assign(new Error('One of the selected decks no longer exists.'), { statusCode: 409 });
+      }
+
+      const challengerDeck = challengerDeckSnap.data();
+      const defenderDeck = defenderDeckSnap.data();
+      if (challengerDeck.battleReady !== true || defenderDeck.battleReady !== true) {
+        throw Object.assign(new Error('One of the selected decks is no longer readied for battle.'), { statusCode: 409 });
+      }
+
+      const challengerCards = Array.isArray(challengerDeck.cards) ? challengerDeck.cards.map(createBattleCardSnapshot) : [];
+      const defenderCards = Array.isArray(defenderDeck.cards) ? defenderDeck.cards.map(createBattleCardSnapshot) : [];
+      if (challengerCards.length === 0 || defenderCards.length === 0) {
+        throw Object.assign(new Error('Both battle decks must contain at least one card.'), { statusCode: 409 });
+      }
+
+      const battleId = `battle-${randomUUID()}`;
+      const battleSeed = randomUUID();
+      const resolution = resolveBattleWithEffects(challengerCards, defenderCards, battleSeed);
+      const winnerUid =
+        resolution.winnerSide === 'challenger'
+          ? challengerUid
+          : resolution.winnerSide === 'defender'
+            ? defenderUid
+            : '';
+      const now = new Date().toISOString();
+      const result = {
+        id: battleId,
+        challengerUid,
+        challengerDeckId,
+        challengerDeckName: challengerDeck.name ?? challengerArena.deckName ?? 'Challenger Deck',
+        defenderUid,
+        defenderDeckId,
+        defenderDeckName: defenderDeck.name ?? defenderArena.deckName ?? 'Defender Deck',
+        winnerUid,
+        challengerScore: resolution.challengerScore,
+        defenderScore: resolution.defenderScore,
+        wagerPoints: resolution.wagerPoints,
+        winningDeckCardIds: resolution.winningDeckCardIds,
+        challengerCardResolutions: resolution.challengerCardResolutions,
+        defenderCardResolutions: resolution.defenderCardResolutions,
+        createdAt: now,
+      };
+
+      tx.set(adminDb.collection('battleResults').doc(battleId), {
+        ...result,
+        _ts: FieldValue.serverTimestamp(),
+      });
+      tx.delete(challengerArenaRef);
+      tx.delete(defenderArenaRef);
+      tx.update(challengerDeckRef, { battleReady: false, updatedAt: now });
+      tx.update(defenderDeckRef, { battleReady: false, updatedAt: now });
+
+      return result;
+    });
+
+    res.status(201).json(result);
+  } catch (error) {
+    console.error('Battle resolution error:', error);
+    res.status(error.statusCode ?? 500).json({ error: error.message ?? 'Failed to resolve battle.' });
+  }
 });
 
 // ── Stripe Checkout Sessions ──────────────────────────────────────────────────

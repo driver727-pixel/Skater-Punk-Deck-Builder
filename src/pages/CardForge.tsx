@@ -11,6 +11,7 @@ import { getCachedImage, setCachedImage } from "../services/imageCache";
 import { getStaticBackgroundUrl, getStaticBackgroundSmallUrl, getStaticFrameUrl } from "../services/staticAssets";
 import { buildBackgroundPrompt, buildCharacterPrompt, buildFramePrompt } from "../lib/promptBuilder";
 import { useTier } from "../context/TierContext";
+import { useAuth } from "../context/AuthContext";
 import { useCollection } from "../hooks/useCollection";
 import { useFactionDiscovery } from "../hooks/useFactionDiscovery";
 import { TIERS } from "../lib/tiers";
@@ -88,6 +89,7 @@ const INITIAL_LAYER_STATE: LayerState = {
 
 export function CardForge() {
   const { tier, canForge, generateCredits, consumeCredit, openUpgradeModal } = useTier();
+  const { user } = useAuth();
   const tierData = TIERS[tier];
   const navigate = useNavigate();
   const { addCard, cards } = useCollection();
@@ -312,10 +314,11 @@ export function CardForge() {
       secretFaction === "D4rk $pider"
         ? { ...prompts, archetype: "D4rk $pider" as const }
         : prompts;
+    const idNonce = `${user?.uid ?? "guest"}:${Date.now()}:${crypto.randomUUID()}`;
 
     // Generate card payload
     const card = applyFactionBranding(
-      generateCard(generationPrompts),
+      generateCard(generationPrompts, { idNonce }),
       displayArchetype,
       secretFaction,
     );
@@ -447,7 +450,7 @@ export function CardForge() {
     })();
 
     setForging(false);
-  }, [prompts, boardConfig, generateLayer, canForge, generateCredits, consumeCredit, openUpgradeModal, hasFaction, unlockFaction]);
+  }, [prompts, boardConfig, generateLayer, canForge, generateCredits, consumeCredit, openUpgradeModal, hasFaction, unlockFaction, user?.uid]);
 
   // ── Expired-URL retry handler ────────────────────────────────────────────
   // Called when a composite img element fires onError (e.g. fal.ai CDN URL has

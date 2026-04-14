@@ -246,7 +246,9 @@ export function sfxGlitch() {
     const buf = c.createBuffer(1, c.sampleRate * 0.18, c.sampleRate);
     const data = buf.getChannelData(0);
     for (let i = 0; i < data.length; i++) {
-      data[i] = (Math.random() * 2 - 1) * (i < data.length * 0.6 ? 1 : 1 - (i - data.length * 0.6) / (data.length * 0.4));
+      const fadeStart = data.length * 0.6;
+      const envelope = i < fadeStart ? 1 : 1 - (i - fadeStart) / (data.length * 0.4);
+      data[i] = (Math.random() * 2 - 1) * envelope;
     }
     const src = c.createBufferSource();
     src.buffer = buf;

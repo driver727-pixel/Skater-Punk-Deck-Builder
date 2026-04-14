@@ -216,15 +216,17 @@ function normalizeFalLoraEntry(entry) {
   const path = typeof entry.path === 'string' ? entry.path.trim() : '';
   if (!path) return null;
 
-  const rawScale =
-    typeof entry.scale === 'number'
-      ? entry.scale
-      : Number.parseFloat(String(entry.scale ?? '1'));
+  const rawScale = parseFalScale(entry.scale, 1);
 
   return {
     path,
     scale: Number.isFinite(rawScale) ? rawScale : 1,
   };
+}
+
+function parseFalScale(value, fallback = 1) {
+  const parsed = typeof value === 'number' ? value : Number.parseFloat(String(value ?? fallback));
+  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
 function normalizeFalLoras(value, fallbackScale = 1) {
@@ -286,12 +288,14 @@ function sanitizeFalRequestConfig(candidate) {
   if (!isPlainObject(candidate)) return null;
 
   const config = {};
+  const loraScale = parseFalScale(candidate.lora_scale, 1);
+  const scale = parseFalScale(candidate.scale, 1);
 
   const maybeLoras =
     normalizeFalLoras(candidate.loras) ??
     normalizeFalLoras(candidate.lora) ??
-    normalizeFalLoras(candidate.lora_path, Number.parseFloat(String(candidate.lora_scale ?? '1'))) ??
-    normalizeFalLoras(candidate.path, Number.parseFloat(String(candidate.scale ?? '1')));
+    normalizeFalLoras(candidate.lora_path, loraScale) ??
+    normalizeFalLoras(candidate.path, scale);
 
   if (candidate.image_size !== undefined) config.image_size = candidate.image_size;
   if (candidate.num_inference_steps !== undefined) config.num_inference_steps = candidate.num_inference_steps;
@@ -349,16 +353,17 @@ async function getRemoteFalRequestConfig() {
 async function buildFalImageRequest(body = {}) {
   const remoteConfig = await getRemoteFalRequestConfig();
   const requestedLoras = Array.isArray(body.loras) ? body.loras : undefined;
+  const remoteDefaults = remoteConfig ?? {};
 
   return {
     ...body,
-    image_size: body.image_size ?? remoteConfig?.image_size ?? DEFAULT_FAL_IMAGE_SIZE,
-    num_inference_steps: body.num_inference_steps ?? remoteConfig?.num_inference_steps ?? DEFAULT_FAL_NUM_INFERENCE_STEPS,
-    guidance_scale: body.guidance_scale ?? remoteConfig?.guidance_scale ?? DEFAULT_FAL_GUIDANCE_SCALE,
-    num_images: body.num_images ?? remoteConfig?.num_images ?? DEFAULT_FAL_NUM_IMAGES,
-    enable_safety_checker: body.enable_safety_checker ?? remoteConfig?.enable_safety_checker ?? DEFAULT_FAL_ENABLE_SAFETY_CHECKER,
-    output_format: body.output_format ?? remoteConfig?.output_format ?? DEFAULT_FAL_OUTPUT_FORMAT,
-    loras: requestedLoras ?? remoteConfig?.loras ?? DEFAULT_FAL_LORAS,
+    image_size: body.image_size ?? remoteDefaults.image_size ?? DEFAULT_FAL_IMAGE_SIZE,
+    num_inference_steps: body.num_inference_steps ?? remoteDefaults.num_inference_steps ?? DEFAULT_FAL_NUM_INFERENCE_STEPS,
+    guidance_scale: body.guidance_scale ?? remoteDefaults.guidance_scale ?? DEFAULT_FAL_GUIDANCE_SCALE,
+    num_images: body.num_images ?? remoteDefaults.num_images ?? DEFAULT_FAL_NUM_IMAGES,
+    enable_safety_checker: body.enable_safety_checker ?? remoteDefaults.enable_safety_checker ?? DEFAULT_FAL_ENABLE_SAFETY_CHECKER,
+    output_format: body.output_format ?? remoteDefaults.output_format ?? DEFAULT_FAL_OUTPUT_FORMAT,
+    loras: requestedLoras ?? remoteDefaults.loras ?? DEFAULT_FAL_LORAS,
   };
 }
 

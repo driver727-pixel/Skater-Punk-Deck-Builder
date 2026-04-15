@@ -84,11 +84,11 @@ const BACKGROUND_ASSETS_SMALL: Partial<Record<District, string>> = {
 //   Legendary: { url: "/assets/frames/legendary.png" },
 
 const FRAME_ASSETS: Partial<Record<Rarity, FrameAssetConfig>> = {
-  // "Punch Skater": { url: "/assets/frames/punch-skater.png" },
-  // Apprentice:     { url: "/assets/frames/apprentice.png" },
-  // Master:         { url: "/assets/frames/master.png" },
-  // Rare:           { url: "/assets/frames/rare.png" },
-  // Legendary:      { url: "/assets/frames/legendary.png" },
+  "Punch Skater": { url: "/assets/frames/punch-skater.png" },
+  Apprentice:     { url: "/assets/frames/apprentice.png" },
+  Master:         { url: "/assets/frames/master.png" },
+  Rare:           { url: "/assets/frames/rare.png" },
+  Legendary:      { url: "/assets/frames/legendary.png" },
 };
 
 // ── Public API ─────────────────────────────────────────────────────────────────

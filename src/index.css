@@ -5857,7 +5857,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   z-index: 2;
   font-size: 9px;
   color: var(--accent2);
-  letter-spacing: 1.6px;
+  letter-spacing: 1.4px;
   text-transform: uppercase;
 }
 

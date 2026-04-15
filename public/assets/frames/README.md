@@ -6,11 +6,11 @@ Place rarity-tier border frame images here to skip AI generation and save fal.ai
 
 | Rarity        | Filename                |
 |---------------|-------------------------|
-| Punch Skater  | `punch-skater.jpg`      |
-| Apprentice    | `apprentice.jpg`        |
-| Master        | `master.jpg`            |
-| Rare          | `rare.jpg`              |
-| Legendary     | `legendary.jpg`         |
+| Punch Skater  | `punch-skater.png`      |
+| Apprentice    | `apprentice.png`        |
+| Master        | `master.png`            |
+| Rare          | `rare.png`              |
+| Legendary     | `legendary.png`         |
 
 ## Accepted Formats
 
@@ -18,16 +18,18 @@ Place rarity-tier border frame images here to skip AI generation and save fal.ai
 
 ## Notes on Format
 
-Frame images use **`mix-blend-mode: screen`** when composited over the card.
+Registered static frame images are treated as **true transparent overlays** by default.
 This means:
-- The **black interior** of the frame becomes transparent at render time — the district
-  background and character layer show through the centre.
-- Only the **coloured/gold/silver border decoration** remains visible.
+- The border art should already include a transparent centre.
+- The app composites the frame with normal alpha blending instead of legacy screen blending.
 
 For best results the frame image should have:
-- A **flat black interior** (not grey or near-black — pure #000000).
+- A **transparent interior**.
 - Bright, high-contrast border artwork (gold, silver, jewel tones work well).
 - Recommended size: **750 × 1050 px** (portrait 5:7).
+
+Legacy AI-generated frames with a black interior still work. Those continue to use
+screen blending automatically when they are not one of the registered static assets.
 
 ## How to Get Images
 
@@ -46,11 +48,11 @@ corresponding entry in `FRAME_ASSETS`:
 
 ```ts
 const FRAME_ASSETS: Partial<Record<Rarity, string>> = {
-  Apprentice:    "/assets/frames/apprentice.jpg",
-  Master:        "/assets/frames/master.jpg",
-  Rare:          "/assets/frames/rare.jpg",
-  Legendary:     "/assets/frames/legendary.jpg",
-  "Punch Skater": "/assets/frames/punch-skater.jpg",
+  Apprentice:     { url: "/assets/frames/apprentice.png" },
+  Master:         { url: "/assets/frames/master.png" },
+  Rare:           { url: "/assets/frames/rare.png" },
+  Legendary:      { url: "/assets/frames/legendary.png" },
+  "Punch Skater": { url: "/assets/frames/punch-skater.png" },
 };
 ```
 

@@ -16,6 +16,7 @@
  */
 
 import { useState, useCallback, useEffect } from "react";
+import type { CSSProperties } from "react";
 import type { BoardComponentImageUrls } from "../lib/boardBuilder";
 
 interface BoardPreviewGridProps {
@@ -71,7 +72,7 @@ export function BoardPreviewGrid({ urls, labels, className, accentColor = "#00ff
   return (
     <div
       className={`board-preview-grid${className ? ` ${className}` : ""}`}
-      style={{ "--board-preview-accent-bg": accentColor } as React.CSSProperties}
+      style={{ "--board-preview-accent-bg": accentColor } as CSSProperties}
     >
       <div className="board-preview-grid__cell board-preview-grid__cell--deck">
         <Tile

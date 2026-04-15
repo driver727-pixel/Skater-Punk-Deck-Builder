@@ -24,13 +24,12 @@ interface BoardPreviewGridProps {
 interface LayerProps {
   src: string;
   alt: string;
-  label: string;
   icon: string;
   slot: string;
   layerClassName: string;
 }
 
-function Layer({ src, alt, label, icon, slot, layerClassName }: LayerProps) {
+function Layer({ src, alt, icon, slot, layerClassName }: LayerProps) {
   const [failed, setFailed] = useState(false);
 
   const handleError = useCallback(() => setFailed(true), []);
@@ -117,7 +116,6 @@ export function BoardPreviewGrid({ urls, labels, className, accentColor = "#00ff
             key={layer.key}
             src={layer.src}
             alt={layer.alt}
-            label={layer.label}
             icon={layer.icon}
             slot={layer.slot}
             layerClassName={layer.layerClassName}

@@ -27,11 +27,7 @@
  * source assets.
  */
 
-const BOARD_COMPONENT_ASSET_VERSION = "2026-04-15";
-
-function withAssetVersion(url: string): string {
-  return `${url}?v=${BOARD_COMPONENT_ASSET_VERSION}`;
-}
+import { withBoardComponentAssetVersion } from "./boardAssetVersion";
 
 function createCategoryImageMap(
   category: string,
@@ -40,7 +36,7 @@ function createCategoryImageMap(
   return Object.fromEntries(
     filenames.map((filename) => {
       const path = `/assets/boards/${category}/${filename}`;
-      return [path, withAssetVersion(path)];
+      return [path, withBoardComponentAssetVersion(path)];
     }),
   );
 }

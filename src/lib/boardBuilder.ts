@@ -11,6 +11,8 @@
  *   4. Battery     — SlimStealth · DoubleStack · TopPeli
  */
 
+import { withBoardComponentAssetVersion } from "./boardAssetVersion";
+
 export type BoardType = "Street" | "AT" | "Mountain" | "Surf" | "Slider";
 export type Drivetrain = "Belt" | "Hub" | "Gear" | "4WD";
 export type MotorType = "Micro" | "Standard" | "Torque" | "Outrunner";
@@ -559,12 +561,6 @@ export interface BoardComponentImageUrls {
   motorUrl: string;
   wheelsUrl: string;
   batteryUrl: string;
-}
-
-const BOARD_COMPONENT_ASSET_VERSION = "2026-04-15";
-
-function withBoardComponentAssetVersion(url: string): string {
-  return `${url}?v=${BOARD_COMPONENT_ASSET_VERSION}`;
 }
 
 export function getBoardComponentImageUrls(config: BoardConfig): BoardComponentImageUrls {

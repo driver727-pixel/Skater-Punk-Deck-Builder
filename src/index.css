@@ -173,9 +173,9 @@ body::after {
 
 /* Compact neon world map displayed in the nav header between the brand and nav links */
 .nav-neon-map {
-  flex: 0 0 auto;
-  width: 110px;
-  height: 46px;
+  --nav-neon-map-width: clamp(200px, 20vw, 300px);
+  flex: 0 0 var(--nav-neon-map-width);
+  width: var(--nav-neon-map-width);
   overflow: hidden;
   align-self: center;
 }
@@ -192,9 +192,29 @@ body::after {
 .nav-neon-map .geo-atlas__panel-head { display: none; }
 
 .nav-neon-map .geo-atlas__map {
-  min-height: unset;
-  height: 46px;
+  height: auto;
+  aspect-ratio: 5 / 3;
   border-radius: 5px;
+}
+
+.nav-neon-map .geo-atlas__map--world {
+  min-height: 0;
+}
+
+.nav-neon-map .geo-atlas__world-callout {
+  right: 10px;
+  bottom: 10px;
+  padding: 6px 8px;
+  gap: 2px;
+}
+
+.nav-neon-map .geo-atlas__world-callout-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.nav-neon-map .geo-atlas__world-callout-title {
+  font-size: 11px;
 }
 
 @media (max-width: 900px) {
@@ -3039,7 +3059,10 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 
 .geo-atlas__map--australia { min-height: 620px; }
-.geo-atlas__map--world { min-height: 260px; }
+.geo-atlas__map--world {
+  min-height: clamp(280px, 34vw, 500px);
+  aspect-ratio: 5 / 3;
+}
 
 .geo-atlas__svg {
   position: absolute;
@@ -3354,7 +3377,74 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 
 .geo-atlas--compact .geo-atlas__map--world {
-  min-height: 210px;
+  min-height: clamp(220px, 27vw, 340px);
+}
+
+.nav-neon-map.geo-atlas--compact .geo-atlas__map--world {
+  min-height: 0;
+}
+
+@media (max-width: 1200px) {
+  .nav-neon-map {
+    --nav-neon-map-width: clamp(180px, 18vw, 240px);
+  }
+
+  .geo-atlas__map--world {
+    min-height: clamp(260px, 38vw, 420px);
+  }
+}
+
+@media (max-width: 768px) {
+  .geo-atlas__map--world {
+    min-height: clamp(220px, 52vw, 320px);
+  }
+
+  .geo-atlas--compact .geo-atlas__map--world {
+    min-height: clamp(190px, 46vw, 260px);
+  }
+
+  .geo-atlas__world-callout {
+    right: 12px;
+    bottom: 12px;
+    padding: 8px 10px;
+  }
+
+  .geo-atlas__world-callout-title {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 520px) {
+  .geo-atlas__panel-head {
+    flex-wrap: wrap;
+  }
+
+  .geo-atlas__panel-head-end {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .geo-atlas__map--world {
+    min-height: clamp(200px, 58vw, 260px);
+  }
+
+  .geo-atlas--compact .geo-atlas__map--world {
+    min-height: clamp(170px, 52vw, 220px);
+  }
+
+  .geo-atlas__world-callout {
+    right: 10px;
+    bottom: 10px;
+    padding: 6px 8px;
+  }
+
+  .geo-atlas__world-callout-label {
+    font-size: 10px;
+  }
+
+  .geo-atlas__world-callout-title {
+    font-size: 11px;
+  }
 }
 
 .lore-map {

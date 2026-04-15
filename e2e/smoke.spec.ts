@@ -59,6 +59,28 @@ test.describe('Home page (Card Forge)', () => {
     await expect(torqueMotor).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('img', { name: /torque 6374/i })).toBeVisible();
   });
+
+  test('random punch skater button randomizes character and board selections', async ({ page }) => {
+    await page.goto('/');
+
+    const randomButton = page.getByTestId('random-punch-skater-button');
+    await expect(randomButton).toHaveAttribute('title', /character loadout, the board loadout, or both/i);
+    const getSelectionSnapshot = () => page.evaluate(() => (
+      Array.from(document.querySelectorAll('button[aria-pressed="true"]'))
+        .map((node) => {
+          const visibleText = node.textContent?.trim();
+          return visibleText && visibleText.length > 0
+            ? visibleText
+            : node.getAttribute('aria-label') ?? node.getAttribute('title');
+        })
+        .filter(Boolean)
+    ));
+    const before = JSON.stringify(await getSelectionSnapshot());
+
+    await randomButton.click();
+
+    await expect.poll(async () => JSON.stringify(await getSelectionSnapshot())).not.toBe(before);
+  });
 });
 
 // ── Login page ────────────────────────────────────────────────────────────────

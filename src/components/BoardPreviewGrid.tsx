@@ -1,10 +1,9 @@
 /**
  * BoardPreviewGrid.tsx
  *
- * Renders the selected board components as a single layered assembly canvas.
- * Each uploaded transparent PNG is stacked on the same high-contrast backdrop
- * so the chosen parts read as one assembled board instead of five separate
- * slots.
+ * Renders the selected board components inside a composition grid.
+ * The Deck anchors the left side of the canvas while the remaining
+ * components fill the surrounding top, right, and bottom positions.
  */
 
 import { useState, useCallback, useEffect, useMemo } from "react";
@@ -26,32 +25,32 @@ interface LayerProps {
   alt: string;
   icon: string;
   slot: string;
-  layerClassName: string;
+   tileClassName: string;
 }
 
-function Layer({ src, alt, icon, slot, layerClassName }: LayerProps) {
+function Layer({ src, alt, icon, slot, tileClassName }: LayerProps) {
   const [failed, setFailed] = useState(false);
 
   const handleError = useCallback(() => setFailed(true), []);
   useEffect(() => setFailed(false), [src]);
 
   return (
-    <>
+    <div className={`board-preview-grid__tile ${tileClassName}`}>
+      <span className="board-preview-grid__tile-slot">{slot}</span>
       {failed ? (
-        <div className={`board-preview-grid__placeholder ${layerClassName}`}>
+        <div className="board-preview-grid__placeholder">
           <span className="board-preview-grid__placeholder-icon">{icon}</span>
-          <span className="board-preview-grid__placeholder-slot">{slot}</span>
           <span className="board-preview-grid__placeholder-label">Image unavailable</span>
         </div>
       ) : (
         <img
           src={src}
           alt={alt}
-          className={layerClassName}
+          className="board-preview-grid__image"
           onError={handleError}
         />
       )}
-    </>
+    </div>
   );
 }
 
@@ -64,7 +63,7 @@ export function BoardPreviewGrid({ urls, labels, className, accentColor = "#00ff
       label: labels?.wheels ?? "Wheels",
       icon: "🛞",
       slot: "Wheels",
-      layerClassName: "board-preview-grid__layer board-preview-grid__layer--wheels",
+      tileClassName: "board-preview-grid__tile--wheels",
     },
     {
       key: "deck",
@@ -73,7 +72,7 @@ export function BoardPreviewGrid({ urls, labels, className, accentColor = "#00ff
       label: labels?.deck ?? "Deck",
       icon: "🛹",
       slot: "Deck",
-      layerClassName: "board-preview-grid__layer board-preview-grid__layer--deck",
+      tileClassName: "board-preview-grid__tile--deck",
     },
     {
       key: "battery",
@@ -82,7 +81,7 @@ export function BoardPreviewGrid({ urls, labels, className, accentColor = "#00ff
       label: labels?.battery ?? "Battery",
       icon: "🔋",
       slot: "Battery",
-      layerClassName: "board-preview-grid__layer board-preview-grid__layer--battery",
+      tileClassName: "board-preview-grid__tile--battery",
     },
     {
       key: "drivetrain",
@@ -91,7 +90,7 @@ export function BoardPreviewGrid({ urls, labels, className, accentColor = "#00ff
       label: labels?.drivetrain ?? "Drivetrain",
       icon: "⚙️",
       slot: "Drivetrain",
-      layerClassName: "board-preview-grid__layer board-preview-grid__layer--drivetrain",
+      tileClassName: "board-preview-grid__tile--drivetrain",
     },
     {
       key: "motor",
@@ -100,7 +99,7 @@ export function BoardPreviewGrid({ urls, labels, className, accentColor = "#00ff
       label: labels?.motor ?? "Motor",
       icon: "⚡",
       slot: "Motor",
-      layerClassName: "board-preview-grid__layer board-preview-grid__layer--motor",
+      tileClassName: "board-preview-grid__tile--motor",
     },
   ]), [labels, urls]);
 
@@ -118,7 +117,7 @@ export function BoardPreviewGrid({ urls, labels, className, accentColor = "#00ff
             alt={layer.alt}
             icon={layer.icon}
             slot={layer.slot}
-            layerClassName={layer.layerClassName}
+            tileClassName={layer.tileClassName}
           />
         ))}
       </div>

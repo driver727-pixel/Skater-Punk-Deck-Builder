@@ -32,6 +32,7 @@ const BODY_TYPES: BodyType[] = ["Slim", "Athletic", "Average", "Heavy"];
 const HAIR_LENGTHS: HairLength[] = ["Bald", "Short", "Medium", "Long"];
 const SKIN_TONES: SkinTone[] = ["Light", "Medium", "Dark", "Very Dark"];
 const FACE_CHARACTERS: FaceCharacter[] = ["Conventional", "Weathered", "Scarred", "Rugged"];
+const ARCHETYPE_VALUES = FORGE_ARCHETYPE_OPTIONS.map((option) => option.value);
 const BOARD_TYPES = BOARD_TYPE_OPTIONS.map((option) => option.value);
 const RANDOM_LOADOUT_SCOPES = ["character", "board", "both"] as const;
 const RANDOM_PUNCH_SKATER_TOOLTIP = "Randomizes the Character loadout, the Board loadout, or both with one click.";
@@ -42,8 +43,13 @@ function getRandomItem<T>(items: readonly T[]): T {
   return items[Math.floor(Math.random() * items.length)];
 }
 
-function buildRandomBoardConfig(): BoardConfig {
-  const boardType = getRandomItem(BOARD_TYPES);
+function getRandomItemExcluding<T>(items: readonly T[], current: T): T {
+  const candidates = items.filter((item) => item !== current);
+  return candidates.length > 0 ? getRandomItem(candidates) : current;
+}
+
+function buildRandomBoardConfig(currentConfig: BoardConfig): BoardConfig {
+  const boardType = getRandomItemExcluding(BOARD_TYPES, currentConfig.boardType);
   const allowed = getAllowedComponents(boardType);
   return {
     boardType,
@@ -586,26 +592,26 @@ export function CardForge() {
 
     if (scope === "character" || scope === "both") {
       setPrompts((current) => {
-        const archetype = getRandomItem(FORGE_ARCHETYPE_OPTIONS).value;
+        const archetype = getRandomItemExcluding(ARCHETYPE_VALUES, current.archetype);
         return {
           ...current,
           archetype,
           style: resolveArchetypeStyle(archetype, current.style),
-          rarity: getRandomItem(RARITIES),
-          district: getRandomItem(DISTRICTS),
-          accentColor: getRandomItem(ACCENT_PRESETS),
-          gender: getRandomItem(GENDERS),
-          ageGroup: getRandomItem(AGE_GROUPS),
-          bodyType: getRandomItem(BODY_TYPES),
-          hairLength: getRandomItem(HAIR_LENGTHS),
-          skinTone: getRandomItem(SKIN_TONES),
-          faceCharacter: getRandomItem(FACE_CHARACTERS),
+          rarity: getRandomItemExcluding(RARITIES, current.rarity),
+          district: getRandomItemExcluding(DISTRICTS, current.district),
+          accentColor: getRandomItemExcluding(ACCENT_PRESETS, current.accentColor),
+          gender: getRandomItemExcluding(GENDERS, current.gender),
+          ageGroup: getRandomItemExcluding(AGE_GROUPS, current.ageGroup),
+          bodyType: getRandomItemExcluding(BODY_TYPES, current.bodyType),
+          hairLength: getRandomItemExcluding(HAIR_LENGTHS, current.hairLength),
+          skinTone: getRandomItemExcluding(SKIN_TONES, current.skinTone),
+          faceCharacter: getRandomItemExcluding(FACE_CHARACTERS, current.faceCharacter),
         };
       });
     }
 
     if (scope === "board" || scope === "both") {
-      setBoardConfig(buildRandomBoardConfig());
+      setBoardConfig((current) => buildRandomBoardConfig(current));
     }
   }, []);
 

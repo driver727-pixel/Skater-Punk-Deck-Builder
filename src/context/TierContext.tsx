@@ -213,8 +213,10 @@ export function TierProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      setTierState("free");
-      saveTier("free");
+      if (data?.tier === "free" || !data?.tier) {
+        setTierState("free");
+        saveTier("free");
+      }
     }, () => {/* non-fatal */});
   }, [user, verifiedCheckout]);
 

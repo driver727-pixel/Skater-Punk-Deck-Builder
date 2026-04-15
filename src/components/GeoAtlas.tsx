@@ -353,7 +353,7 @@ export function GeoAtlas({
                   <span className="geo-atlas__callout-pill">
                     {boardStatusLabel ? `Selected setup · ${boardStatusLabel}` : "Hover a district to inspect access"}
                   </span>
-                  {rideableDistrictCount != null && (
+                  {rideableDistrictCount !== null && (
                     <span className="geo-atlas__callout-pill">
                       {rideableDistrictCount}/{PLAYABLE_DISTRICTS.length} districts rideable now
                     </span>

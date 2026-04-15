@@ -6,7 +6,6 @@ import {
   onSnapshot,
   doc,
   runTransaction,
-  orderBy,
   limit,
 } from "firebase/firestore";
 import type { TradePayload } from "../lib/types";
@@ -68,13 +67,17 @@ export function Trades() {
       query(
         collection(db, "trades"),
         where("status", "==", "pending"),
-        orderBy("createdAt", "desc"),
         limit(50)
       ),
       (snap) => {
         const all = snap.docs.map((d) => d.data() as TradePayload);
-        // Exclude the current user's own listings (already in Inbox / Sent)
-        setMarket(all.filter((t) => t.fromUid !== uid && t.toUid !== uid));
+        // Exclude the current user's own listings (already in Inbox / Sent),
+        // then sort by most recent first (client-side, avoids composite index).
+        setMarket(
+          all
+            .filter((t) => t.fromUid !== uid && t.toUid !== uid)
+            .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0)),
+        );
       },
       handleSnapshotError,
     );

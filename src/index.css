@@ -7351,7 +7351,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   }
   .mission-selector-card {
     padding: 12px;
-    gap: 5px;
+    gap: 6px;
   }
   .mission-selector-card__name {
     font-size: 13px;

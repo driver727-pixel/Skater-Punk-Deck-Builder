@@ -1,11 +1,23 @@
-import type { CardPayload, Style } from "./types";
+import type { Archetype, CardPayload, Style } from "./types";
 import { normalizeCardStats } from "./generator";
 
 const LEGACY_STYLE_REMAP: Record<string, string> = {
-  Chef: "Union",
+  // Legacy removed styles now inherit the active style bundled into the
+  // matching cover identity so old saved/imported cards follow the new wiring.
+  Chef: "Street",
   Ninja: "Ex Military",
-  Hacker: "Corporate",
+  Hacker: "Punk Rocker",
   Military: "Ex Military",
+};
+
+const COMBINED_ARCHETYPE_STYLES: Partial<Record<Archetype, Style>> = {
+  Qu111s: "Corporate",
+  "D4rk $pider": "Punk Rocker",
+  "The Asclepians": "Ex Military",
+  "The Mesopotamian Society": "Off-grid",
+  "Hermes' Squirmies": "Union",
+  UCPS: "Olympic",
+  "Iron Curtains": "Street",
 };
 
 export const ACTIVE_STYLES: Style[] = [
@@ -21,6 +33,11 @@ export const ACTIVE_STYLES: Style[] = [
 
 const ACTIVE_STYLE_SET = new Set<string>(ACTIVE_STYLES);
 
+export function getCombinedStyleForArchetype(archetype: unknown): Style | null {
+  if (typeof archetype !== "string") return null;
+  return COMBINED_ARCHETYPE_STYLES[archetype as Archetype] ?? null;
+}
+
 export function normalizeStyle(style: unknown): Style {
   let resolved = typeof style === "string" ? style : "Street";
   const seen = new Set<string>();
@@ -31,6 +48,10 @@ export function normalizeStyle(style: unknown): Style {
   }
 
   return (ACTIVE_STYLE_SET.has(resolved) ? resolved : "Street") as Style;
+}
+
+export function resolveArchetypeStyle(archetype: unknown, style: unknown): Style {
+  return getCombinedStyleForArchetype(archetype) ?? normalizeStyle(style);
 }
 
 /**
@@ -44,7 +65,7 @@ export function remapStyleConnection(style: unknown): string {
 
 export function normalizeCardPayload(card: CardPayload): CardPayload {
   const rawStyle = typeof card.prompts?.style === "string" ? card.prompts.style : "Street";
-  const style = normalizeStyle(rawStyle);
+  const style = resolveArchetypeStyle(card.prompts?.archetype, rawStyle);
   const normalizedStats = normalizeCardStats(card.stats);
   const hasStyleChange = style !== rawStyle;
   const hasStatChange = (Object.keys(card.stats) as Array<keyof typeof card.stats>)

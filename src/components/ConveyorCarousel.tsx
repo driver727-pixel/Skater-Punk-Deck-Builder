@@ -12,6 +12,8 @@
 
 import { useEffect, useRef, useCallback } from "react";
 
+const SCROLL_SYNC_DEBOUNCE_MS = 120;
+
 export interface CarouselItem {
   value: string;
   label: string;
@@ -50,7 +52,7 @@ export function ConveyorCarousel({
     scrollSyncTimeoutRef.current = setTimeout(() => {
       syncingScrollRef.current = false;
       scrollSyncTimeoutRef.current = null;
-    }, 120);
+    }, SCROLL_SYNC_DEBOUNCE_MS);
   }, []);
 
   /** Derive which item index is closest to the center of the scroll container. */

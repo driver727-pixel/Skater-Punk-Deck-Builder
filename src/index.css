@@ -174,7 +174,7 @@ body::after {
 /* Compact neon world map displayed in the nav header between the brand and nav links */
 .nav-neon-map {
   --nav-neon-map-width: clamp(200px, 20vw, 300px);
-  flex: 0 1 var(--nav-neon-map-width);
+  flex: 0 0 var(--nav-neon-map-width);
   width: var(--nav-neon-map-width);
   min-width: 200px;
   overflow: hidden;
@@ -210,7 +210,7 @@ body::after {
 }
 
 .nav-neon-map .geo-atlas__world-callout-label {
-  font-size: 7px;
+  font-size: 10px;
   letter-spacing: 1px;
 }
 
@@ -3441,7 +3441,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   }
 
   .geo-atlas__world-callout-label {
-    font-size: 8px;
+    font-size: 10px;
   }
 
   .geo-atlas__world-callout-title {

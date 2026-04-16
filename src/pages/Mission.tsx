@@ -315,10 +315,10 @@ export function Mission() {
     });
   }, []);
 
-  const handleSelectMission = useCallback((missionId: string, scrollToControls = false) => {
+  const handleSelectMission = useCallback((missionId: string, shouldScrollToControls = false) => {
     setActiveMissionId(missionId);
     resetMissionSession();
-    if (scrollToControls) {
+    if (shouldScrollToControls) {
       scrollToMissionControls();
     }
   }, [resetMissionSession, scrollToMissionControls]);
@@ -854,7 +854,7 @@ export function Mission() {
       )}
 
       {missionResult && (
-        <div className="mission-result-overlay" onClick={handleDismissMissionResult} role="presentation">
+        <div className="mission-result-overlay" onClick={handleDismissMissionResult}>
           <section
             ref={missionResultRef}
             className={`mission-panel mission-result-panel mission-result-popup${missionResult.success ? " mission-result-panel--success" : " mission-result-panel--fail"}`}

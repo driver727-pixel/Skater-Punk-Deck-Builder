@@ -143,7 +143,8 @@ const BATTERY_ITEMS: CarouselItem[] = BATTERY_OPTIONS.map((o) => ({
   tagline: o.tagline,
 }))
 
-export function BoardBuilder({ value, onChange, onSave }: BoardBuilderProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function BoardBuilder({ value, onChange, onSave, accentColor: _accentColor }: BoardBuilderProps) {
   // Animation phase flags — toggled in sequence on lock-in
   const [shaking, setShaking]   = useState(false);
   const [locked,  setLocked]    = useState(false);

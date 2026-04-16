@@ -28,6 +28,19 @@ const DECK_PREVIEW_CARD_HEIGHT = 112;
 const MOBILE_LONG_PRESS_DELAY_MS = 280;
 const TOUCH_MOVEMENT_THRESHOLD_PX = 10;
 
+interface DeckTouchState {
+  index: number;
+  pointerId: number;
+  dragging: boolean;
+  startX: number;
+  startY: number;
+  element: HTMLDivElement | null;
+}
+
+function exceedsMovementThreshold(startX: number, startY: number, currentX: number, currentY: number, threshold: number) {
+  return Math.hypot(currentX - startX, currentY - startY) > threshold;
+}
+
 export function DeckBuilder() {
   const { decks, createDeck, deleteDeck, addCardToDeck, removeCardFromDeck, renameDeck, moveCardInDeck, moveDeck } = useDecks();
   const { cards } = useCollection();
@@ -46,7 +59,7 @@ export function DeckBuilder() {
   const [touchDraggingDeckId, setTouchDraggingDeckId] = useState<string | null>(null);
   const [blockedReason, setBlockedReason] = useState<string | null>(null);
   const deckLongPressTimerRef = useRef<number | null>(null);
-  const deckTouchStateRef = useRef<{ index: number; pointerId: number; dragging: boolean; startX: number; startY: number; element: HTMLDivElement | null } | null>(null);
+  const deckTouchStateRef = useRef<DeckTouchState | null>(null);
   const ignoreDeckClickRef = useRef(false);
 
   // First-deck initiation status (only relevant when activeDeck is the first deck)
@@ -235,7 +248,7 @@ export function DeckBuilder() {
     const state = deckTouchStateRef.current;
     if (!state || state.pointerId !== event.pointerId) return;
     if (!state.dragging) {
-      if (Math.hypot(event.clientX - state.startX, event.clientY - state.startY) > TOUCH_MOVEMENT_THRESHOLD_PX) {
+      if (exceedsMovementThreshold(state.startX, state.startY, event.clientX, event.clientY, TOUCH_MOVEMENT_THRESHOLD_PX)) {
         clearDeckLongPressTimer();
         deckTouchStateRef.current = null;
       }
@@ -308,7 +321,7 @@ export function DeckBuilder() {
                  <p className="empty-text">No decks yet.</p>
                )}
                {decks.length > 0 && (
-                 <p id="deck-reorder-hint" className="deck-reorder-hint">Drag decks to reorder them. On mobile, long-press and drag.</p>
+                 <p id="deck-reorder-hint" className="deck-reorder-hint" aria-live="polite">Drag decks to reorder them. On mobile, long-press and drag.</p>
                )}
                {decks.map((deck, deckIndex) => (
                  <div

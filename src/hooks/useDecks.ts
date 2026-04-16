@@ -66,9 +66,14 @@ export function useDecks() {
       const normalized = normalizeDeckOrder(incoming);
       setDecks(normalized);
 
-      const sortOrderById = new Map(normalized.map((deck) => [deck.id, deck.sortOrder]));
-      if (incoming.some((deck) => deck.sortOrder !== sortOrderById.get(deck.id))) {
-        void Promise.all(normalized.map((deck) => setDoc(doc(db, "users", uid, "decks", deck.id), deck))).catch(console.error);
+      const incomingDecksById = new Map(incoming.map((deck) => [deck.id, deck]));
+      const changedDecks = normalized.filter((deck) => {
+        const incomingDeck = incomingDecksById.get(deck.id);
+        return incomingDeck && incomingDeck.sortOrder !== deck.sortOrder;
+      });
+
+      if (changedDecks.length > 0) {
+        void Promise.all(changedDecks.map((deck) => setDoc(doc(db, "users", uid, "decks", deck.id), deck))).catch(console.error);
       }
     });
     return unsub;

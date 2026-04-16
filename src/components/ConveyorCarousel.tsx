@@ -10,9 +10,92 @@
  *     scale 1.1× + neon glow + CSS ::before/::after pseudo-element clamps.
  */
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useMemo, useState } from "react";
 
 const SCROLL_SYNC_DEBOUNCE_MS = 120;
+const conveyorImageCache = new Map<string, Promise<string>>();
+
+function isMatteBackgroundPixel(data: Uint8ClampedArray, offset: number) {
+  const r = data[offset];
+  const g = data[offset + 1];
+  const b = data[offset + 2];
+  const a = data[offset + 3];
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const brightness = (r + g + b) / 3;
+  return a > 0 && brightness >= 218 && max - min <= 42;
+}
+
+function stripImageMatte(src: string) {
+  let pending = conveyorImageCache.get(src);
+  if (pending) return pending;
+
+  pending = new Promise<string>((resolve) => {
+    const image = new Image();
+    image.decoding = "async";
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+
+      if (!context) {
+        resolve(src);
+        return;
+      }
+
+      context.drawImage(image, 0, 0);
+      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+      const { data, width, height } = imageData;
+      const visited = new Uint8Array(width * height);
+      const queue = new Uint32Array(width * height);
+      let head = 0;
+      let tail = 0;
+
+      const enqueue = (x: number, y: number) => {
+        if (x < 0 || y < 0 || x >= width || y >= height) return;
+        const index = y * width + x;
+        if (visited[index]) return;
+        const offset = index * 4;
+        if (!isMatteBackgroundPixel(data, offset)) return;
+        visited[index] = 1;
+        queue[tail++] = index;
+      };
+
+      for (let x = 0; x < width; x++) {
+        enqueue(x, 0);
+        enqueue(x, height - 1);
+      }
+      for (let y = 1; y < height - 1; y++) {
+        enqueue(0, y);
+        enqueue(width - 1, y);
+      }
+
+      while (head < tail) {
+        const index = queue[head++];
+        const x = index % width;
+        const y = Math.floor(index / width);
+        const offset = index * 4;
+        const brightness = (data[offset] + data[offset + 1] + data[offset + 2]) / 3;
+        const matteStrength = Math.max(0, Math.min(1, (brightness - 218) / 37));
+        data[offset + 3] = Math.round(data[offset + 3] * (1 - matteStrength));
+
+        enqueue(x - 1, y);
+        enqueue(x + 1, y);
+        enqueue(x, y - 1);
+        enqueue(x, y + 1);
+      }
+
+      context.putImageData(imageData, 0, 0);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    image.onerror = () => resolve(src);
+    image.src = src;
+  });
+
+  conveyorImageCache.set(src, pending);
+  return pending;
+}
 
 export interface CarouselItem {
   value: string;
@@ -48,6 +131,35 @@ export function ConveyorCarousel({
   const initialSyncDoneRef = useRef(false);
   const syncingScrollRef = useRef(false);
   const scrollSyncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [transparentImages, setTransparentImages] = useState<Record<string, string>>({});
+  const imageSources = useMemo(
+    () => [...new Set(items.map((item) => item.imageSrc).filter((src): src is string => !!src))],
+    [items],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    Promise.all(
+      imageSources.map(async (src) => [src, await stripImageMatte(src)] as const),
+    ).then((entries) => {
+      if (cancelled) return;
+      setTransparentImages((current) => {
+        const next = { ...current };
+        let changed = false;
+        for (const [src, processed] of entries) {
+          if (next[src] === processed) continue;
+          next[src] = processed;
+          changed = true;
+        }
+        return changed ? next : current;
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [imageSources]);
 
   const releaseScrollSync = useCallback(() => {
     if (scrollSyncTimeoutRef.current !== null) clearTimeout(scrollSyncTimeoutRef.current);
@@ -167,7 +279,7 @@ export function ConveyorCarousel({
             >
               {item.imageSrc ? (
                 <img
-                  src={item.imageSrc}
+                  src={transparentImages[item.imageSrc] ?? item.imageSrc}
                   alt={item.label}
                   className="conveyor__item-media conveyor__item-img"
                 />

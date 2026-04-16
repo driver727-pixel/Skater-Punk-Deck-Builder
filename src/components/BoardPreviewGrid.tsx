@@ -40,7 +40,7 @@ function Layer({ src, alt, icon, slot, label, tileClassName }: LayerProps) {
       {failed ? (
         <div className="board-preview-grid__placeholder">
           <span className="board-preview-grid__placeholder-icon">{icon}</span>
-          <span className="board-preview-grid__placeholder-label">{slot}</span>
+          <span className="board-preview-grid__placeholder-label">Image unavailable</span>
         </div>
       ) : (
         <img

@@ -25,10 +25,11 @@ interface LayerProps {
   alt: string;
   icon: string;
   slot: string;
-   tileClassName: string;
+  label: string;
+  tileClassName: string;
 }
 
-function Layer({ src, alt, icon, slot, tileClassName }: LayerProps) {
+function Layer({ src, alt, icon, slot, label, tileClassName }: LayerProps) {
   const [failed, setFailed] = useState(false);
 
   const handleError = useCallback(() => setFailed(true), []);
@@ -36,11 +37,10 @@ function Layer({ src, alt, icon, slot, tileClassName }: LayerProps) {
 
   return (
     <div className={`board-preview-grid__tile ${tileClassName}`}>
-      <span className="board-preview-grid__tile-slot">{slot}</span>
       {failed ? (
         <div className="board-preview-grid__placeholder">
           <span className="board-preview-grid__placeholder-icon">{icon}</span>
-          <span className="board-preview-grid__placeholder-label">Image unavailable</span>
+          <span className="board-preview-grid__placeholder-label">{slot}</span>
         </div>
       ) : (
         <img
@@ -50,6 +50,10 @@ function Layer({ src, alt, icon, slot, tileClassName }: LayerProps) {
           onError={handleError}
         />
       )}
+      <span className="board-preview-grid__tile-label" aria-label={`${slot}: ${label}`}>
+        <span className="board-preview-grid__tile-label-slot">{slot}</span>
+        <span className="board-preview-grid__tile-label-value">{label}</span>
+      </span>
     </div>
   );
 }
@@ -117,6 +121,7 @@ export function BoardPreviewGrid({ urls, labels, className, accentColor = "#00ff
             alt={layer.alt}
             icon={layer.icon}
             slot={layer.slot}
+            label={layer.label}
             tileClassName={layer.tileClassName}
           />
         ))}

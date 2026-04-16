@@ -5892,14 +5892,6 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 
 .board-preview-grid__canvas {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) repeat(2, minmax(0, 1fr));
-  grid-template-areas:
-    "deck drivetrain motor"
-    "deck wheels wheels"
-    "deck battery battery";
-  gap: 0;
-  align-items: stretch;
   overflow: hidden;
   min-height: 0;
   aspect-ratio: 16 / 10;
@@ -5938,44 +5930,91 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 
 .board-preview-grid__tile {
-  position: relative;
+  position: absolute;
   z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 0;
-  padding: 28px 18px 18px;
+  padding: 12px;
 }
 
+/* Deck: dominant left column, full height */
 .board-preview-grid__tile--deck {
-  grid-area: deck;
+  left: 0;
+  top: 0;
+  width: 42%;
+  height: 100%;
+  z-index: 3;
 }
 
+/* Drivetrain: upper-center — overlaps deck edge by 2% */
 .board-preview-grid__tile--drivetrain {
-  grid-area: drivetrain;
-}
-
-.board-preview-grid__tile--motor {
-  grid-area: motor;
-}
-
-.board-preview-grid__tile--wheels {
-  grid-area: wheels;
-}
-
-.board-preview-grid__tile--battery {
-  grid-area: battery;
-}
-
-.board-preview-grid__tile-slot {
-  position: absolute;
-  top: 10px;
-  left: 12px;
+  left: 40%;
+  top: 0;
+  width: 32%;
+  height: 52%;
   z-index: 2;
-  font-size: 9px;
-  color: var(--accent2);
-  letter-spacing: 1.4px;
+}
+
+/* Motor: upper-right — overlaps drivetrain edge by 2% */
+.board-preview-grid__tile--motor {
+  left: 70%;
+  top: 0;
+  width: 30%;
+  height: 52%;
+  z-index: 1;
+}
+
+/* Wheels: lower-center — overlaps drivetrain bottom by 2% */
+.board-preview-grid__tile--wheels {
+  left: 40%;
+  top: 50%;
+  width: 32%;
+  height: 52%;
+  z-index: 2;
+}
+
+/* Battery: lower-right — overlaps motor bottom and wheels right by 2% */
+.board-preview-grid__tile--battery {
+  left: 70%;
+  top: 50%;
+  width: 30%;
+  height: 52%;
+  z-index: 1;
+}
+
+/* Label overlay: positioned at the bottom of each tile */
+.board-preview-grid__tile-label {
+  position: absolute;
+  bottom: 8px;
+  left: 10px;
+  right: 10px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  pointer-events: none;
+}
+
+.board-preview-grid__tile-label-slot {
+  font-size: 8px;
+  letter-spacing: 1.6px;
   text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  line-height: 1;
+}
+
+.board-preview-grid__tile-label-value {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--board-preview-accent-bg, #00ff88);
+  text-shadow:
+    0 0 8px var(--board-preview-accent-bg, #00ff88),
+    0 1px 6px rgba(0, 0, 0, 0.9);
+  line-height: 1.1;
 }
 
 .board-preview-grid__image {
@@ -6064,25 +6103,38 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
     padding: 14px;
   }
 
-  .board-preview-grid__canvas {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-areas:
-      "deck deck"
-      "drivetrain motor"
-      "wheels battery";
-    aspect-ratio: auto;
+  .board-preview-grid__tile-label-slot {
+    font-size: 7px;
+  }
+
+  .board-preview-grid__tile-label-value {
+    font-size: 9px;
   }
 }
 
 @media (max-width: 520px) {
-  .board-preview-grid__canvas {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "deck"
-      "drivetrain"
-      "motor"
-      "wheels"
-      "battery";
+  .board-preview-grid__tile--deck {
+    width: 38%;
+  }
+
+  .board-preview-grid__tile--drivetrain {
+    left: 36%;
+    width: 34%;
+  }
+
+  .board-preview-grid__tile--motor {
+    left: 68%;
+    width: 32%;
+  }
+
+  .board-preview-grid__tile--wheels {
+    left: 36%;
+    width: 34%;
+  }
+
+  .board-preview-grid__tile--battery {
+    left: 68%;
+    width: 32%;
   }
 
   .board-preview-grid__legend {

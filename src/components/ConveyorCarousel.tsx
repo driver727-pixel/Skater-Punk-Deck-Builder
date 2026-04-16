@@ -13,7 +13,14 @@
 import { useEffect, useRef, useCallback, useMemo, useState } from "react";
 
 const SCROLL_SYNC_DEBOUNCE_MS = 120;
+const MATTE_BRIGHTNESS_THRESHOLD = 218;
+const MATTE_VARIANCE_THRESHOLD = 42;
+const MATTE_FADE_RANGE = 37;
 const conveyorImageCache = new Map<string, Promise<string>>();
+
+function getPixelBrightness(data: Uint8ClampedArray, offset: number) {
+  return (data[offset] + data[offset + 1] + data[offset + 2]) / 3;
+}
 
 function isMatteBackgroundPixel(data: Uint8ClampedArray, offset: number) {
   const r = data[offset];
@@ -22,10 +29,12 @@ function isMatteBackgroundPixel(data: Uint8ClampedArray, offset: number) {
   const a = data[offset + 3];
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
-  const brightness = (r + g + b) / 3;
+  const brightness = getPixelBrightness(data, offset);
   // Treat only bright, low-variance edge pixels as matte so the flood fill
   // removes the white studio backdrop without cutting into the product art.
-  return a > 0 && brightness >= 218 && max - min <= 42;
+  return a > 0
+    && brightness >= MATTE_BRIGHTNESS_THRESHOLD
+    && max - min <= MATTE_VARIANCE_THRESHOLD;
 }
 
 /**
@@ -57,9 +66,8 @@ function stripImageMatte(src: string) {
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       const { data, width, height } = imageData;
       const visited = new Uint8Array(width * height);
-      const queue = new Uint32Array(width * height);
+      const queue: number[] = [];
       let head = 0;
-      let tail = 0;
 
       const enqueue = (x: number, y: number) => {
         if (x < 0 || y < 0 || x >= width || y >= height) return;
@@ -68,7 +76,7 @@ function stripImageMatte(src: string) {
         const offset = index * 4;
         if (!isMatteBackgroundPixel(data, offset)) return;
         visited[index] = 1;
-        queue[tail++] = index;
+        queue.push(index);
       };
 
       for (let x = 0; x < width; x++) {
@@ -80,15 +88,18 @@ function stripImageMatte(src: string) {
         enqueue(width - 1, y);
       }
 
-      while (head < tail) {
+      while (head < queue.length) {
         const index = queue[head++];
         const x = index % width;
         const y = Math.floor(index / width);
         const offset = index * 4;
-        const brightness = (data[offset] + data[offset + 1] + data[offset + 2]) / 3;
-        // Fade only the brightest connected matte pixels: 218 matches the flood-fill
-        // threshold above, and the 37-point ramp softens the edge before full clear-out.
-        const matteStrength = Math.max(0, Math.min(1, (brightness - 218) / 37));
+        const brightness = getPixelBrightness(data, offset);
+        // MATTE_FADE_RANGE softens anti-aliased edge pixels immediately above the
+        // matte threshold instead of snapping the whole connected background to 0 alpha.
+        const matteStrength = Math.max(
+          0,
+          Math.min(1, (brightness - MATTE_BRIGHTNESS_THRESHOLD) / MATTE_FADE_RANGE),
+        );
         data[offset + 3] = Math.round(data[offset + 3] * (1 - matteStrength));
 
         enqueue(x - 1, y);

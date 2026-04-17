@@ -84,7 +84,7 @@ const ELECTRIC_SKATEBOARD_REQUIREMENT =
   "Vehicle: an electric skateboard only — a single board deck under the rider's feet with four skateboard wheels, no handlebars, no seat, no extra chassis. ";
 
 const ELECTRIC_SKATEBOARD_EXCLUSIONS =
-  "Never depict a scooter, mobility chair, wheelchair, roller skates, inline skates, children’s hoverboard, self-balancing board, segway, or any other device underfoot. ";
+  "Never depict a scooter, mobility chair, roller skates, inline skates, children’s hoverboard, self-balancing board, segway, or any other device underfoot. ";
 
 function joinPromptBlocks(...blocks: Array<string | undefined>): string {
   return blocks

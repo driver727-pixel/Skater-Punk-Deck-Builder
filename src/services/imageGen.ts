@@ -61,7 +61,7 @@ const NEGATIVE_PROMPT =
   "nsfw, child, children, under age, underage, x rated, r rated, unclothed, undressed, " +
   "nudity, naked, exposed, gore, sexually explicit, porn, pornographic, rape, sexual assault, " +
   "death, killing, kill, murder, violence, decapitation, mutilation, kids, minors, " +
-  "scooter, kick scooter, mobility scooter, mobility chair, wheelchair, roller skates, inline skates, rollerskates, " +
+  "scooter, kick scooter, mobility scooter, mobility chair, roller skates, inline skates, rollerskates, " +
   "hoverboard, self-balancing scooter, self balancing scooter, segway, unicycle, mono wheel, monowheel, " +
   "blurry, blur, fuzzy, soft focus, out of focus, low resolution, low quality, degraded, " +
   "pixelated, jpeg artifacts, compression artifacts, watermark, signature, " +

@@ -80,6 +80,12 @@ const CORE_COMIC_BOOK_STYLE =
   "Comic-book illustration styled for a premium trading card. " +
   "Adult anatomy, crisp detail, grounded faces, and strong silhouette readability. ";
 
+const ELECTRIC_SKATEBOARD_REQUIREMENT =
+  "Vehicle: an electric skateboard only — a single board deck under the rider's feet with four skateboard wheels, no handlebars, no seat, no extra chassis. ";
+
+const ELECTRIC_SKATEBOARD_EXCLUSIONS =
+  "Never depict a scooter, mobility chair, roller skates, inline skates, children’s hoverboard, self-balancing board, segway, or any other device underfoot. ";
+
 function joinPromptBlocks(...blocks: Array<string | undefined>): string {
   return blocks
     .filter((block): block is string => Boolean(block?.trim()))
@@ -214,7 +220,9 @@ export function buildCharacterPrompt(prompts: CardPrompts, graffitiWords?: strin
     CORE_COMIC_BOOK_STYLE,
     `Subject: full-body portrait of a clearly adult ${prompts.archetype} skateboarder courier.`,
     `Composition: facing directly toward the viewer, front-facing, looking at the camera, wearing ${clothing}, ${pose}.`,
-    `Props: carrying courier gear, riding an all-terrain electric skateboard with big off-road wheels, lights and gear.`,
+    `Props: carrying courier gear suited to a fast courier run.`,
+    ELECTRIC_SKATEBOARD_REQUIREMENT,
+    ELECTRIC_SKATEBOARD_EXCLUSIONS,
     graffitiLine,
     `Performance note: character is alert, street-tough, and ready to move.`,
     `Mood: ${mood}.`,
@@ -346,7 +354,9 @@ export function buildImagePrompt(prompts: CardPrompts): string {
     CORE_COMIC_BOOK_STYLE,
     `Subject: clearly adult ${prompts.archetype} skateboarder courier.`,
     `Composition: facing directly toward the viewer, front-facing, looking at the camera, wearing ${clothing}, ${pose}.`,
-    `Props: carrying courier gear, riding an all-terrain electric skateboard with big off-road wheels, lights and gear.`,
+    `Props: carrying courier gear suited to a fast courier run.`,
+    ELECTRIC_SKATEBOARD_REQUIREMENT,
+    ELECTRIC_SKATEBOARD_EXCLUSIONS,
     `Performance note: character is alert and ready to move.`,
     `Character is ${genderDesc}, ${ageDesc}, with ${bodyDesc}.`,
     `${hairDesc}${skinDesc}${faceDesc}`,

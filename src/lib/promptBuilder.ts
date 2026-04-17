@@ -59,13 +59,16 @@ const COVER_IDENTITY_ROLES: Record<string, string> = {
 };
 
 const COVER_IDENTITY_POSES: Record<string, string> = {
+  "The Knights Technarchy": "holding a stealthy low-profile courier stance with precise balance, covert focus, and controlled movement",
   Qu111s: "striking a focused investigative action pose with determined eye contact, messenger bag secured for a fast scoop",
+  "Ne0n Legion": "throwing a flashy high-energy stunt pose with bold confidence and showy athletic control",
   "Iron Curtains": "leaning into a forceful action stance with tough kitchen-worker swagger and a heavy-duty delivery loadout",
   "D4rk $pider": "locked into a sharp hacker courier pose with compact tech gear, fast hands, and high-alert focus",
   "The Asclepians": "in a decisive emergency-response stance, ready to deliver urgent aid supplies without breaking stride",
   "The Mesopotamian Society": "balancing confidently in an adventurous field-research pose with treasure-hunter swagger",
   "Hermes' Squirmies": "driving forward in a hard-working delivery pose with practical momentum and union-job grit",
   UCPS: "in a disciplined postal-delivery action pose with a secure parcel, practical utility gear, and efficient movement",
+  "The Team": "holding a polished elite-athlete delivery stance with disciplined posture, balance, and coordinated confidence",
 };
 
 const RARITY_MOOD: Record<string, string> = {
@@ -254,7 +257,7 @@ export function buildCharacterPrompt(prompts: CardPrompts, graffitiWords?: strin
 
   return joinPromptBlocks(
     CORE_COMIC_BOOK_STYLE,
-    `Subject: full-body portrait of a clearly adult ${coverRole} riding an electric skateboard.`,
+    `Subject: full-body portrait of a clearly adult ${coverRole}.`,
     `Composition: facing directly toward the viewer, front-facing, looking at the camera, wearing ${clothing}, riding an electric skateboard, ${pose}.`,
     `Props: carrying courier gear suited to a fast courier run.`,
     ELECTRIC_SKATEBOARD_REQUIREMENT,
@@ -390,7 +393,7 @@ export function buildImagePrompt(prompts: CardPrompts): string {
 
   return joinPromptBlocks(
     CORE_COMIC_BOOK_STYLE,
-    `Subject: clearly adult ${coverRole} riding an electric skateboard.`,
+    `Subject: clearly adult ${coverRole}.`,
     `Composition: facing directly toward the viewer, front-facing, looking at the camera, wearing ${clothing}, riding an electric skateboard, ${pose}.`,
     `Props: carrying courier gear suited to a fast courier run.`,
     ELECTRIC_SKATEBOARD_REQUIREMENT,

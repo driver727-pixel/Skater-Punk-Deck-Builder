@@ -584,4 +584,17 @@ export const FACTION_LORE: FactionLoreEntry[] = [
       "by professional skaters. Their most infamous act is attacking UCA white bike riders " +
       "by throwing broomsticks into the wheel spokes. Skip 'Skids' Mayhew started here.",
   },
+  {
+    name: "The Team",
+    districts: ["Glass City", "Airaway"],
+    tagline: "Coordination wins races. Coordination wins everything.",
+    description:
+      "A neutral coordinated group of ex athletes who compete with such precision that they " +
+      "provide stiff competition for the big oligarchs. They dress like Olympic snowboarders — " +
+      "matching sponsored ensembles, high-end performance fabrics, coordinated team colors. " +
+      "Individually skilled but devastatingly effective as a unit. They operate visibly in " +
+      "Glass City's holo-lit corridors and Airaway's mag-rail bridges, where their sponsor " +
+      "logos are indistinguishable from corporate branding. The oligarchs haven't figured " +
+      "out how to buy them — yet.",
+  },
 ];

@@ -490,14 +490,6 @@ const DRIVETRAIN_SEED: Record<Drivetrain, string | null> = {
   "4WD": null, // no catalog asset yet
 };
 
-/** Maps each WheelType value to the seedKey of its representative asset. */
-const WHEEL_SEED: Record<WheelType, string | null> = {
-  Urethane:  "wheel-100mm-urethane-street",
-  Pneumatic: "wheel-175mm-pneumatic-at",
-  Rubber:    null,
-  Cloud:     "wheel-120mm-cloud-sliders",
-};
-
 /** Maps each BatteryType value to the seedKey of its representative asset. */
 const BATTERY_SEED: Record<BatteryType, string | null> = {
   SlimStealth: "battery-slim-stealth-pack",
@@ -790,7 +782,6 @@ export function calculateBoardStats(config: BoardConfig): BoardLoadout {
   const deckSeed    = BOARD_TYPE_DECK_SEED[normalizedConfig.boardType];
   const driveSeed   = DRIVETRAIN_SEED[normalizedConfig.drivetrain];
   const motorSeed   = MOTOR_SEED[normalizedConfig.motor];
-  const wheelSeed   = WHEEL_SEED[normalizedConfig.wheels];
   const batterySeed = BATTERY_SEED[normalizedConfig.battery];
 
   const deckModel    = BOARD_COMPONENT_CATALOG.find((m) => m.seedKey === deckSeed);

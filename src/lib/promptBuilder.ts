@@ -190,7 +190,7 @@ function buildFacialHairDescription(prompts: CardPrompts): string {
     prompts.faceCharacter ?? "",
   ].join("|"));
 
-  if (prompts.gender === "Non-binary" && facialHairRng.next() < 0.5) {
+  if (facialHairRng.next() < 0.5) {
     return "";
   }
 

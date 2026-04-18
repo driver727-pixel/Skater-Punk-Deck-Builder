@@ -598,6 +598,7 @@ export function CardForge() {
         layers.backgroundPrintUrl ?? layers.backgroundUrl,
         layers.characterUrl,
         layers.frameUrl,
+        generated.frameSeed,
         characterBlend,
       );
     } catch (err) {

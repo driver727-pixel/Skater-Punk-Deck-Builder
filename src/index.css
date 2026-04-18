@@ -4575,6 +4575,11 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   mix-blend-mode: screen; /* black background of frame image becomes transparent; colored border stays visible */
   object-fit: fill;       /* stretch to exactly match the card surface so the border aligns with the edges */
 }
+.viewer3d-layer--svg-frame {
+  z-index: 3;
+  mix-blend-mode: normal;
+  pointer-events: none;
+}
 
 /* Gloss overlay on the front face */
 .viewer3d-gloss {
@@ -4828,6 +4833,11 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   z-index: 3;
   mix-blend-mode: screen;
   object-fit: fill;
+}
+.print-art-layer--svg-frame {
+  z-index: 3;
+  mix-blend-mode: normal;
+  pointer-events: none;
 }
 .print-art-layer--bg-inset {
   transform: scale(0.88);
@@ -5112,6 +5122,11 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
     z-index: 3;
     mix-blend-mode: screen;
     object-fit: fill;
+  }
+  .print-only-card .print-art-layer--svg-frame {
+    z-index: 3;
+    mix-blend-mode: normal;
+    pointer-events: none;
   }
   .print-only-card .print-art-layer--bg-inset {
     transform: scale(0.88);

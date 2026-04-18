@@ -45,7 +45,7 @@ test.describe('Tier modal', () => {
     await expect(freeCard).toContainText(/download or screenshot cards to share/i);
     await expect(freeCard).toContainText(/referral credits:/i);
     await expect(freeCard).not.toContainText(/share cards via link/i);
-    await expect(freeCard).not.toContainText(/^✓ 1 free player card$/i);
+    await expect(freeCard).not.toContainText(/✓ 1 free player card/i);
   });
 
   test('tier2 card shows $5 one-time price', async ({ page }) => {

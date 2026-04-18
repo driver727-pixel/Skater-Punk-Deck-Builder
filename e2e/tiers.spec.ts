@@ -41,7 +41,9 @@ test.describe('Tier modal', () => {
   test('free tier card shows accurate free-user and referral messaging', async ({ page }) => {
     await openTierModal(page);
     const freeCard = page.locator('.tier-card').filter({ hasText: 'Free Rider' });
-    await expect(freeCard).toContainText(/create 1 free player card/i);
+    await expect(
+      freeCard.locator('.tier-features li').filter({ hasText: /^✓ Create 1 free player card$/ }),
+    ).toBeVisible();
     await expect(freeCard).toContainText(/download or screenshot cards to share/i);
     await expect(freeCard).toContainText(/referral credits:/i);
     await expect(freeCard).not.toContainText(/share cards via link/i);

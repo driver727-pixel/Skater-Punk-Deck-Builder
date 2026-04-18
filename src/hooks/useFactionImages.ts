@@ -7,6 +7,7 @@ export interface FactionImageEntry {
   imageUrl: string;
 }
 
+/** Appends a stable cache-busting version so the latest uploaded faction art is rendered. */
 function resolveFactionImageUrl(imageUrl: string, imageVersion?: number): string {
   if (!imageVersion) return imageUrl;
   return `${imageUrl}${imageUrl.includes("?") ? "&" : "?"}v=${imageVersion}`;

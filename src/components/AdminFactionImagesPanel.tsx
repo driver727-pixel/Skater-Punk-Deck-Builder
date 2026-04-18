@@ -5,6 +5,7 @@ import { auth, db, storage } from "../lib/firebase";
 import { FACTION_LORE } from "../lib/lore";
 import { factionSlug } from "../lib/factionSlug";
 
+/** Resolves the original flat storage path used before faction uploads were versioned. */
 function getLegacyFactionStoragePath(slug: string, ext?: string): string | null {
   return ext ? `factionImages/${slug}.${ext}` : null;
 }

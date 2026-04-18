@@ -1,4 +1,5 @@
 import { getForgeArchetypeLabel } from "./factionDiscovery";
+import { createSeededRandom } from "./prng";
 import { PUNCH_SKATER_RARITY, type CardPrompts, type Rarity } from "./types";
 
 // ── Lookup tables ──────────────────────────────────────────────────────────────
@@ -175,6 +176,34 @@ function buildHairDescription(hairLength?: string, accentColor?: string): string
   return `${length} dyed in a ${describeAccentColor(accentColor)} tone matching the selected accent color. `;
 }
 
+function buildFacialHairDescription(prompts: CardPrompts): string {
+  if (prompts.gender === "Woman") return "";
+
+  const facialHairRng = createSeededRandom([
+    prompts.archetype,
+    prompts.style,
+    prompts.gender,
+    prompts.ageGroup,
+    prompts.bodyType,
+    prompts.hairLength ?? "",
+    prompts.skinTone ?? "",
+    prompts.faceCharacter ?? "",
+  ].join("|"));
+
+  if (facialHairRng.next() < 0.5) {
+    return "";
+  }
+
+  const facialHairStyle = facialHairRng.pick([
+    "short beard",
+    "trimmed mustache and goatee",
+    "close-cropped beard",
+    "neatly shaped mustache",
+  ]);
+
+  return `${facialHairStyle} dyed in a ${describeAccentColor(prompts.accentColor)} tone matching the selected accent color. `;
+}
+
 function buildSkinDescription(skinTone?: string): string {
   if (!skinTone) return "";
   const desc =
@@ -250,10 +279,11 @@ export function buildCharacterPrompt(prompts: CardPrompts, graffitiWords?: strin
   const bodyDesc = buildBodyDescription(prompts.bodyType);
 
   const hairDesc = buildHairDescription(prompts.hairLength, prompts.accentColor);
+  const facialHairDesc = buildFacialHairDescription(prompts);
   const skinDesc = buildSkinDescription(prompts.skinTone);
   const faceDesc = buildFaceDescription(prompts.faceCharacter);
 
-  const characterDesc = `Character is ${genderDesc}, ${ageDesc}, with ${bodyDesc}. ${hairDesc}${skinDesc}${faceDesc}`;
+  const characterDesc = `Character is ${genderDesc}, ${ageDesc}, with ${bodyDesc}. ${hairDesc}${facialHairDesc}${skinDesc}${faceDesc}`;
 
   return joinPromptBlocks(
     CORE_COMIC_BOOK_STYLE,
@@ -399,6 +429,7 @@ export function buildImagePrompt(prompts: CardPrompts): string {
   const bodyDesc = buildBodyDescription(prompts.bodyType);
 
   const hairDesc = buildHairDescription(prompts.hairLength, prompts.accentColor);
+  const facialHairDesc = buildFacialHairDescription(prompts);
   const skinDesc = buildSkinDescription(prompts.skinTone);
   const faceDesc = buildFaceDescription(prompts.faceCharacter);
 
@@ -412,7 +443,7 @@ export function buildImagePrompt(prompts: CardPrompts): string {
     `Identity note: the character should be recognizable as a ${coverRole}, not a faction mascot or logo character.`,
     `Performance note: character is alert and ready to move.`,
     `Character is ${genderDesc}, ${ageDesc}, with ${bodyDesc}.`,
-    `${hairDesc}${skinDesc}${faceDesc}`,
+    `${hairDesc}${facialHairDesc}${skinDesc}${faceDesc}`,
     `Mood: ${mood}.`,
     AGE_RESTRICTION,
     `Render goals: cinematic lighting, crisp detail, and realistic adult proportions.`,

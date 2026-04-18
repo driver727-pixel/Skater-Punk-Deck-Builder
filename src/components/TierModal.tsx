@@ -2,6 +2,7 @@ import { useState } from "react";
 import { TIERS, saveEmail, type TierLevel } from "../lib/tiers";
 import { useTier } from "../context/TierContext";
 import { resolveApiUrl } from "../lib/apiUrls";
+import { ReferralPanel } from "./ReferralPanel";
 
 interface TierModalProps {
   onClose: () => void;
@@ -97,17 +98,24 @@ export function TierModal({ onClose }: TierModalProps) {
                   {lvl === "tier3" && <span className="tier-badge">BEST VALUE</span>}
                   <div className="tier-name">{t.name}</div>
                   <div className="tier-price">{t.price}</div>
-                  <p className="tier-desc">{t.description}</p>
-                  <ul className="tier-features">
-                    {t.features.map((f) => (
-                      <li key={f}>✓ {f}</li>
-                    ))}
-                  </ul>
-                  <button
-                    className={`btn-primary tier-select-btn ${lvl === "tier3" ? "btn-featured" : ""}`}
-                    onClick={() => handleSelectTier(lvl)}
-                    disabled={isCurrent}
-                  >
+                   <p className="tier-desc">{t.description}</p>
+                   <ul className="tier-features">
+                     {t.features.map((f) => (
+                       <li key={f}>✓ {f}</li>
+                     ))}
+                   </ul>
+                   {lvl === "free" && (
+                     <div className="tier-card-note">
+                       <strong>Referral credits:</strong> sign in on the free tier to copy your referral
+                       link and earn extra forge credits.
+                     </div>
+                   )}
+                   {lvl === "free" && isCurrent && <ReferralPanel />}
+                   <button
+                     className={`btn-primary tier-select-btn ${lvl === "tier3" ? "btn-featured" : ""}`}
+                     onClick={() => handleSelectTier(lvl)}
+                     disabled={isCurrent}
+                   >
                     {isCurrent ? "Current Plan" : lvl === "free" ? "Use Free" : `Upgrade — ${t.price}`}
                   </button>
                 </div>

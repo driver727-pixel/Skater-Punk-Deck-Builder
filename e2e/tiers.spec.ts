@@ -32,6 +32,16 @@ test.describe('Tier modal', () => {
     await expect(page.locator('.tier-card').filter({ hasText: 'Free Rider' }).locator('.tier-price')).toContainText(/free/i);
   });
 
+  test('free tier card shows accurate free-user and referral messaging', async ({ page }) => {
+    await openTierModal(page);
+    const freeCard = page.locator('.tier-card').filter({ hasText: 'Free Rider' });
+    await expect(freeCard).toContainText(/create 1 free player card/i);
+    await expect(freeCard).toContainText(/download or screenshot cards to share/i);
+    await expect(freeCard).toContainText(/referral credits:/i);
+    await expect(freeCard).not.toContainText(/share cards via link/i);
+    await expect(freeCard).not.toContainText(/^✓ 1 free player card$/i);
+  });
+
   test('tier2 card shows $5 one-time price', async ({ page }) => {
     await openTierModal(page);
     await expect(

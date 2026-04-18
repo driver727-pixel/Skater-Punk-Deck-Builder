@@ -2068,6 +2068,20 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .tier-features li { font-size: 11px; color: var(--text-dim); }
 .tier-features li::before { content: ""; }
 
+.tier-card-note {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+}
+
+.tier-card .referral-panel {
+  margin-top: 0;
+}
+
 .tier-select-btn { width: 100%; margin-top: 8px; }
 .btn-featured { border-color: var(--purple); color: var(--purple); }
 .btn-featured:hover:not(:disabled) { background: var(--purple); color: #fff; }

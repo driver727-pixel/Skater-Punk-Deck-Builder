@@ -80,6 +80,7 @@ export function DeckBuilder({ embedded = false }: { embedded?: boolean } = {}) {
     if (activeDeck) {
       const fresh = decks.find((d) => d.id === activeDeck.id);
       if (fresh) setActiveDeck(fresh);
+      else setActiveDeck(null);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [decks]);

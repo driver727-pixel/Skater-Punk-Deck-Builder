@@ -105,13 +105,10 @@ export function getForgeCoverRole(archetype: Archetype): string {
 }
 
 export function resolveSecretFaction(prompts: CardPrompts): Faction | null {
-  // 1. Punch Skater rarity cards always surface the Punch Skaters faction first.
-  if (prompts.rarity === "Punch Skater") return "Punch Skaters";
-
-  // 2. Any forge inside The Forest reveals The Wooders — it's their exclusive territory.
+  // 1. Any forge inside The Forest reveals The Wooders — it's their exclusive territory.
   if (prompts.district === "The Forest") return "The Wooders";
 
-  // 3. D4rk $pider (legacy logic preserved — wired to successor styles after
+  // 2. D4rk $pider (legacy logic preserved — wired to successor styles after
   //    Ninja/Hacker were removed from the active style list).
   const darkSpiderMatch =
     prompts.rarity === "Apprentice" &&
@@ -119,13 +116,13 @@ export function resolveSecretFaction(prompts: CardPrompts): Faction | null {
     DARK_SPIDER_DISTRICT_MATCHES.has(prompts.district);
   if (darkSpiderMatch) return "D4rk $pider";
 
-  // 4. UCA: a Corporate or Fascist-styled courier operating out of Airaway
+  // 3. UCA: a Corporate or Fascist-styled courier operating out of Airaway
   //    surfaces the governing body before any archetype check fires.
   if (UCA_STYLE_MATCHES.has(remapStyleConnection(prompts.style)) && prompts.district === "Airaway") {
     return "United Corporations of America (UCA)";
   }
 
-  // 5. Moonrisers: Apprentice couriers running Street-style packages through
+  // 4. Moonrisers: Apprentice couriers running Street-style packages through
   //    Nightshade underground — the classic Moonriser recruitment path.
   if (
     prompts.rarity === "Apprentice" &&
@@ -135,7 +132,7 @@ export function resolveSecretFaction(prompts: CardPrompts): Faction | null {
     return "Moonrisers";
   }
 
-  // 6. Archetype-based reveals: selecting an archetype directly uncovers its faction.
+  // 5. Archetype-based reveals: selecting an archetype directly uncovers its faction.
   switch (prompts.archetype) {
     case "The Knights Technarchy": return "The Knights Technarchy";
     case "Qu111s": return "Qu111s (Quills)";

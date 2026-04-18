@@ -1105,7 +1105,7 @@ export function CardForge() {
       {revealedFaction && (
         <div className="save-celebrate-overlay" onClick={() => setRevealedFaction(null)}>
           <div className="save-celebrate-modal save-celebrate-modal--reveal" onClick={(e) => e.stopPropagation()}>
-            <div className="save-celebrate-emoji">🕷</div>
+            <div className="save-celebrate-emoji">{generated?.discovery?.logoMark ?? "🎴"}</div>
             <h2 className="save-celebrate-title">
               {revealedFaction.isNew
                 ? "Secret faction discovered!"

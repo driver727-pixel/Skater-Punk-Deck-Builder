@@ -230,6 +230,7 @@ export function Admin() {
   const [factionImageFile, setFactionImageFile] = useState<File | null>(null);
   const [factionImagePreview, setFactionImagePreview] = useState<string | null>(null);
   const [factionCurrentImages, setFactionCurrentImages] = useState<Record<string, string>>({});
+  const [factionCurrentExts, setFactionCurrentExts] = useState<Record<string, string>>({});
   const [factionUploadStatus, setFactionUploadStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
   const [factionUploadError, setFactionUploadError] = useState("");
   const factionFileInputRef = useRef<HTMLInputElement>(null);
@@ -237,12 +238,15 @@ export function Admin() {
   useEffect(() => {
     if (!db) return;
     getDocs(collection(db, "factionImages")).then((snap) => {
-      const map: Record<string, string> = {};
+      const imageMap: Record<string, string> = {};
+      const extMap: Record<string, string> = {};
       snap.forEach((d) => {
         const data = d.data();
-        if (typeof data.imageUrl === "string") map[d.id] = data.imageUrl;
+        if (typeof data.imageUrl === "string") imageMap[d.id] = data.imageUrl;
+        if (typeof data.imageExt === "string") extMap[d.id] = data.imageExt;
       });
-      setFactionCurrentImages(map);
+      setFactionCurrentImages(imageMap);
+      setFactionCurrentExts(extMap);
     }).catch(console.error);
   }, []);
 
@@ -264,16 +268,18 @@ export function Admin() {
     setFactionUploadError("");
     try {
       const slug = factionSlug(selectedFaction);
-      const ext = factionImageFile.name.split(".").pop() ?? "png";
+      const ext = factionImageFile.name.split(".").pop()?.toLowerCase() ?? "png";
       const storageRef = ref(storage, `factionImages/${slug}.${ext}`);
       await uploadBytes(storageRef, factionImageFile, { contentType: factionImageFile.type });
       const downloadUrl = await getDownloadURL(storageRef);
       await setDoc(doc(db, "factionImages", slug), {
         factionName: selectedFaction,
         imageUrl: downloadUrl,
+        imageExt: ext,
         updatedAt: serverTimestamp(),
       });
       setFactionCurrentImages((prev) => ({ ...prev, [slug]: downloadUrl }));
+      setFactionCurrentExts((prev) => ({ ...prev, [slug]: ext }));
       setFactionImageFile(null);
       setFactionImagePreview(null);
       if (factionFileInputRef.current) factionFileInputRef.current.value = "";
@@ -291,20 +297,19 @@ export function Admin() {
     if (!window.confirm(`Remove the background image for "${faction}"?`)) return;
     const slug = factionSlug(faction);
     try {
-      await setDoc(doc(db, "factionImages", slug), { imageUrl: deleteField() }, { merge: true });
+      await setDoc(doc(db, "factionImages", slug), { imageUrl: deleteField(), imageExt: deleteField() }, { merge: true });
       setFactionCurrentImages((prev) => {
         const next = { ...prev };
         delete next[slug];
         return next;
       });
       if (storage) {
-        // Best-effort delete from Storage (may fail if file extension differs)
-        for (const ext of ["png", "jpg", "jpeg", "webp", "gif"]) {
+        const ext = factionCurrentExts[slug];
+        if (ext) {
           try {
             await deleteObject(ref(storage, `factionImages/${slug}.${ext}`));
-            break;
-          } catch {
-            // ignore — file may not exist with this extension
+          } catch (err) {
+            console.warn("Could not delete storage object:", err);
           }
         }
       }

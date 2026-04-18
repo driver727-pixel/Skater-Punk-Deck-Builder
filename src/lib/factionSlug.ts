@@ -4,7 +4,7 @@
  * underscores, then collapsing repeated underscores.
  *
  * Examples:
- *   "D4rk $pider"                          → "d4rk_pider"
+ *   "D4rk $pider"                          → "d4rk_pider"  ($ stripped)
  *   "United Corporations of America (UCA)" → "united_corporations_of_america_uca"
  *   "Hermes' Squirmies"                    → "hermes_squirmies"
  */

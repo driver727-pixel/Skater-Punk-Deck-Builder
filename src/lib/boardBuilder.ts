@@ -530,7 +530,6 @@ export function getBoardAssetUrls(config: BoardConfig): {
   const deckSeed    = BOARD_TYPE_DECK_SEED[normalizedConfig.boardType];
   const driveSeed   = DRIVETRAIN_SEED[normalizedConfig.drivetrain];
   const motorSeed   = MOTOR_SEED[normalizedConfig.motor];
-  const wheelSeed   = WHEEL_SEED[normalizedConfig.wheels];
   const batterySeed = BATTERY_SEED[normalizedConfig.battery];
   const batteryOpt  = BATTERY_OPTIONS.find((o) => o.value === normalizedConfig.battery);
 

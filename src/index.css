@@ -3990,13 +3990,34 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   background: var(--bg2);
   border: 1px solid var(--border);
   border-radius: 6px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition: border-color 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.lore-faction-item:hover { border-color: var(--accent2); }
+
+/* Dark overlay that sits on top of the background image */
+.lore-faction-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 18, 0.72);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Content wrapper keeps text above the overlay */
+.lore-faction-content {
+  position: relative;
+  z-index: 1;
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  transition: border-color 0.15s;
 }
-.lore-faction-item:hover { border-color: var(--accent2); }
 
 .lore-faction-header {
   display: flex;

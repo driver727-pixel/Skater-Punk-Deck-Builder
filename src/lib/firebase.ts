@@ -1,6 +1,7 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
+import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
@@ -22,10 +23,11 @@ const firebaseServices: {
   app: FirebaseApp | null;
   auth: Auth | null;
   db: Firestore | null;
+  storage: FirebaseStorage | null;
 } = (() => {
   if (!isFirebaseConfigured) {
     console.warn("[Firebase] Missing config:", missingFirebaseConfig.join(", "));
-    return { app: null, auth: null, db: null };
+    return { app: null, auth: null, db: null, storage: null };
   }
 
   try {
@@ -34,13 +36,14 @@ const firebaseServices: {
       app,
       auth: getAuth(app),
       db: getFirestore(app),
+      storage: getStorage(app),
     };
   } catch (error) {
     console.error("[Firebase] Initialization failed.", error);
-    return { app: null, auth: null, db: null };
+    return { app: null, auth: null, db: null, storage: null };
   }
 })();
 
-const { app, auth, db } = firebaseServices;
+const { app, auth, db, storage } = firebaseServices;
 
-export { app, auth, db };
+export { app, auth, db, storage };

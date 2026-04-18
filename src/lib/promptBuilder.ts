@@ -67,7 +67,7 @@ const COVER_IDENTITY_POSES: Record<string, string> = {
   "D4rk $pider": "locked into a sharp hacker courier pose with compact tech gear, fast hands, and high-alert focus",
   "The Asclepians": "in a decisive emergency-response stance, ready to deliver urgent aid supplies without breaking stride",
   "The Mesopotamian Society": "balancing confidently in an adventurous field-research pose with treasure-hunter swagger",
-  "Hermes' Squirmies": "driving forward in a hard-working delivery pose with practical momentum and union-job grit",
+  "Hermes' Squirmies": "Arms folded in a hard-working delivery pose with practical momentum and union-job grit",
   UCPS: "in a disciplined postal-delivery action pose with a secure parcel, practical utility gear, and efficient movement",
   "The Team": "holding a polished elite-athlete delivery stance with disciplined posture, balance, and coordinated confidence",
 };

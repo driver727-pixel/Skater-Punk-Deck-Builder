@@ -26,18 +26,18 @@ export function AdminFactionImagesPanel() {
     if (!db) return;
     getDocs(collection(db, "factionImages"))
       .then((snap) => {
-        const imageMap: Record<string, string> = {};
-        const extMap: Record<string, string> = {};
-        const pathMap: Record<string, string> = {};
+        const factionImageUrls: Record<string, string> = {};
+        const factionImageExtensions: Record<string, string> = {};
+        const factionStoragePaths: Record<string, string> = {};
         snap.forEach((entry) => {
           const data = entry.data();
-          if (typeof data.imageUrl === "string") imageMap[entry.id] = data.imageUrl;
-          if (typeof data.imageExt === "string") extMap[entry.id] = data.imageExt;
-          if (typeof data.storagePath === "string") pathMap[entry.id] = data.storagePath;
+          if (typeof data.imageUrl === "string") factionImageUrls[entry.id] = data.imageUrl;
+          if (typeof data.imageExt === "string") factionImageExtensions[entry.id] = data.imageExt;
+          if (typeof data.storagePath === "string") factionStoragePaths[entry.id] = data.storagePath;
         });
-        setFactionCurrentImages(imageMap);
-        setFactionCurrentExts(extMap);
-        setFactionCurrentPaths(pathMap);
+        setFactionCurrentImages(factionImageUrls);
+        setFactionCurrentExts(factionImageExtensions);
+        setFactionCurrentPaths(factionStoragePaths);
       })
       .catch((error) => {
         console.error("Failed to load faction images:", error);
@@ -169,7 +169,7 @@ export function AdminFactionImagesPanel() {
     <div className="admin-create-user">
       <h2 className="admin-section-title">Faction Background Images</h2>
       <p style={{ fontSize: 12, color: "var(--text-dim)", marginBottom: 10 }}>
-        Upload an image to display behind a faction&apos;s description on the Factions page.
+        Upload an image to display behind a faction's description on the Factions page.
       </p>
       <div className="admin-create-form" style={{ alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
         <div className="form-group" style={{ flex: "1 1 200px", marginBottom: 0 }}>

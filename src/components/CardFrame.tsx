@@ -27,6 +27,7 @@ interface FrameProps {
 
 const FRAME_TOP_CONNECTORS = [170, 375, 580] as const;
 const FRAME_SIDE_CONNECTORS = [176, 314, 735, 874] as const;
+const FRAME_UID_MAX_LENGTH = 40;
 const CORNER_TRANSFORMS = [
   { key: "tl", transform: "translate(54 54)" },
   { key: "tr", transform: `translate(${FRAME_RENDER_WIDTH - 54} 54) scale(-1 1)` },
@@ -92,7 +93,7 @@ function buildEdgeSpecks(seed: string, colorA: string, colorB: string) {
 }
 
 function PunchSkaterFrame({ uid, frameSeed }: { uid: string; frameSeed: string }) {
-  const safeUid = createFrameUid(uid, 40);
+  const safeUid = createFrameUid(uid, FRAME_UID_MAX_LENGTH);
   const rustPatches = buildRustPatches(frameSeed);
   const specks = buildEdgeSpecks(frameSeed, "#a9632e", "#4d2719");
   const tieBands = [140, 375, 610];
@@ -209,7 +210,7 @@ function PunchSkaterFrame({ uid, frameSeed }: { uid: string; frameSeed: string }
 }
 
 function ApprenticeFrame({ uid }: { uid: string }) {
-  const safeUid = createFrameUid(uid, 40);
+  const safeUid = createFrameUid(uid, FRAME_UID_MAX_LENGTH);
   return (
     <>
       <defs>
@@ -305,7 +306,7 @@ function ApprenticeFrame({ uid }: { uid: string }) {
 }
 
 function MasterFrame({ uid }: { uid: string }) {
-  const safeUid = createFrameUid(uid, 40);
+  const safeUid = createFrameUid(uid, FRAME_UID_MAX_LENGTH);
   const collarY = [170, 330, 720, 880];
   return (
     <>
@@ -403,7 +404,7 @@ function MasterFrame({ uid }: { uid: string }) {
 }
 
 function RareFrame({ uid }: { uid: string }) {
-  const safeUid = createFrameUid(uid, 40);
+  const safeUid = createFrameUid(uid, FRAME_UID_MAX_LENGTH);
   const neonNodes = [
     { x: 144, y: 26, color: "#6ff6ff" },
     { x: 375, y: 26, color: "#7eff73" },
@@ -507,7 +508,7 @@ function RareFrame({ uid }: { uid: string }) {
 }
 
 function LegendaryFrame({ uid, frameSeed }: { uid: string; frameSeed: string }) {
-  const safeUid = createFrameUid(uid, 40);
+  const safeUid = createFrameUid(uid, FRAME_UID_MAX_LENGTH);
   const neonBands = [
     { colorA: "#ff4fd8", colorB: "#7effff", width: 2.4, dashOffset: seededVal(frameSeed, 100) * 36 },
     { colorA: "#7eff73", colorB: "#ffd84f", width: 2.1, dashOffset: seededVal(frameSeed, 101) * 36 },

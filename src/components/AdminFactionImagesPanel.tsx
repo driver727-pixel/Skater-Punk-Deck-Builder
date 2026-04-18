@@ -69,8 +69,8 @@ export function AdminFactionImagesPanel() {
 
     const slug = factionSlug(selectedFaction);
     const ext = factionImageFile.name.split(".").pop()?.toLowerCase() ?? "png";
-    const uploadVersion = Date.now();
-    const storagePath = `factionImages/${slug}/${uploadVersion}.${ext}`;
+    const uploadTimestamp = Date.now();
+    const storagePath = `factionImages/${slug}/${uploadTimestamp}.${ext}`;
     const previousStoragePath =
       factionCurrentPaths[slug] || getLegacyFactionStoragePath(slug, factionCurrentExts[slug]);
 
@@ -85,7 +85,6 @@ export function AdminFactionImagesPanel() {
           factionName: selectedFaction,
           imageExt: ext,
           imageUrl: downloadUrl,
-          imageVersion: uploadVersion,
           storagePath,
           updatedAt: serverTimestamp(),
         },
@@ -130,7 +129,6 @@ export function AdminFactionImagesPanel() {
         {
           imageExt: deleteField(),
           imageUrl: deleteField(),
-          imageVersion: deleteField(),
           storagePath: deleteField(),
         },
         { merge: true },

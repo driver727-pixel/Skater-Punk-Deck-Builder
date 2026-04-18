@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('forge-welcome-dismissed', '1');
+  });
+});
+
 async function openTierModal(page: import('@playwright/test').Page) {
   await page.goto('/');
   const desktopTierButton = page.locator('.nav-desktop-only.tier-badge-btn');
@@ -30,6 +36,18 @@ test.describe('Tier modal', () => {
   test('free tier card shows correct price', async ({ page }) => {
     await openTierModal(page);
     await expect(page.locator('.tier-card').filter({ hasText: 'Free Rider' }).locator('.tier-price')).toContainText(/free/i);
+  });
+
+  test('free tier card shows accurate free-user and referral messaging', async ({ page }) => {
+    await openTierModal(page);
+    const freeCard = page.locator('.tier-card').filter({ hasText: 'Free Rider' });
+    await expect(
+      freeCard.locator('.tier-features li').filter({ hasText: /^✓ Create 1 free player card$/ }),
+    ).toBeVisible();
+    await expect(freeCard).toContainText(/download or screenshot cards to share/i);
+    await expect(freeCard).toContainText(/referral credits:/i);
+    await expect(freeCard).not.toContainText(/share cards via link/i);
+    await expect(freeCard).not.toContainText(/✓ 1 free player card/i);
   });
 
   test('tier2 card shows $5 one-time price', async ({ page }) => {
@@ -97,56 +115,72 @@ test.describe('Tier modal', () => {
 // ── Forge gating — free tier ──────────────────────────────────────────────────
 
 test.describe('Forge gating — free tier', () => {
-  test('forge button shows locked label for free-tier users', async ({ page }) => {
+  test('forge button shows the free-card label for free-tier users', async ({ page }) => {
     await page.goto('/');
-    // Ensure free tier (no localStorage tier set)
-    await page.evaluate(() => localStorage.removeItem('skpd_tier'));
+    await page.evaluate(() => {
+      localStorage.removeItem('skpd_tier');
+      localStorage.removeItem('ps_gen_credits');
+      localStorage.removeItem('skpd_free_card_used');
+    });
     await page.reload();
     const forgeBtn = page.getByTestId('forge-button');
     await expect(forgeBtn).toBeVisible();
-    await expect(forgeBtn).toContainText(/upgrade to unlock/i);
+    await expect(forgeBtn).toContainText(/1 free card/i);
   });
 
-  test('clicking locked forge button opens the upgrade modal', async ({ page }) => {
+  test('clicking forge uses the free card instead of opening the upgrade modal', async ({ page }) => {
     await page.goto('/');
-    await page.evaluate(() => localStorage.removeItem('skpd_tier'));
+    await page.evaluate(() => {
+      localStorage.removeItem('skpd_tier');
+      localStorage.removeItem('ps_gen_credits');
+      localStorage.removeItem('skpd_free_card_used');
+    });
     await page.reload();
     await page.getByTestId('forge-button').click();
-    await expect(page.getByRole('heading', { name: /choose your tier/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /choose your tier/i })).not.toBeVisible();
+    await expect(page.getByRole('button', { name: /save to collection/i })).toBeVisible();
   });
 });
 
 // ── Forge gating — tampered localStorage tiers ────────────────────────────────
 
 test.describe('Forge gating — tampered localStorage tiers', () => {
-  test('forge button stays locked when localStorage is forced to tier2', async ({ page }) => {
+  test('forge button still treats the user as free when localStorage is forced to tier2', async ({ page }) => {
     await page.goto('/');
     // Simulate a tampered client-side tier value.
-    await page.evaluate(() => localStorage.setItem('skpd_tier', 'tier2'));
+    await page.evaluate(() => {
+      localStorage.setItem('skpd_tier', 'tier2');
+      localStorage.removeItem('ps_gen_credits');
+      localStorage.removeItem('skpd_free_card_used');
+    });
     await page.reload();
     const forgeBtn = page.getByTestId('forge-button');
     await expect(forgeBtn).toBeVisible();
-    await expect(forgeBtn).toContainText(/upgrade to unlock/i);
-    await expect(forgeBtn).toContainText(/forge your card/i);
+    await expect(forgeBtn).toContainText(/1 free card/i);
   });
 
-  test('forge button stays locked when localStorage is forced to tier3', async ({ page }) => {
+  test('forge button still treats the user as free when localStorage is forced to tier3', async ({ page }) => {
     await page.goto('/');
-    await page.evaluate(() => localStorage.setItem('skpd_tier', 'tier3'));
+    await page.evaluate(() => {
+      localStorage.setItem('skpd_tier', 'tier3');
+      localStorage.removeItem('ps_gen_credits');
+      localStorage.removeItem('skpd_free_card_used');
+    });
     await page.reload();
     const forgeBtn = page.getByTestId('forge-button');
     await expect(forgeBtn).toBeVisible();
-    await expect(forgeBtn).toContainText(/upgrade to unlock/i);
+    await expect(forgeBtn).toContainText(/1 free card/i);
   });
 });
 
 // ── Forge gating — referral credits ──────────────────────────────────────────
 
 test.describe('Forge gating — referral credits', () => {
-  test('forge button shows credit count when free user has credits', async ({ page }) => {
+  test('forge button shows credit count once the free card has been used', async ({ page }) => {
     await page.goto('/');
     await page.evaluate(() => {
       localStorage.removeItem('skpd_tier');
+      localStorage.setItem('skpd_free_card_used', '1');
       localStorage.setItem('ps_gen_credits', '3');
     });
     await page.reload();

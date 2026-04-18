@@ -725,12 +725,6 @@ const DISTRICT_ACCESS_ORDER: District[] = [
   "The Forest",
   "Glass City",
 ];
-const WHEEL_ACCESS_PROFILES: Record<WheelType, string> = {
-  Urethane: "Urban district access",
-  Pneumatic: "Off-grid district access",
-  Rubber: "Heavy-duty district access",
-  Cloud: "Corridor glide access",
-};
 const DEFAULT_ACCESS_PROFILE = "General district access";
 
 /**
@@ -755,7 +749,7 @@ function getBoardDistrictAccessProfile(config: BoardConfig): string {
 
   return accessibleDistricts.length > 0
     ? accessibleDistricts.join(" · ")
-    : WHEEL_ACCESS_PROFILES[normalizedConfig.wheels] ?? DEFAULT_ACCESS_PROFILE;
+    : DEFAULT_ACCESS_PROFILE;
 }
 
 

@@ -1,0 +1,13 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Faction background images — publicly readable, admin-only writes.
+    match /factionImages/{imageFile} {
+      allow read: if true;
+      allow write, delete: if request.auth != null
+        && firestore.get(
+          /databases/(default)/documents/userProfiles/$(request.auth.uid)
+        ).data.isAdmin == true;
+    }
+  }
+}

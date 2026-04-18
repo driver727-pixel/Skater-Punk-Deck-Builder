@@ -1,8 +1,11 @@
 import { FACTION_LORE } from "../lib/lore";
 import { useFactionDiscovery } from "../hooks/useFactionDiscovery";
+import { useFactionImages } from "../hooks/useFactionImages";
+import { factionSlug } from "../lib/factionSlug";
 
 export function Factions() {
   const { discoveredFactions } = useFactionDiscovery();
+  const factionImages = useFactionImages();
   const knownFactions = FACTION_LORE.filter((entry) => discoveredFactions.includes(entry.name));
 
   return (
@@ -19,16 +22,34 @@ export function Factions() {
         <section className="lore-section">
           <h2 className="lore-heading">Known Factions</h2>
           <div className="lore-faction-list">
-            {knownFactions.map((faction) => (
-              <div key={faction.name} className="lore-faction-item">
-                <div className="lore-faction-header">
-                  <span className="lore-faction-name">{faction.name}</span>
-                  <span className="lore-faction-districts">{faction.districts.join(" · ")}</span>
+            {knownFactions.map((faction) => {
+              const imageUrl = factionImages.get(factionSlug(faction.name));
+              return (
+                <div
+                  key={faction.name}
+                  className="lore-faction-item"
+                  style={
+                    imageUrl
+                      ? {
+                          backgroundImage: `url(${imageUrl})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
+                      : undefined
+                  }
+                >
+                  {imageUrl && <div className="lore-faction-img-overlay" />}
+                  <div className="lore-faction-content">
+                    <div className="lore-faction-header">
+                      <span className="lore-faction-name">{faction.name}</span>
+                      <span className="lore-faction-districts">{faction.districts.join(" · ")}</span>
+                    </div>
+                    <p className="lore-tagline lore-tagline--sm">"{faction.tagline}"</p>
+                    <p className="lore-body lore-body--sm">{faction.description}</p>
+                  </div>
                 </div>
-                <p className="lore-tagline lore-tagline--sm">"{faction.tagline}"</p>
-                <p className="lore-body lore-body--sm">{faction.description}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}

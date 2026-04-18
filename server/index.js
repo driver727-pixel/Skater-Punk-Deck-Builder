@@ -36,7 +36,7 @@ app.use(helmet({
       fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
       formAction: ["'self'"],
       frameAncestors: ["'none'"],
-      imgSrc: ["'self'", 'data:', 'https://*.fal.media', 'https://*.firebaseapp.com'],
+      imgSrc: ["'self'", 'data:', 'https://*.fal.media', 'https://*.firebaseapp.com', 'https://firebasestorage.googleapis.com'],
       manifestSrc: ["'self'"],
       objectSrc: ["'none'"],
       scriptSrc: ["'self'", "'unsafe-inline'"],

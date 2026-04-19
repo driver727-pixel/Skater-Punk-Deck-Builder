@@ -157,8 +157,12 @@ export function shouldInsetBackgroundForFrame(rarity: Rarity, frameUrl?: string)
 // Add an entry here once you have placed the corresponding file in that folder.
 
 const FACTION_ASSETS: Partial<Record<Faction, string>> = {
+  "D4rk $pider":                          "/assets/factions/d4rk_pider.jpg",
+  "Hermes' Squirmies":                    "/assets/factions/hermes_squirmies.jpg",
+  "Iron Curtains":                        "/assets/factions/iron_curtains.jpg",
+  "Ne0n Legion":                          "/assets/factions/ne0n_legion.jpg",
   "Qu111s (Quills)":                      "/assets/factions/qu111s_quills.jpg",
-  "The Asclepians":                        "/assets/factions/the_asclepians.jpg",
+  "The Asclepians":                       "/assets/factions/the_asclepians.jpg",
   "The Knights Technarchy":               "/assets/factions/the_knights_technarchy.jpg",
   "The Mesopotamian Society":             "/assets/factions/the_mesopotamian_society.jpg",
   "The Team":                             "/assets/factions/the_team.jpg",

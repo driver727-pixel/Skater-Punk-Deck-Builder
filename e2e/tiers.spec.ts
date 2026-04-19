@@ -153,6 +153,7 @@ test.describe('Forge gating — free tier', () => {
 
     await page.getByTestId('forge-button').click();
 
+    await expect(page.getByRole('button', { name: /save to collection/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /secret faction discovered!/i })).not.toBeVisible();
     await expect(page.getByRole('link', { name: /^factions$/i })).not.toBeVisible();
   });

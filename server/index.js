@@ -723,6 +723,15 @@ function normalizeBoardReferenceUrls(value) {
   return urls;
 }
 
+function extractBoardImageUrl(result) {
+  const image = result?.data?.image;
+  if (typeof image === 'string' && image) return image;
+  if (typeof image?.url === 'string' && image.url) return image.url;
+  if (typeof result?.data?.image_url === 'string' && result.data.image_url) return result.data.image_url;
+  if (typeof result?.image?.url === 'string' && result.image.url) return result.image.url;
+  return null;
+}
+
 app.post('/api/generate-board-image', imageRateLimit, async (req, res) => {
   try {
     if (!FAL_KEY) {
@@ -742,18 +751,14 @@ app.post('/api/generate-board-image', imageRateLimit, async (req, res) => {
         prompt,
         // Fal.ai's Nano Banana 2 API expects snake_case `image_urls`.
         image_urls: imageUrls,
+        // These settings are intentionally fixed for board generation so every
+        // request uses the same higher-reasoning, no-web-search render mode.
         thinking_level: 'high',
         enable_web_search: false,
       },
     });
 
-    const imageUrl =
-      result?.data?.image?.url ??
-      (typeof result?.data?.image === 'string' ? result.data.image : null) ??
-      result?.data?.image_url ??
-      result?.image?.url ??
-      null;
-
+    const imageUrl = extractBoardImageUrl(result);
     if (!imageUrl) {
       res.status(502).json({ error: 'Fal.ai did not return a board image URL.' });
       return;

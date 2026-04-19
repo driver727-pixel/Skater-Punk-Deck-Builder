@@ -8,7 +8,7 @@ const BOARD_IMAGE_API_URL = resolveApiUrl(
   import.meta.env.VITE_BOARD_IMAGE_API_URL as string | undefined,
   "/api/generate-board-image",
 );
-const BOARD_IMAGE_CACHE_VERSION = "v3-nano-banana-gouache";
+const BOARD_IMAGE_CACHE_VERSION = "v3-fal-gouache-board";
 const BOARD_IMAGE_LOCAL_CACHE_PREFIX = "skpd_board_image_cache::";
 const BOARD_IMAGE_PUBLIC_ORIGIN = "https://punchskater.com";
 

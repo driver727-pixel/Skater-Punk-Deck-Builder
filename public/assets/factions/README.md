@@ -10,6 +10,10 @@ Registered images (place the file, it is picked up automatically):
 
 | Faction                              | File                          |
 |--------------------------------------|-------------------------------|
+| D4rk $pider                          | `d4rk_pider.jpg`              |
+| Hermes' Squirmies                    | `hermes_squirmies.jpg`        |
+| Iron Curtains                        | `iron_curtains.jpg`           |
+| Ne0n Legion                          | `ne0n_legion.jpg`             |
 | Qu111s (Quills)                      | `qu111s_quills.jpg`           |
 | The Asclepians                       | `the_asclepians.jpg`          |
 | The Knights Technarchy               | `the_knights_technarchy.jpg`  |

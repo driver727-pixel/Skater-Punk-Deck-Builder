@@ -395,7 +395,9 @@ function isPlainObject(value) {
 function normalizeFalLoraEntry(entry) {
   if (!isPlainObject(entry)) return null;
 
-  const path = typeof entry.path === 'string' ? entry.path.trim() : '';
+  const path = typeof entry.path === 'string' ? entry.path.trim()
+    : typeof entry.url === 'string' ? entry.url.trim()
+    : '';
   if (!path) return null;
 
   const rawScale = parseFalScale(entry.scale, 1);
@@ -467,6 +469,8 @@ function extractFalRequestConfigCandidate(payload) {
       'lora',
       'lora_path',
       'path',
+      'diffusers_lora_file',
+      'config_file',
     ].some((key) => candidate[key] !== undefined);
   }) ?? null;
 }
@@ -482,7 +486,8 @@ function sanitizeFalRequestConfig(candidate) {
     normalizeFalLoras(candidate.loras) ??
     normalizeFalLoras(candidate.lora) ??
     normalizeFalLoras(candidate.lora_path, loraScale) ??
-    normalizeFalLoras(candidate.path, scale);
+    normalizeFalLoras(candidate.path, scale) ??
+    normalizeFalLoras(candidate.diffusers_lora_file, loraScale);
 
   if (candidate.image_size !== undefined) config.image_size = candidate.image_size;
   if (candidate.num_inference_steps !== undefined) config.num_inference_steps = candidate.num_inference_steps;

@@ -273,7 +273,7 @@ test.describe('Factions page', () => {
     await page.goto('/factions');
 
     const factionCard = page.locator('.lore-faction-item').filter({ hasText: knownFaction.name });
-    const factionToggle = factionCard.getByRole('button', { name: new RegExp(knownFaction.name, 'i') });
+    const factionToggle = factionCard.locator('.lore-faction-toggle');
     const description = page.getByText(knownFaction.description);
 
     await expect(description).toBeHidden();

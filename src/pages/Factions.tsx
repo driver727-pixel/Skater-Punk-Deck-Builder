@@ -55,6 +55,8 @@ export function Factions() {
                         imageUrl
                           ? {
                               backgroundImage: `url(${imageUrl})`,
+                              backgroundSize: "cover",
+                              backgroundPosition: "center",
                             }
                           : undefined
                       }

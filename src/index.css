@@ -4094,7 +4094,12 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 
 .lore-faction-details {
+  display: none;
   max-width: 60ch;
+}
+
+.lore-faction-details--visible {
+  display: block;
 }
 
 .lore-faction-description {

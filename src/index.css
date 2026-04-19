@@ -4024,7 +4024,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   background-position: center;
 }
 
-/* Dark overlay that sits on top of the background image */
+/* Light-to-dark gradient for text readability over faction imagery */
 .lore-faction-img-overlay {
   position: absolute;
   inset: 0;

@@ -47,6 +47,7 @@ export function Factions() {
                     onClick={() => toggleFaction(faction.name)}
                     aria-expanded={isExpanded}
                     aria-controls={detailsId}
+                    aria-label={`${isExpanded ? "Collapse" : "Expand"} ${faction.name} faction details`}
                   >
                     <div
                       className="lore-faction-media"

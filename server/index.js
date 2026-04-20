@@ -19,13 +19,18 @@ import {
   shouldGrantAdminAccess,
 } from './lib/auth.js';
 import {
-  extractFalRequestConfigCandidate,
   isPlainObject,
   normalizeBoardReferenceUrls,
   normalizeFalLoras,
   parseFalScale,
-  sanitizeFalRequestConfig,
 } from './lib/fal.js';
+import {
+  createFalImageRequestBuilder,
+  createFalRequestConfigLoader,
+  normalizeFalProfile,
+  readFalRequestConfig,
+  resolveFalProfile as resolveConfiguredFalProfile,
+} from './lib/falRequest.js';
 import { buildRateLimiter, createRateLimitStore } from './lib/rateLimit.js';
 import { registerAdminRoutes } from './routes/admin.js';
 import { registerBattleRoutes } from './routes/battle.js';
@@ -66,7 +71,6 @@ const MIN_GUIDANCE_SCALE = 1;
 const MAX_GUIDANCE_SCALE = 20;
 const ALLOWED_OUTPUT_FORMAT = 'png';
 const BOARD_IMAGE_JOB_TTL_MS = 20 * 60 * 1000;
-const MAX_FAL_CONFIG_CACHE_ENTRIES = 8;
 const ALLOWED_REMOTE_IMAGE_HOST_PATTERNS = [
   /(^|\.)fal\.media$/i,
   /^firebasestorage\.googleapis\.com$/i,
@@ -196,38 +200,19 @@ const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || process.env.VITE_
 const FIREBASE_ADMIN_CLIENT_EMAIL = process.env.FIREBASE_ADMIN_CLIENT_EMAIL || '';
 const FIREBASE_ADMIN_PRIVATE_KEY = process.env.FIREBASE_ADMIN_PRIVATE_KEY || '';
 const FIREBASE_SERVICE_ACCOUNT_JSON = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '';
-const DEFAULT_FAL_URL = process.env.FAL_IMAGE_MODEL_URL || 'https://fal.run/fal-ai/flux-lora';
-const DEFAULT_FAL_CONFIG_URL = process.env.FAL_CONFIG_URL || process.env.FAL_LORA_CONFIG_URL || '';
-const DEFAULT_FAL_LORA_PATH = process.env.FAL_LORA_PATH || 'https://v3b.fal.media/files/b/0a961b80/LZYfVjdfVXWWb7gMl4kL2_pytorch_lora_weights.safetensors';
-const rawFalLoraScale = Number.parseFloat(process.env.FAL_LORA_SCALE || '1');
-const DEFAULT_FAL_LORA_SCALE = Number.isFinite(rawFalLoraScale) ? rawFalLoraScale : 1;
-if (process.env.FAL_LORA_SCALE && !Number.isFinite(rawFalLoraScale)) {
-  console.warn('⚠️  FAL_LORA_SCALE is invalid — falling back to 1.');
-}
-const DEFAULT_FAL_LORAS = DEFAULT_FAL_LORA_PATH
-  ? [{ path: DEFAULT_FAL_LORA_PATH, scale: DEFAULT_FAL_LORA_SCALE }]
-  : [];
-const CHARACTER_FAL_URL = process.env.FAL_CHARACTER_IMAGE_MODEL_URL || 'https://fal.run/fal-ai/flux-2/lora';
-const CHARACTER_FAL_CONFIG_URL = process.env.FAL_CHARACTER_CONFIG_URL || 'https://v3b.fal.media/files/b/0a962cdb/GvvgV0ByFDT7TB0SNb9Dc_config_cf867d1b-1b55-45d1-a4a4-fe5e223ec932.json';
-const CHARACTER_FAL_LORA_PATH = process.env.FAL_CHARACTER_LORA_PATH || 'https://v3b.fal.media/files/b/0a962cda/rW-WL7L6NIqULjsRzuyV7_pytorch_lora_weights.safetensors';
-const rawCharacterFalLoraScale = Number.parseFloat(process.env.FAL_CHARACTER_LORA_SCALE || '1');
-const CHARACTER_FAL_LORA_SCALE = Number.isFinite(rawCharacterFalLoraScale) ? rawCharacterFalLoraScale : 1;
-if (process.env.FAL_CHARACTER_LORA_SCALE && !Number.isFinite(rawCharacterFalLoraScale)) {
-  console.warn('⚠️  FAL_CHARACTER_LORA_SCALE is invalid — falling back to 1.');
-}
-const CHARACTER_FAL_LORAS = CHARACTER_FAL_LORA_PATH
-  ? [{ path: CHARACTER_FAL_LORA_PATH, scale: CHARACTER_FAL_LORA_SCALE }]
-  : [];
-const DEFAULT_FAL_IMAGE_SIZE = { width: 750, height: 1050 };
-const DEFAULT_FAL_NUM_INFERENCE_STEPS = 20;
-const DEFAULT_FAL_GUIDANCE_SCALE = 3.5;
-const DEFAULT_FAL_NUM_IMAGES = 1;
-const DEFAULT_FAL_ENABLE_SAFETY_CHECKER = true;
-const DEFAULT_FAL_OUTPUT_FORMAT = 'png';
-const FAL_CONFIG_CACHE_TTL_MS = 5 * 60 * 1000;
 const BIREFNET_URL = 'https://fal.run/fal-ai/birefnet';
-
-const falRequestConfigCache = new Map();
+const falRequestConfig = readFalRequestConfig(process.env, console);
+const getRemoteFalRequestConfig = createFalRequestConfigLoader({
+  cacheTtlMs: falRequestConfig.cacheTtlMs,
+  logger: console,
+  maxCacheEntries: falRequestConfig.maxCacheEntries,
+});
+const resolveFalProfile = (profile) => resolveConfiguredFalProfile(profile, falRequestConfig.profiles);
+const buildFalImageRequest = createFalImageRequestBuilder({
+  getRemoteFalRequestConfig,
+  requestDefaults: falRequestConfig.requestDefaults,
+  resolveFalProfile,
+});
 
 // Allowed Stripe price IDs — derived from src/lib/tierPricing.json so that
 // updating prices only requires editing that one file.
@@ -698,99 +683,6 @@ registerBattleRoutes(app, {
   randomUUID,
   FieldValue,
 });
-
-function normalizeFalProfile(value) {
-  return value === 'character' ? 'character' : 'default';
-}
-
-function resolveFalProfile(profile) {
-  if (profile === 'character') {
-    return {
-      modelUrl: CHARACTER_FAL_URL,
-      configUrl: CHARACTER_FAL_CONFIG_URL,
-      defaultLoras: CHARACTER_FAL_LORAS,
-    };
-  }
-
-  return {
-    modelUrl: DEFAULT_FAL_URL,
-    configUrl: DEFAULT_FAL_CONFIG_URL,
-    defaultLoras: DEFAULT_FAL_LORAS,
-  };
-}
-
-function cacheFalRequestConfig(configUrl, payload, fetchedAt) {
-  if (!falRequestConfigCache.has(configUrl) && falRequestConfigCache.size >= MAX_FAL_CONFIG_CACHE_ENTRIES) {
-    const oldestKey = falRequestConfigCache.keys().next().value;
-    if (oldestKey) falRequestConfigCache.delete(oldestKey);
-  }
-  falRequestConfigCache.set(configUrl, {
-    payload,
-    fetchedAt,
-  });
-  return payload;
-}
-
-async function getRemoteFalRequestConfig(configUrl) {
-  if (!configUrl) return null;
-
-  const now = Date.now();
-  const cachedEntry = falRequestConfigCache.get(configUrl);
-  const hasFreshCache =
-    cachedEntry?.payload &&
-    now - cachedEntry.fetchedAt < FAL_CONFIG_CACHE_TTL_MS;
-
-  if (hasFreshCache) {
-    return cachedEntry.payload;
-  }
-
-  try {
-    const upstream = await fetch(configUrl);
-    if (!upstream.ok) {
-      throw new Error(`Remote Fal config fetch from ${configUrl} failed with ${upstream.status} ${upstream.statusText}.`);
-    }
-
-    const payload = await upstream.json();
-    const config = sanitizeFalRequestConfig(extractFalRequestConfigCandidate(payload));
-
-    if (!config) {
-      // Treat unsupported remote JSON as "no remote defaults" so image requests
-      // still fall back to built-in settings without logging repeated refresh errors.
-      return cacheFalRequestConfig(configUrl, {}, now);
-    }
-
-    return cacheFalRequestConfig(configUrl, config, now);
-  } catch (err) {
-    console.error(`Fal config refresh failed for ${configUrl}:`, err);
-
-    if (cachedEntry?.payload) {
-      return cachedEntry.payload;
-    }
-
-    return null;
-  }
-}
-
-async function buildFalImageRequest(body = {}) {
-  const profile = normalizeFalProfile(typeof body.fal_profile === 'string' ? body.fal_profile.trim() : '');
-  const profileSettings = resolveFalProfile(profile);
-  const remoteConfig = await getRemoteFalRequestConfig(profileSettings.configUrl);
-  const requestedLoras = Array.isArray(body.loras) ? body.loras : undefined;
-  const remoteDefaults = remoteConfig ?? {};
-  const upstreamBody = { ...body };
-  delete upstreamBody.fal_profile;
-
-  return {
-    ...upstreamBody,
-    image_size: body.image_size ?? remoteDefaults.image_size ?? DEFAULT_FAL_IMAGE_SIZE,
-    num_inference_steps: body.num_inference_steps ?? remoteDefaults.num_inference_steps ?? DEFAULT_FAL_NUM_INFERENCE_STEPS,
-    guidance_scale: body.guidance_scale ?? remoteDefaults.guidance_scale ?? DEFAULT_FAL_GUIDANCE_SCALE,
-    num_images: body.num_images ?? remoteDefaults.num_images ?? DEFAULT_FAL_NUM_IMAGES,
-    enable_safety_checker: body.enable_safety_checker ?? remoteDefaults.enable_safety_checker ?? DEFAULT_FAL_ENABLE_SAFETY_CHECKER,
-    output_format: body.output_format ?? remoteDefaults.output_format ?? DEFAULT_FAL_OUTPUT_FORMAT,
-    loras: requestedLoras ?? remoteDefaults.loras ?? profileSettings.defaultLoras,
-  };
-}
 
 registerImageRoutes(app, {
   fal,

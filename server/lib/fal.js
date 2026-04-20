@@ -1,5 +1,6 @@
 const BOARD_REFERENCE_IMAGE_PATH_PATTERN =
-  // Board reference assets are now generated/served as optimized WebP files only.
+  // Board reference assets are now generated/served as optimized WebP files only
+  // across the canonical deck, drivetrain, motor, wheels, and battery folders.
   /^\/assets\/boards\/(deck|drivetrain|motor|wheels|battery)\/[a-z0-9-]+\.webp$/i;
 
 function isPlainObject(value) {

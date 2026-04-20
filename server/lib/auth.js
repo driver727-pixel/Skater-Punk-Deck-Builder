@@ -14,6 +14,9 @@ export function shouldGrantAdminAccess(email, adminEmails) {
   return Boolean(normalizedEmail) && adminEmails.includes(normalizedEmail);
 }
 
+/**
+ * Require at least 12 characters with upper, lower, number, and symbol.
+ */
 export function isStrongPassword(password) {
   if (typeof password !== 'string' || password.length < 12) return false;
   return /[a-z]/.test(password)

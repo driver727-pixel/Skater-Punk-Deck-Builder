@@ -54,7 +54,7 @@ export function getFirebaseServiceAccount(env = process.env, logger = console) {
 
     const projectId = parsed.project_id ?? parsed.projectId ?? '';
     if (!projectId && getFirebaseProjectId(env)) {
-      logger.warn('Firebase service-account JSON is missing project_id — falling back to environment project ID.');
+      logger.warn('Firebase service-account JSON is missing project_id — falling back to FIREBASE_PROJECT_ID, VITE_FIREBASE_PROJECT_ID, GOOGLE_CLOUD_PROJECT, or GCLOUD_PROJECT.');
     }
 
     return {
@@ -112,7 +112,7 @@ export function createFirebaseAdminServices({
       adminDb: getAdminFirestoreImpl(app),
     };
   } catch (error) {
-    if (!serviceAccount) logger.warn('Firebase Admin initialization failed using optional application default credentials.', error);
+    if (!serviceAccount) logger.warn('Firebase Admin initialization failed using optional application default credentials. Verify GOOGLE_APPLICATION_CREDENTIALS or your platform-managed GCP service identity.', error);
     else logger.error('Firebase Admin initialization failed.', error);
     return { adminAuth: null, adminDb: null };
   }

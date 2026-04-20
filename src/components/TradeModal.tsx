@@ -97,12 +97,12 @@ export function TradeModal({ cards, onClose, preselectedCard }: TradeModalProps)
       }
       const recipientProfile = snap.docs[0].data();
       const tradeId = `trade-${Date.now()}`;
-      await setDoc(doc(db, "trades", tradeId), {
+        await setDoc(doc(db, "trades", tradeId), {
         id: tradeId,
-        fromUid: user.uid,
-        fromEmail: user.email ?? "",
-        toUid: recipientProfile.uid,
-        toEmail: recipientProfile.email,
+          fromUid: user.uid,
+          fromEmail: user.email ?? "",
+          toUid: recipientProfile.uid,
+          toEmail: email,
         offeredCardId: selectedCard.id,
         offeredCard: selectedCard,
         status: "pending",

@@ -8,16 +8,13 @@ const SUPPORTED_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg']);
 // q=72 keeps transparent UI assets visibly crisp while still cutting most of
 // the oversized source images down enough for fast browser delivery.
 const WEBP_QUALITY = Number.parseInt(process.env.WEBP_QUALITY || '72', 10);
-const SKIP_DIRS = new Set(['small']);
 
 async function* walk(dir) {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (!SKIP_DIRS.has(entry.name)) {
-        yield* walk(fullPath);
-      }
+      yield* walk(fullPath);
       continue;
     }
     yield fullPath;

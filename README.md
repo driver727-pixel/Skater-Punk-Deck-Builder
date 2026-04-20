@@ -38,6 +38,7 @@ Copy `.env.example` to `.env` for local client config.
 - `VITE_FIREBASE_*`
 - `VITE_IMAGE_API_URL`
 - `VITE_CHECKOUT_API_URL`
+- `VITE_AUTH_SYNC_API_URL`
 - `VITE_ADMIN_API_URL`
 - `VITE_BATTLE_API_URL`
 - `VITE_DISTRICT_WEATHER_API_URL`
@@ -57,6 +58,7 @@ Copy `.env.example` to `.env` for local client config.
 - `STRIPE_WEBHOOK_SECRET`
 - `ADMIN_EMAILS`
 - `APP_ORIGINS` (optional; extra CORS / checkout redirect origins)
+- `REDIS_URL` (optional; enables shared Redis-backed rate limiting)
 - `FIREBASE_SERVICE_ACCOUNT_JSON` or (`FIREBASE_PROJECT_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, `FIREBASE_ADMIN_PRIVATE_KEY`)
 
 Do not commit server secrets.
@@ -91,6 +93,7 @@ npm run test:e2e
 - The Express API is intentionally hardened for API-only hosting. If you ever serve the SPA from the same origin, expand the CSP `connectSrc` allow-list first so Firebase, Stripe, and Fal requests continue to work.
 - Fal image-generation, board-generation, and background-removal routes now require an authenticated Firebase user plus Firebase Admin credentials on the server.
 - Stripe checkout redirects are restricted to approved app origins, and webhook delivery should be configured for `/api/stripe/webhook`.
+- Admin access is now enforced via Firebase custom claims, with `userLookup` providing the minimal public directory used for trade lookups.
 
 ## Prompt Surface Inventory
 

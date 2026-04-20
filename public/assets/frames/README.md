@@ -1,6 +1,6 @@
 # Card Frame / Border Assets
 
-Place rarity-tier border frame images here for the legacy PNG frame fallback.
+Place rarity-tier border frame images here for the legacy raster frame fallback.
 
 The live app now prefers the built-in SVG cable borders for Punch Skater, Apprentice,
 Master, Rare, and Legendary. These files are only used when older saved cards still
@@ -10,11 +10,11 @@ reference the registered PNG overlay paths.
 
 | Rarity        | Filename                |
 |---------------|-------------------------|
-| Punch Skater  | `punch-skater.png`      |
-| Apprentice    | `apprentice.png`        |
-| Master        | `master.png`            |
-| Rare          | `rare.png`              |
-| Legendary     | `legendary.png`         |
+| Punch Skater  | `punch-skater.webp`      |
+| Apprentice    | `apprentice.webp`        |
+| Master        | `master.webp`            |
+| Rare          | `rare.webp`              |
+| Legendary     | `legendary.webp`         |
 
 ## Accepted Formats
 
@@ -42,8 +42,8 @@ screen blending automatically when they are not one of the registered static ass
    `[StaticAsset] Generated frame for <Rarity>: <URL>`. Download and save it here, then
    register it in `src/services/staticAssets.ts`.
 
-2. **Custom artwork:** Design your own border in any image editor. Export as PNG (preserves
-   transparency better) or JPG, named per the table above.
+2. **Custom artwork:** Design your own border in any image editor. Export as WebP (preferred)
+   or PNG/JPG, named per the table above.
 
 ## Activating a File
 
@@ -52,11 +52,11 @@ corresponding entry in `FRAME_ASSETS`:
 
 ```ts
 const FRAME_ASSETS: Partial<Record<Rarity, string>> = {
-  Apprentice:     { url: "/assets/frames/apprentice.png" },
-  Master:         { url: "/assets/frames/master.png" },
-  Rare:           { url: "/assets/frames/rare.png" },
-  Legendary:      { url: "/assets/frames/legendary.png" },
-  "Punch Skater": { url: "/assets/frames/punch-skater.png" },
+  Apprentice:     { url: "/assets/frames/apprentice.webp" },
+  Master:         { url: "/assets/frames/master.webp" },
+  Rare:           { url: "/assets/frames/rare.webp" },
+  Legendary:      { url: "/assets/frames/legendary.webp" },
+  "Punch Skater": { url: "/assets/frames/punch-skater.webp" },
 };
 ```
 

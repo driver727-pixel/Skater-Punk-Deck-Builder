@@ -7,6 +7,14 @@
         { "fieldPath": "status",    "order": "ASCENDING"  },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "leaderboard",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "deckPower", "order": "DESCENDING" },
+        { "fieldPath": "ozzies", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

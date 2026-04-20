@@ -506,14 +506,13 @@ async function syncPurchasedTier({ tier, email, sessionId }) {
   });
   if (matchingDocs.size === 0) return;
 
-  const updatedAt = new Date().toISOString();
   const batch = adminDb.batch();
   matchingDocs.forEach((docSnap) => {
     batch.set(docSnap.ref, {
       tier,
       purchaseEmail: normalizedEmail,
       lastCheckoutSessionId: sessionId,
-      updatedAt,
+      updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
   });
   await batch.commit();
@@ -639,11 +638,11 @@ async function syncAdminClaim(uid, email) {
     else delete nextClaims.admin;
     await adminAuth.setCustomUserClaims(uid, nextClaims);
     if (adminDb) {
-      await adminDb.collection('userProfiles').doc(uid).set({
-        isAdmin: shouldBeAdmin,
-        ...(shouldBeAdmin ? { tier: 'tier3' } : {}),
-        updatedAt: new Date().toISOString(),
-      }, { merge: true });
+        await adminDb.collection('userProfiles').doc(uid).set({
+          isAdmin: shouldBeAdmin,
+          ...(shouldBeAdmin ? { tier: 'tier3' } : {}),
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
     }
     return { admin: shouldBeAdmin, claimsUpdated: true };
   }
@@ -652,7 +651,7 @@ async function syncAdminClaim(uid, email) {
     await adminDb.collection('userProfiles').doc(uid).set({
       isAdmin: shouldBeAdmin,
       ...(shouldBeAdmin ? { tier: 'tier3' } : {}),
-      updatedAt: new Date().toISOString(),
+      updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
   }
 
@@ -663,16 +662,22 @@ async function upsertUserLookupRecord({ uid, email, displayName }) {
   if (!adminDb) return;
   const normalizedEmail = normalizeEmail(email);
   const resolvedDisplayName = buildUserDisplayName({ email, displayName });
-  const payload = {
+  const profilePayload = {
     uid,
     email: typeof email === 'string' ? email.trim() : '',
     emailLower: normalizedEmail,
     displayName: resolvedDisplayName,
-    updatedAt: new Date().toISOString(),
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+  const lookupPayload = {
+    uid,
+    emailLower: normalizedEmail,
+    displayName: resolvedDisplayName,
+    updatedAt: FieldValue.serverTimestamp(),
   };
   await Promise.all([
-    adminDb.collection('userProfiles').doc(uid).set(payload, { merge: true }),
-    adminDb.collection('userLookup').doc(uid).set(payload, { merge: true }),
+    adminDb.collection('userProfiles').doc(uid).set(profilePayload, { merge: true }),
+    adminDb.collection('userLookup').doc(uid).set(lookupPayload, { merge: true }),
   ]);
 }
 

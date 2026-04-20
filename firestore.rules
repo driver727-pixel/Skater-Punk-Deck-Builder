@@ -13,6 +13,8 @@ service cloud.firestore {
     }
 
     // ── Private user profiles ────────────────────────────────────────────────
+    // Full profile docs are owner/admin readable only. Admin authority comes
+    // from Firebase Auth custom claims, not from self-editable Firestore data.
     match /userProfiles/{uid} {
       allow read: if request.auth != null
         && (request.auth.uid == uid || request.auth.token.admin == true);
@@ -34,17 +36,18 @@ service cloud.firestore {
     }
 
     // ── Public user lookup (trade/address book) ──────────────────────────────
+    // Minimal directory used for recipient lookup during trades.
     match /userLookup/{uid} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && (
         (request.auth.uid == uid
-          && request.resource.data.keys().hasOnly(['uid', 'email', 'emailLower', 'displayName', 'updatedAt']))
+          && request.resource.data.keys().hasOnly(['uid', 'emailLower', 'displayName', 'updatedAt']))
         || request.auth.token.admin == true
       );
       allow update: if request.auth != null && (
         (request.auth.uid == uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'email', 'emailLower', 'displayName', 'updatedAt'
+            'emailLower', 'displayName', 'updatedAt'
           ]))
         || request.auth.token.admin == true
       );

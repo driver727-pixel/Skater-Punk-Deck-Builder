@@ -82,9 +82,15 @@ async function upsertUserProfile(user: User) {
     displayName: user.displayName ?? user.email?.split("@")[0] ?? "Skater",
     updatedAt: serverTimestamp(),
   };
+  const lookupPayload = {
+    uid: user.uid,
+    emailLower: email.trim().toLowerCase(),
+    displayName: user.displayName ?? user.email?.split("@")[0] ?? "Skater",
+    updatedAt: serverTimestamp(),
+  };
   await Promise.all([
     setDoc(doc(db, "userProfiles", user.uid), profilePayload, { merge: true }),
-    setDoc(doc(db, "userLookup", user.uid), profilePayload, { merge: true }),
+    setDoc(doc(db, "userLookup", user.uid), lookupPayload, { merge: true }),
   ]);
 }
 

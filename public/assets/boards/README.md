@@ -1,6 +1,6 @@
 # Board Component Assets
 
-Static PNG images used by the board builder.
+Static board images used by the board builder.
 
 ---
 
@@ -16,7 +16,7 @@ It is not part of the live card-rendering pipeline.
 
 ## BoardPreviewGrid images (`public/assets/boards/<category>/`)
 
-These are the transparent component PNGs shown on the **assembly canvas**
+These are the optimized component WebPs shown on the **assembly canvas**
 above the conveyor belts inside the board builder. The app layers the selected
 deck, drivetrain, motor, wheels, and battery together on one shared backdrop.
 
@@ -76,13 +76,13 @@ mapping is:
 ### Example filenames
 
 ```
-public/assets/boards/deck/street-carbon.png              → Street deck
-public/assets/boards/deck/at-bamboo.png                  → AT deck
-public/assets/boards/deck/mt-board.png                   → Mountain deck
-public/assets/boards/deck/surf-skate.png                 → Surf deck
-public/assets/boards/motor/5055-motor.png                → Micro motor
-public/assets/boards/wheels/poly-urethane-wheels.png     → Urethane wheels
-public/assets/boards/battery/battery-slim-stealth-pack.png → Slim Stealth battery
+public/assets/boards/deck/street-carbon.webp              → Street deck
+public/assets/boards/deck/at-bamboo.webp                  → AT deck
+public/assets/boards/deck/mt-board.webp                   → Mountain deck
+public/assets/boards/deck/surf-skate.webp                 → Surf deck
+public/assets/boards/motor/5055-motor.webp                → Micro motor
+public/assets/boards/wheels/poly-urethane-wheels.webp     → Urethane wheels
+public/assets/boards/battery/battery-slim-stealth-pack.webp → Slim Stealth battery
 ```
 
 ### All category folders
@@ -98,7 +98,7 @@ public/assets/boards/battery/battery-slim-stealth-pack.png → Slim Stealth batt
 ### Rules
 
 * Include a keyword from the table above in the filename.
-* Multiple keywords in one name are fine (e.g. `dual-belt-drive.png`).
+* Multiple keywords in one name are fine (e.g. `dual-belt-drive.webp`).
 * After updating images, redeploy the app so browsers can request the refreshed
   public assets.
 * Each `.gitkeep` file in these folders exists only to keep the folder tracked

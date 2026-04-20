@@ -1,621 +1,67 @@
-import { useState, useCallback, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import type { Archetype, CardPrompts, CardPayload, Rarity, District, Gender, AgeGroup, BodyType, Faction, HairLength, SkinTone, FaceCharacter } from "../lib/types";
-import { buildCharacterSeed, generateCard } from "../lib/generator";
-import { CardDisplay } from "../components/CardDisplay";
-import { CardViewer3D } from "../components/CardViewer3D";
-import { PrintModal } from "../components/PrintModal";
-import { ReferralPanel } from "../components/ReferralPanel";
-import { generateImage, removeBackground, isImageGenConfigured, getImageDimensions, type ImageGenOptions } from "../services/imageGen";
-import { getCachedImage, setCachedImage } from "../services/imageCache";
-import { generateGouacheBoard } from "../services/boardImageGen";
-import { getStaticBackgroundUrl, getStaticBackgroundSmallUrl, getStaticFrameUrl } from "../services/staticAssets";
-import { buildBackgroundPrompt, buildCharacterPrompt, buildFramePrompt } from "../lib/promptBuilder";
-import { useTier } from "../context/TierContext";
-import { useAuth } from "../context/AuthContext";
-import { useCollection } from "../hooks/useCollection";
-import { useFactionDiscovery } from "../hooks/useFactionDiscovery";
-import { TIERS } from "../lib/tiers";
-import { downloadCardAsJpg } from "../services/cardDownload";
-import { applyFactionBranding, FORGE_ARCHETYPE_OPTIONS, getForgeArchetypeLabel, resolveSecretFaction } from "../lib/factionDiscovery";
-import { BoardBuilder, DEFAULT_BOARD_CONFIG } from "../components/BoardBuilder";
-import type { BoardConfig } from "../lib/boardBuilder";
-import { BOARD_TYPE_OPTIONS, calculateBoardStats, getAllowedComponents } from "../lib/boardBuilder";
-import { resolveArchetypeStyle } from "../lib/styles";
-import { sfxSuccessPing, sfxSuccess, sfxError, sfxClick } from "../lib/sfx";
-
-const RARITIES: Rarity[] = ["Punch Skater", "Apprentice", "Master", "Rare", "Legendary"];
-const DISTRICTS: District[] = ["Airaway", "Nightshade", "Batteryville", "The Grid", "The Forest", "Glass City"];
-const GENDERS: Gender[] = ["Woman", "Man", "Non-binary"];
-const AGE_GROUPS: AgeGroup[] = ["Young Adult", "Adult", "Middle-aged", "Senior"];
-const BODY_TYPES: BodyType[] = ["Slim", "Athletic", "Average", "Heavy"];
-const HAIR_LENGTHS: HairLength[] = ["Bald", "Short", "Medium", "Long"];
-const SKIN_TONES: SkinTone[] = ["Light", "Medium", "Dark", "Very Dark"];
-const FACE_CHARACTERS: FaceCharacter[] = ["Conventional", "Attractive", "Weathered", "Scarred", "Rugged"];
-const ARCHETYPE_VALUES = FORGE_ARCHETYPE_OPTIONS.map((option) => option.value);
-const BOARD_TYPES = BOARD_TYPE_OPTIONS.map((option) => option.value);
-const RANDOM_SKATER_TOOLTIP = "Randomizes the Character loadout and the Board loadout with one click.";
-
-const ACCENT_PRESETS = ["#00ff88", "#00ccff", "#3366ff", "#ff4444", "#ffaa00", "#8b5cf6", "#ff66cc"];
-
-function getRandomIndex(length: number): number {
-  if (length === 0) {
-    throw new Error("Cannot choose a random item from an empty collection.");
-  }
-  if (length <= 1) return 0;
-  const randomBuffer = new Uint32Array(1);
-  const unbiasedUpperBound = Math.floor(0x1_0000_0000 / length) * length;
-  let randomValue = 0;
-
-  do {
-    crypto.getRandomValues(randomBuffer);
-    randomValue = randomBuffer[0];
-  } while (randomValue >= unbiasedUpperBound);
-
-  return randomValue % length;
-}
-
-function getRandomItem<T>(items: readonly T[]): T {
-  return items[getRandomIndex(items.length)];
-}
-
-function getRandomItemExcluding<T>(items: readonly T[], current: T): T {
-  const candidates = items.filter((item) => item !== current);
-  return candidates.length > 0 ? getRandomItem(candidates) : current;
-}
-
-function buildRandomBoardConfig(currentConfig: BoardConfig): BoardConfig {
-  const boardType = getRandomItemExcluding(BOARD_TYPES, currentConfig.boardType);
-  const allowed = getAllowedComponents(boardType);
-  return {
-    boardType,
-    drivetrain: getRandomItem(allowed.drivetrains),
-    motor: getRandomItem(allowed.motors),
-    wheels: getRandomItem(allowed.wheels),
-    battery: getRandomItem(allowed.batteries),
-  };
-}
-
-// ── Image generation layer helpers ─────────────────────────────────────────────
-
-/** Maximum number of automatic retries per layer when a cached URL fails to load. */
-const MAX_LAYER_RETRIES = 1;
-const CHARACTER_CACHE_VERSION = "v4-dynamic-pose";
-const CHARACTER_GENERATION_OPTIONS: ImageGenOptions = {
-  imageSize: { width: 1088, height: 1536 },
-  numInferenceSteps: 45,
-  guidanceScale: 4,
-  falProfile: "character",
-};
-const NON_LORA_GENERATION_OPTIONS: ImageGenOptions = {
-  loras: [],
-};
-const CHARACTER_MIN_DIMENSIONS = { width: 1088, height: 1536 };
-const CHARACTER_SEED_VARIANTS = ["hq-a", "hq-b"];
-
-/** Converts a display name to a kebab-case filename stem (e.g. "The Grid" → "the-grid"). */
-function toFileSlug(name: string): string {
-  return name.toLowerCase().replace(/\s+/g, "-");
-}
-
-interface LayerState {
-  backgroundUrl?: string;
-  /** Full print-quality background URL (1536 × 2048 px). Only set when a
-   *  screen-quality small variant is available; used for print / download. */
-  backgroundPrintUrl?: string;
-  characterUrl?: string;
-  frameUrl?: string;
-  loading: { background: boolean; character: boolean; frame: boolean };
-  errors: string[];
-}
-
-/** Per-layer generation parameters stored for retry use by handleLayerError. */
-interface LayerGenParams {
-  key: string;
-  prompt: string;
-  seed?: string;
-  attempts?: Array<{ seed: string; generationOptions?: ImageGenOptions }>;
-  postProcess?: (url: string) => Promise<string>;
-  validateResult?: (url: string) => Promise<void>;
-  generationOptions?: ImageGenOptions;
-}
-
-const INITIAL_LAYER_STATE: LayerState = {
-  loading: { background: false, character: false, frame: false },
-  errors: [],
-};
+import { ForgeControlsPanel } from "./cardForge/ForgeControlsPanel";
+import { ForgePreviewPanel } from "./cardForge/ForgePreviewPanel";
+import { ForgeResultOverlays } from "./cardForge/ForgeResultOverlays";
+import { ForgeWelcomeModal } from "./cardForge/ForgeWelcomeModal";
+import {
+  ACCENT_PRESETS,
+  AGE_GROUPS,
+  BODY_TYPES,
+  DISTRICTS,
+  FACE_CHARACTERS,
+  GENDERS,
+  HAIR_LENGTHS,
+  RANDOM_SKATER_TOOLTIP,
+  RARITIES,
+  SKIN_TONES,
+} from "./cardForge/constants";
+import { useCardForgeController } from "./cardForge/useCardForgeController";
+import { isImageGenConfigured } from "../services/imageGen";
 
 export function CardForge() {
-  const { tier, canForge, generateCredits, consumeCredit, openUpgradeModal, freeCardUsed, markFreeCardUsed } = useTier();
-  const { user } = useAuth();
-  const tierData = TIERS[tier];
-  const navigate = useNavigate();
-  const { addCard, cards } = useCollection();
-  const { hasFaction, unlockFaction } = useFactionDiscovery();
-  const [prompts, setPrompts] = useState<CardPrompts>({
-    archetype: "Qu111s", rarity: "Punch Skater", style: "Corporate",
-    district: "Nightshade", accentColor: "#00ff88",
-    gender: "Non-binary", ageGroup: "Adult", bodyType: "Athletic",
-    hairLength: "Short", skinTone: "Medium", faceCharacter: "Conventional",
-  });
-  const [boardConfig, setBoardConfig] = useState<BoardConfig>(DEFAULT_BOARD_CONFIG);
-  const [generated, setGenerated] = useState<CardPayload | null>(null);
-  const [layers, setLayers] = useState<LayerState>(INITIAL_LAYER_STATE);
-  const [characterBlend, setCharacterBlend] = useState(1);
-  const [forging, setForging] = useState(false);
-  const [viewing3D, setViewing3D] = useState(false);
-  const [printing, setPrinting] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [savedCard, setSavedCard] = useState<CardPayload | null>(null);
-  const [isFirstCard, setIsFirstCard] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-  const [revealedFaction, setRevealedFaction] = useState<{ faction: Faction; isNew: boolean } | null>(null);
-  const [showWelcome, setShowWelcome] = useState(
-    () => localStorage.getItem("forge-welcome-dismissed") !== "1"
-  );
-
-  const closeWelcome = useCallback(() => {
-    localStorage.setItem("forge-welcome-dismissed", "1");
-    setShowWelcome(false);
-  }, []);
-
-  // Close welcome modal on Escape key
-  useEffect(() => {
-    if (!showWelcome) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeWelcome();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [showWelcome, closeWelcome]);
-
-  // Abort controller ref for cancelling in-flight image generation
-  const abortRef = useRef<AbortController | null>(null);
-
-  // Per-layer retry tracking — each entry is the number of retries attempted for
-  // the current forge session.  Reset when handleForge starts a fresh forge.
-  const retryCountRef = useRef<Record<"background" | "character" | "frame", number>>({
-    background: 0, character: 0, frame: 0,
-  });
-
-  // Parameters stored for each layer so the retry handler can re-trigger
-  // generation without re-running the full forge flow.
-  const layerParamsRef = useRef<Record<"background" | "character" | "frame", LayerGenParams | null>>({
-    background: null, character: null, frame: null,
-  });
-
-  // Clean up on unmount
-  useEffect(() => {
-    return () => { abortRef.current?.abort(); };
-  }, []);
-
-  const set = <K extends keyof CardPrompts>(key: K, val: CardPrompts[K]) =>
-    setPrompts((p) => ({ ...p, [key]: val }));
-  const setArchetype = (archetype: Archetype) =>
-    setPrompts((current) => ({
-      ...current,
-      archetype,
-      style: resolveArchetypeStyle(archetype, current.style),
-    }));
-
-  // ── Generate a single layer (background, character, or frame) ────────────
-  const generateLayer = useCallback(
-    async (
-      layer: "background" | "character" | "frame",
-      cacheKey: string,
-      prompt: string,
-      seed: string | undefined,
-      signal: AbortSignal,
-      postProcess?: (url: string) => Promise<string>,
-      validateResult?: (url: string) => Promise<void>,
-      generationOptions?: ImageGenOptions,
-      attempts?: Array<{ seed: string; generationOptions?: ImageGenOptions }>,
-      skipCache = false,
-    ) => {
-      setLayers((s) => ({ ...s, loading: { ...s.loading, [layer]: true } }));
-      try {
-        if (!skipCache) {
-          // 1. Check for a pre-loaded static asset (served from public/assets/).
-          //    These are permanent files that never expire and consume no credits.
-          //    For backgrounds we prefer the screen-quality small variant for
-          //    display and keep the full-size URL as backgroundPrintUrl for
-          //    print / download.
-          const staticUrl =
-            layer === "background"
-              ? getStaticBackgroundUrl(seed as District)
-              : layer === "frame"
-              ? getStaticFrameUrl(seed as Rarity)
-              : null;
-
-          if (staticUrl) {
-            if (signal.aborted) return;
-            if (layer === "background") {
-              const smallUrl = getStaticBackgroundSmallUrl(seed as District);
-              setLayers((s) => ({
-                ...s,
-                backgroundUrl: smallUrl ?? staticUrl,
-                backgroundPrintUrl: smallUrl ? staticUrl : undefined,
-                loading: { ...s.loading, background: false },
-              }));
-            } else {
-              const urlKey = `${layer}Url` as keyof Pick<LayerState, "characterUrl" | "frameUrl">;
-              setLayers((s) => ({
-                ...s,
-                [urlKey]: staticUrl,
-                loading: { ...s.loading, [layer]: false },
-              }));
-            }
-            return;
-          }
-
-          // 2. Check the Firestore cache (write-once, shared across users).
-          const cached = await getCachedImage(cacheKey);
-          if (signal.aborted) return;
-          if (cached) {
-            const urlKey = `${layer}Url` as keyof Pick<LayerState, "backgroundUrl" | "characterUrl" | "frameUrl">;
-            setLayers((s) => ({
-              ...s,
-              [urlKey]: cached,
-              loading: { ...s.loading, [layer]: false },
-            }));
-            return;
-          }
-        }
-
-        // 3. Generate via Fal.ai
-        const seedAttempts = attempts?.length
-          ? attempts
-          : seed
-            ? [{ seed, generationOptions }]
-            : [];
-
-        if (seedAttempts.length === 0) {
-          throw new Error(`No generation seed configured for ${layer} layer.`);
-        }
-
-        let finalUrl: string | null = null;
-        let lastGenerationError: unknown = null;
-
-        for (const attempt of seedAttempts) {
-          try {
-            const result = await generateImage(prompt, attempt.seed, attempt.generationOptions ?? generationOptions);
-            if (signal.aborted) return;
-
-            let candidateUrl = result.imageUrl;
-
-            // Post-process (e.g., background removal for character layer)
-            if (postProcess) {
-              candidateUrl = await postProcess(candidateUrl);
-              if (signal.aborted) return;
-            }
-
-            if (validateResult) {
-              await validateResult(candidateUrl);
-              if (signal.aborted) return;
-            }
-
-            finalUrl = candidateUrl;
-            break;
-          } catch (err) {
-            lastGenerationError = err;
-          }
-        }
-
-        if (!finalUrl) {
-          throw lastGenerationError ?? new Error(`Failed to generate ${layer} layer.`);
-        }
-
-        // Log the URL so users can download and save as a static asset
-        if (layer === "background") {
-          console.info(`[StaticAsset] Generated background for ${seed}: ${finalUrl}`);
-          console.info(`  → Download and save to public/assets/backgrounds/${toFileSlug(seed)}.jpg`);
-          console.info(`  → Then register it in src/services/staticAssets.ts`);
-        } else if (layer === "frame") {
-          console.info(`[StaticAsset] Generated frame for ${seed}: ${finalUrl}`);
-          console.info(`  → Download and save to public/assets/frames/${toFileSlug(seed)}.jpg`);
-          console.info(`  → Then register it in src/services/staticAssets.ts`);
-        }
-
-        // Cache the result in Firestore (write-once; a concurrent write for the same
-        // key is harmless — the second write is silently rejected by the security rule)
-        await setCachedImage(cacheKey, finalUrl, { prompt, layer, seed });
-
-        const urlKey = `${layer}Url` as keyof Pick<LayerState, "backgroundUrl" | "characterUrl" | "frameUrl">;
-        setLayers((s) => ({
-          ...s,
-          [urlKey]: finalUrl,
-          loading: { ...s.loading, [layer]: false },
-        }));
-      } catch (err) {
-        if (signal.aborted) return;
-        const msg = err instanceof Error ? err.message : String(err);
-        setLayers((s) => ({
-          ...s,
-          loading: { ...s.loading, [layer]: false },
-          errors: [...s.errors, `${layer}: ${msg}`],
-        }));
-      }
-    },
-    [],
-  );
-
-  // ── Main forge handler ───────────────────────────────────────────────────
-  const handleForge = useCallback(() => {
-    // Gate: free-tier users without referral credits cannot generate
-    if (!canForge) {
-      openUpgradeModal();
-      return;
-    }
-    // Play forge success ping sound effect
-    sfxSuccessPing();
-
-    // Cancel any in-flight generation
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    const { signal } = controller;
-
-    const forgePrompts = { ...prompts, style: resolveArchetypeStyle(prompts.archetype, prompts.style) };
-    const displayArchetype = getForgeArchetypeLabel(forgePrompts.archetype);
-    const secretFaction = tier === "free" ? null : resolveSecretFaction(forgePrompts);
-    const generationPrompts =
-      secretFaction === "D4rk $pider"
-        ? { ...forgePrompts, archetype: "D4rk $pider" as const }
-        : forgePrompts;
-    const idNonce = `${user?.uid ?? "guest"}:${Date.now()}:${crypto.randomUUID()}`;
-
-    // Generate card payload
-    const card = applyFactionBranding(
-      generateCard(generationPrompts, { idNonce }),
-      displayArchetype,
-      secretFaction,
-    );
-    // Attach the board loadout to the card (always recompute from config to
-    // avoid stale stats when the user forges without clicking "Lock It In")
-    const cardWithBoard = { ...card, board: boardConfig, boardLoadout: calculateBoardStats(boardConfig) };
-    setGenerated(cardWithBoard);
-    setForging(true);
-    if (secretFaction) {
-      const isNew = !hasFaction(secretFaction);
-      unlockFaction(secretFaction);
-      setRevealedFaction({ faction: secretFaction, isNew });
-    } else {
-      setRevealedFaction(null);
-    }
-
-    // Consume one referral credit when on the free tier, or mark the free card as used
-    if (tier === "free" && !freeCardUsed) {
-      markFreeCardUsed();
-    } else if (generateCredits > 0) {
-      consumeCredit();
-    }
-
-    // Reset layer state
-    setLayers(INITIAL_LAYER_STATE);
-
-    // Reset per-layer retry counts for this new forge session
-    retryCountRef.current = { background: 0, character: 0, frame: 0 };
-
-    if (!isImageGenConfigured) {
-      setForging(false);
-      return;
-    }
-
-    // Kick off all three layers in parallel
-    const bgPrompt    = buildBackgroundPrompt(forgePrompts.district);
-    const charPrompt  = buildCharacterPrompt(forgePrompts);
-    const framePrompt = buildFramePrompt(prompts.rarity);
-
-    const bgKey    = `bg::${card.backgroundSeed}`;
-    const charImageSeed = buildCharacterSeed(forgePrompts);
-    const charKey  = `char::${CHARACTER_CACHE_VERSION}::${charImageSeed}`;
-    const frameKey = `frame::${card.frameSeed}`;
-
-    const bgSeed    = card.backgroundSeed;
-    const charSeed  = charImageSeed;
-    const frameSeed = card.frameSeed;
-
-    const charPostProcess = async (url: string) => {
-      const result = await removeBackground(url);
-      return result.imageUrl;
-    };
-    const validateCharacterLayer = async (url: string) => {
-      const { width, height } = await getImageDimensions(url);
-      if (width < CHARACTER_MIN_DIMENSIONS.width || height < CHARACTER_MIN_DIMENSIONS.height) {
-        throw new Error(
-          `Character layer dimensions ${width}×${height} are below the minimum ${CHARACTER_MIN_DIMENSIONS.width}×${CHARACTER_MIN_DIMENSIONS.height}.`,
-        );
-      }
-    };
-    const charAttempts = CHARACTER_SEED_VARIANTS.map((variant) => ({
-      seed: `${charSeed}|${variant}`,
-      generationOptions: CHARACTER_GENERATION_OPTIONS,
-    }));
-
-    // Store params so handleLayerError can retry without re-running handleForge
-    layerParamsRef.current = {
-      background: { key: bgKey,    prompt: bgPrompt,    seed: bgSeed    },
-      character:  {
-        key: charKey,
-        prompt: charPrompt,
-        seed: charSeed,
-        attempts: charAttempts,
-        postProcess: charPostProcess,
-        validateResult: validateCharacterLayer,
-        generationOptions: CHARACTER_GENERATION_OPTIONS,
-      },
-      frame:      {
-        key: frameKey,
-        prompt: framePrompt,
-        seed: frameSeed,
-        generationOptions: NON_LORA_GENERATION_OPTIONS,
-      },
-    };
-
-    // Background layer
-    generateLayer("background", bgKey, bgPrompt, bgSeed, signal);
-
-    // Character layer — post-process with background removal
-    generateLayer(
-      "character",
-      charKey,
-      charPrompt,
-      charSeed,
-      signal,
-      charPostProcess,
-      validateCharacterLayer,
-      CHARACTER_GENERATION_OPTIONS,
-      charAttempts,
-    );
-
-    // Frame layer
-    generateLayer("frame", frameKey, framePrompt, frameSeed, signal);
-
-    // Board image layer — generate a single skateboard image from the combined
-    // component descriptions.  The result is stored as boardImageUrl on the card.
-    (async () => {
-      try {
-        const boardImageUrl = await generateGouacheBoard(boardConfig);
-        if (signal.aborted) return;
-        setGenerated((prev) => prev ? { ...prev, boardImageUrl } : prev);
-      } catch (err) {
-        console.warn("Board image generation failed:", err);
-      }
-    })();
-
-    setForging(false);
-  }, [prompts, boardConfig, generateLayer, canForge, generateCredits, consumeCredit, openUpgradeModal, hasFaction, unlockFaction, user?.uid, tier, freeCardUsed, markFreeCardUsed]);
-
-  // ── Expired-URL retry handler ────────────────────────────────────────────
-  // Called when a composite img element fires onError (e.g. fal.ai CDN URL has
-  // expired).  Bypasses the Firestore cache and re-generates from fal.ai.
-  // Limited to one retry per layer per forge session to prevent infinite loops.
-  const handleLayerError = useCallback(
-    (layer: "background" | "character" | "frame") => {
-      const params = layerParamsRef.current?.[layer];
-      if (!params) return;
-
-      // Only retry once per layer per forge session
-      if (retryCountRef.current[layer] >= MAX_LAYER_RETRIES) return;
-      retryCountRef.current[layer] += 1;
-
-      // Clear the broken URL and errors, then re-generate skipping cache
-      setLayers((s) => ({
-        ...s,
-        [`${layer}Url`]: undefined,
-        errors: s.errors.filter((e) => !e.startsWith(`${layer}:`)),
-      }));
-
-      const controller = new AbortController();
-      abortRef.current = controller;
-
-      generateLayer(
-        layer,
-        params.key,
-        params.prompt,
-        params.seed,
-        controller.signal,
-        params.postProcess,
-        params.validateResult,
-        params.generationOptions,
-        params.attempts,
-        true, // skipCache — bypass the expired Firestore URL
-      );
-    },
-    [generateLayer],
-  );
-
-  // ── Derive UI state ──────────────────────────────────────────────────────
-  const isAnyLayerLoading = layers.loading.background || layers.loading.character || layers.loading.frame;
-  const hasAnyLayerUrl = !!(layers.backgroundUrl || layers.characterUrl || layers.frameUrl);
-
-  // ── Save to Collection ───────────────────────────────────────────────────
-  const handleSaveToCollection = useCallback(async () => {
-    if (!generated) return;
-    if (!tierData.canSave) {
-      openUpgradeModal();
-      return;
-    }
-
-    // Enforce collection card limit for the current tier
-    const cardLimit = tierData.cardLimit;
-    if (cardLimit !== null && cards.length >= cardLimit) {
-      openUpgradeModal();
-      return;
-    }
-
-    setSaving(true);
-    setSaveError(null);
-
-    // Capture whether this is the user's first card BEFORE updating state
-    const firstCard = cards.length === 0;
-
-    const cardToSave: CardPayload = {
-      ...generated,
-      ...(layers.backgroundUrl != null ? { backgroundImageUrl: layers.backgroundUrl } : {}),
-      ...(layers.characterUrl != null ? { characterImageUrl: layers.characterUrl } : {}),
-      ...(layers.frameUrl != null ? { frameImageUrl: layers.frameUrl } : {}),
-    };
-
-    try {
-      await addCard(cardToSave);
-      sfxSuccess();
-      setIsFirstCard(firstCard);
-      setSavedCard(cardToSave);
-    } catch (err) {
-      console.error("Failed to save card:", err);
-      sfxError();
-      setSaveError("Failed to save card. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  }, [generated, layers, tierData, cards, addCard, openUpgradeModal]);
-
-  // ── Download composed card as JPEG ──────────────────────────────────────
-  const handleDownloadJpg = useCallback(async () => {
-    if (!generated) return;
-    setDownloading(true);
-    try {
-      await downloadCardAsJpg(
-        generated.identity.name,
-        generated.prompts.rarity,
-        layers.backgroundPrintUrl ?? layers.backgroundUrl,
-        layers.characterUrl,
-        layers.frameUrl,
-        generated.frameSeed,
-        characterBlend,
-      );
-    } catch (err) {
-      console.error("Card JPG download failed:", err);
-    } finally {
-      setDownloading(false);
-    }
-  }, [generated, layers, characterBlend]);
-
-  const handleRandomSkater = useCallback(() => {
-    sfxClick();
-
-    setPrompts((current) => {
-      const archetype = getRandomItemExcluding(ARCHETYPE_VALUES, current.archetype);
-      return {
-        ...current,
-        archetype,
-        style: resolveArchetypeStyle(archetype, current.style),
-        rarity: getRandomItemExcluding(RARITIES, current.rarity),
-        district: getRandomItemExcluding(DISTRICTS, current.district),
-        accentColor: getRandomItemExcluding(ACCENT_PRESETS, current.accentColor),
-        gender: getRandomItemExcluding(GENDERS, current.gender),
-        ageGroup: getRandomItemExcluding(AGE_GROUPS, current.ageGroup),
-        bodyType: getRandomItemExcluding(BODY_TYPES, current.bodyType),
-        hairLength: getRandomItemExcluding(HAIR_LENGTHS, current.hairLength),
-        skinTone: getRandomItemExcluding(SKIN_TONES, current.skinTone),
-        faceCharacter: getRandomItemExcluding(FACE_CHARACTERS, current.faceCharacter),
-      };
-    });
-
-    setBoardConfig((current) => buildRandomBoardConfig(current));
-  }, []);
+  const {
+    boardConfig,
+    canForge,
+    characterBlend,
+    closeWelcome,
+    downloading,
+    forging,
+    freeCardUsed,
+    generated,
+    generateCredits,
+    handleClose3D,
+    handleCloseFactionReveal,
+    handleClosePrint,
+    handleCollectionNavigation,
+    handleDownloadJpg,
+    handleForge,
+    handleLayerError,
+    handleOpen3D,
+    handleOpenFactions,
+    handleOpenPrint,
+    handlePreviewUpdate,
+    handleRandomSkater,
+    handleReopenWelcome,
+    handleSaveToCollection,
+    hasAnyLayerUrl,
+    isAnyLayerLoading,
+    isFirstCard,
+    layers,
+    openUpgradeModal,
+    printing,
+    prompts,
+    revealedFaction,
+    saveError,
+    savedCard,
+    saving,
+    setArchetype,
+    setBoardConfig,
+    setCharacterBlend,
+    setPrompt,
+    showWelcome,
+    tier,
+    tierCanSave,
+    viewing3D,
+  } = useCardForgeController();
 
   return (
     <div className="page">
@@ -623,63 +69,13 @@ export function CardForge() {
       <h1 className="page-title">CARD FORGE</h1>
       <p className="page-sub">Configure your Sk8r and forge a unique card</p>
 
-      {showWelcome && (
-        <div
-          className="modal-overlay forge-welcome-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="forge-welcome-title"
-          onClick={closeWelcome}
-        >
-          <div className="modal-panel forge-welcome-panel" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="close-btn modal-close"
-              aria-label="Close welcome"
-              onClick={closeWelcome}
-            >
-              ✕
-            </button>
-            <div className="forge-welcome__eyebrow">Start Here</div>
-            <h2 id="forge-welcome-title" className="forge-welcome__title">Welcome to Punch Skater, rookie.</h2>
-            <p className="forge-welcome__lede">
-              The Card Forge is where you build your first deck, uncover hidden factions, and chase wild new combos across more than 4 million possible character variations.
-            </p>
-            <div className="forge-welcome__grid">
-              <div className="forge-welcome__item">
-                <h3>What</h3>
-                <p>Create Punch Skater cards, upgrade your squad with a Master card, and assemble a six-card deck built for missions, battles, and trades.</p>
-              </div>
-              <div className="forge-welcome__item">
-                <h3>How</h3>
-                <p>Start by forging 5 Punch Skater class cards and 1 Master class card, then tune their look, district, and board loadout before you lock them into your lineup.</p>
-              </div>
-              <div className="forge-welcome__item">
-                <h3>Why</h3>
-                <p>Earn points and power-ups on Missions, bring your best deck into the Battle Arena, and trade for the cards that complete your next big strategy.</p>
-              </div>
-            </div>
-            <div className="forge-welcome__actions">
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={closeWelcome}
-              >
-                Got it, let's forge
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ForgeWelcomeModal open={showWelcome} onClose={closeWelcome} />
 
       <div className="forge-quick-actions">
         <button
           type="button"
           className="btn-outline btn-sm forge-welcome-reopen"
-          onClick={() => {
-            localStorage.removeItem("forge-welcome-dismissed");
-            setShowWelcome(true);
-          }}
+          onClick={handleReopenWelcome}
           aria-label="Open Start Here welcome"
         >
           Start Here
@@ -698,423 +94,68 @@ export function CardForge() {
       </div>
 
       <div className="forge-layout">
-        {/* ── Left column: form controls ── */}
-        <div className="forge-form">
-          <div className={`form-group${tier === "free" ? " form-group--locked" : ""}`}>
-            <label>
-              Cover Identity
-              {tier === "free" && (
-                <button type="button" className="form-group-lock-badge" onClick={openUpgradeModal} aria-label="Upgrade to unlock Cover Identity">
-                  🔒 Upgrade
-                </button>
-              )}
-            </label>
-            <div className="pill-group">
-              {FORGE_ARCHETYPE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  className={`pill${prompts.archetype === opt.value ? " selected" : ""}`}
-                  onClick={() => { sfxClick(); setArchetype(opt.value); }}
-                  aria-pressed={prompts.archetype === opt.value}
-                  disabled={tier === "free"}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-            <p className="form-hint">Pick the public-facing role your courier presents to the city.</p>
-          </div>
+        <ForgeControlsPanel
+          accentPresets={ACCENT_PRESETS}
+          ageGroups={AGE_GROUPS}
+          bodyTypes={BODY_TYPES}
+          boardConfig={boardConfig}
+          canForge={canForge}
+          canSaveToCollection={tierCanSave}
+          characterBlend={characterBlend}
+          districts={DISTRICTS}
+          downloading={downloading}
+          faceCharacters={FACE_CHARACTERS}
+          forging={forging}
+          freeCardUsed={freeCardUsed}
+          genders={GENDERS}
+          generateCredits={generateCredits}
+          generated={generated}
+          hairLengths={HAIR_LENGTHS}
+          hasAnyLayerUrl={hasAnyLayerUrl}
+          isAnyLayerLoading={isAnyLayerLoading}
+          onArchetypeChange={setArchetype}
+          onBlendChange={setCharacterBlend}
+          onBoardConfigChange={setBoardConfig}
+          onDownloadJpg={handleDownloadJpg}
+          onForge={handleForge}
+          onOpen3D={handleOpen3D}
+          onOpenPrint={handleOpenPrint}
+          onOpenUpgradeModal={openUpgradeModal}
+          onPromptChange={setPrompt}
+          onSaveToCollection={handleSaveToCollection}
+          prompts={prompts}
+          rarities={RARITIES}
+          saveError={saveError}
+          saving={saving}
+          skinTones={SKIN_TONES}
+          tier={tier}
+        />
 
-          <div className={`form-group${tier === "free" ? " form-group--locked" : ""}`}>
-            <label>
-              Class
-              {tier === "free" && (
-                <button type="button" className="form-group-lock-badge" onClick={openUpgradeModal} aria-label="Upgrade to unlock Class">
-                  🔒 Upgrade
-                </button>
-              )}
-            </label>
-            <div className="pill-group">
-              {RARITIES.map((opt) => (
-                <button
-                  key={opt}
-                  className={`pill${prompts.rarity === opt ? " selected" : ""}`}
-                  onClick={() => { sfxClick(); set("rarity", opt); }}
-                  aria-pressed={prompts.rarity === opt}
-                  disabled={tier === "free"}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={`form-group${tier === "free" ? " form-group--locked" : ""}`}>
-            <label>
-              District
-              {tier === "free" && (
-                <button type="button" className="form-group-lock-badge" onClick={openUpgradeModal} aria-label="Upgrade to unlock District">
-                  🔒 Upgrade
-                </button>
-              )}
-            </label>
-            <div className="pill-group">
-              {DISTRICTS.map((opt) => (
-                <button
-                  key={opt}
-                  className={`pill${prompts.district === opt ? " selected" : ""}`}
-                  onClick={() => { sfxClick(); set("district", opt); }}
-                  aria-pressed={prompts.district === opt}
-                  disabled={tier === "free"}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Gender</label>
-            <div className="pill-group">
-              {GENDERS.map((opt) => (
-                <button
-                  key={opt}
-                  className={`pill${prompts.gender === opt ? " selected" : ""}`}
-                  onClick={() => { sfxClick(); set("gender", opt); }}
-                  aria-pressed={prompts.gender === opt}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Age Group</label>
-            <div className="pill-group">
-              {AGE_GROUPS.map((opt) => (
-                <button
-                  key={opt}
-                  className={`pill${prompts.ageGroup === opt ? " selected" : ""}`}
-                  onClick={() => { sfxClick(); set("ageGroup", opt); }}
-                  aria-pressed={prompts.ageGroup === opt}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Body Type</label>
-            <div className="pill-group">
-              {BODY_TYPES.map((opt) => (
-                <button
-                  key={opt}
-                  className={`pill${prompts.bodyType === opt ? " selected" : ""}`}
-                  onClick={() => { sfxClick(); set("bodyType", opt); }}
-                  aria-pressed={prompts.bodyType === opt}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Hair Length</label>
-            <div className="pill-group">
-              {HAIR_LENGTHS.map((opt) => (
-                <button
-                  key={opt}
-                  className={`pill${prompts.hairLength === opt ? " selected" : ""}`}
-                  onClick={() => { sfxClick(); set("hairLength", opt); }}
-                  aria-pressed={prompts.hairLength === opt}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Skin Tone</label>
-            <div className="pill-group">
-              {SKIN_TONES.map((opt) => (
-                <button
-                  key={opt}
-                  className={`pill${prompts.skinTone === opt ? " selected" : ""}`}
-                  onClick={() => { sfxClick(); set("skinTone", opt); }}
-                  aria-pressed={prompts.skinTone === opt}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Face Character</label>
-            <div className="pill-group">
-              {FACE_CHARACTERS.map((opt) => (
-                <button
-                  key={opt}
-                  className={`pill${prompts.faceCharacter === opt ? " selected" : ""}`}
-                  onClick={() => { sfxClick(); set("faceCharacter", opt); }}
-                  aria-pressed={prompts.faceCharacter === opt}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Accent Color</label>
-            <p className="form-hint">Accent color also drives hair color.</p>
-            <div className="color-group">
-              {ACCENT_PRESETS.map((c) => (
-                <button
-                  key={c}
-                  className={`color-swatch${prompts.accentColor === c ? " selected" : ""}`}
-                  style={{ background: c }}
-                  onClick={() => { sfxClick(); set("accentColor", c); }}
-                  aria-pressed={prompts.accentColor === c}
-                  aria-label={`Accent color ${c}`}
-                  title={c}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Board Loadout</label>
-            <p className="form-hint" style={{ marginBottom: 6 }}>
-              Build your electric skateboard — your most important piece of gear.
-            </p>
-            <BoardBuilder
-              value={boardConfig}
-              onChange={setBoardConfig}
-              accentColor={prompts.accentColor}
-              onSave={(config) => { setBoardConfig(config); }}
-            />
-          </div>
-
-          <button
-            className="btn-primary btn-lg btn-forge"
-            onClick={handleForge}
-            disabled={forging || isAnyLayerLoading}
-            data-testid="forge-button"
-          >
-            {isAnyLayerLoading
-              ? "✨ Generating…"
-              : !canForge
-              ? "🔒 FORGE YOUR CARD — Upgrade to Unlock"
-              : tier === "free" && !freeCardUsed
-              ? "⚡ FORGE YOUR CARD (1 free card)"
-              : generateCredits > 0
-              ? `⚡ FORGE YOUR CARD (${generateCredits} credit${generateCredits === 1 ? "" : "s"} left)`
-              : "⚡ FORGE YOUR CARD"
-            }
-          </button>
-
-          {/* Referral panel — helps free-tier users earn credits by sharing */}
-          <ReferralPanel />
-
-          {/* Post-generation controls */}
-          {generated && (
-            <div className="forge-generated-actions">
-              {(hasAnyLayerUrl || isAnyLayerLoading) && (
-                <div className="blend-control">
-                  <label className="blend-control__label">
-                    <span>Character Blend</span>
-                    <span>{Math.round(characterBlend * 100)}%</span>
-                  </label>
-                  <input
-                    type="range"
-                    className="range-slider"
-                    min={0}
-                    max={1}
-                    step={0.05}
-                    value={characterBlend}
-                    onChange={(e) => setCharacterBlend(Number(e.target.value))}
-                  />
-                </div>
-              )}
-              <div className="forge-generated-buttons">
-                <button className="btn-outline btn-3d" onClick={() => { sfxClick(); setViewing3D(true); }} title="View card in 3D">
-                  ◈ 3D
-                </button>
-                <button className="btn-outline" onClick={() => { sfxClick(); setPrinting(true); }} title="Print this card">
-                  🖨 Print
-                </button>
-                {tierData.canSave ? (
-                  <button
-                    className="btn-primary"
-                    onClick={handleSaveToCollection}
-                    disabled={saving}
-                    title="Save card to your Collection"
-                  >
-                    {saving ? "💾 Saving…" : "💾 Save to Collection"}
-                  </button>
-                ) : (
-                  <button
-                    className="btn-outline"
-                    onClick={openUpgradeModal}
-                    title="Upgrade to save cards to your Collection"
-                  >
-                    🔒 Save to Collection
-                  </button>
-                )}
-                <button
-                  className="btn-outline"
-                  onClick={handleDownloadJpg}
-                  disabled={downloading || isAnyLayerLoading}
-                  title="Download composed card as JPG"
-                >
-                  {downloading ? "⏳ Saving…" : "⬇ Download JPG"}
-                </button>
-              </div>
-              {saveError && (
-                <p className="forge-image-error" role="alert">{saveError}</p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* ── Right column: card preview ── */}
-        <div className="forge-preview">
-          {generated ? (
-            <div className="forge-card-wrapper">
-              <div>
-                {/* Layer errors */}
-                {layers.errors.length > 0 && (
-                  <div className="forge-image-errors">
-                    {layers.errors.map((err, i) => (
-                      <p key={i} className="forge-image-error">{err}</p>
-                    ))}
-                  </div>
-                )}
-
-                {/* Image gen not configured notice */}
-                {!isImageGenConfigured && (
-                  <p className="forge-image-notice">
-                    AI image generation is not configured. Set{" "}
-                    <code>VITE_IMAGE_API_URL</code> in your <code>.env</code> to
-                    enable Fal.ai layered artwork.
-                  </p>
-                )}
-
-                <CardDisplay
-                  card={generated}
-                  backgroundImageUrl={layers.backgroundUrl}
-                  characterImageUrl={layers.characterUrl}
-                  frameImageUrl={layers.frameUrl}
-                  layerLoading={layers.loading}
-                  characterBlend={characterBlend}
-                  hideToolButtons
-                  onLayerError={handleLayerError}
-                  onUpdate={(updates) => {
-                    setGenerated((prev) => {
-                      if (!prev) return prev;
-                      return {
-                        ...prev,
-                        identity: (updates.name != null || updates.age != null)
-                          ? {
-                              ...prev.identity,
-                              ...(updates.name != null ? { name: updates.name } : {}),
-                              ...(updates.age != null ? { age: updates.age } : {}),
-                            }
-                          : prev.identity,
-                        flavorText: updates.flavorText ?? prev.flavorText,
-                      };
-                    });
-                  }}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="empty-preview">
-              <span className="empty-icon">🛹</span>
-              <span>Select prompts &amp; forge a card</span>
-            </div>
-          )}
-        </div>
+        <ForgePreviewPanel
+          card={generated}
+          characterBlend={characterBlend}
+          isImageGenConfigured={isImageGenConfigured}
+          layers={layers}
+          onCardUpdate={handlePreviewUpdate}
+          onLayerError={handleLayerError}
+        />
       </div>
 
-      {/* 3D viewer and print modals — rendered at page level since tool buttons are hidden on the card */}
-      {generated && viewing3D && (
-        <CardViewer3D
-          card={generated}
-          backgroundImageUrl={layers.backgroundUrl}
-          characterImageUrl={layers.characterUrl}
-          frameImageUrl={layers.frameUrl}
-          characterBlend={characterBlend}
-          onClose={() => setViewing3D(false)}
-        />
-      )}
-      {generated && printing && (
-        <PrintModal
-          card={generated}
-          backgroundImageUrl={layers.backgroundUrl}
-          backgroundPrintUrl={layers.backgroundPrintUrl}
-          characterImageUrl={layers.characterUrl}
-          frameImageUrl={layers.frameUrl}
-          characterBlend={characterBlend}
-          onClose={() => setPrinting(false)}
-        />
-      )}
-      {/* ── Save-to-collection celebration overlay ── */}
-      {savedCard && (
-        <div className="save-celebrate-overlay" onClick={() => { setSavedCard(null); navigate("/collection"); }}>
-          <div className="save-celebrate-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="save-celebrate-emoji">🎉</div>
-            <h2 className="save-celebrate-title">
-              {isFirstCard
-                ? "Congrats! You saved your first card!"
-                : "Card saved to your Collection!"}
-            </h2>
-            <p className="save-celebrate-name">{savedCard.identity.name}</p>
-            <p className="save-celebrate-seed">SEED · {savedCard.seed}</p>
-            <button
-              className="btn-primary"
-              onClick={() => { sfxClick(); setSavedCard(null); navigate("/collection"); }}
-            >
-              Go to My Collection →
-            </button>
-          </div>
-        </div>
-      )}
-      {revealedFaction && (
-        <div className="save-celebrate-overlay" onClick={() => setRevealedFaction(null)}>
-          <div className="save-celebrate-modal save-celebrate-modal--reveal" onClick={(e) => e.stopPropagation()}>
-            <div className="save-celebrate-emoji">{generated?.discovery?.logoMark ?? "🎴"}</div>
-            <h2 className="save-celebrate-title">
-              {revealedFaction.isNew
-                ? "Secret faction discovered!"
-                : "Faction signal reacquired!"}
-            </h2>
-            <p className="save-celebrate-name">{revealedFaction.faction}</p>
-            <p className="save-celebrate-notice">
-              Your forged card has been branded with the faction mark, and the Factions tab is now tracking what you know.
-            </p>
-            <div className="forge-generated-buttons">
-              <button
-                className="btn-primary"
-                onClick={() => { setRevealedFaction(null); navigate("/factions"); }}
-              >
-                Open Factions →
-              </button>
-              <button
-                className="btn-outline"
-                onClick={() => setRevealedFaction(null)}
-              >
-                Keep Forging
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ForgeResultOverlays
+        card={generated}
+        characterBlend={characterBlend}
+        isFirstCard={isFirstCard}
+        layers={layers}
+        onCloseFactionReveal={handleCloseFactionReveal}
+        onClosePrint={handleClosePrint}
+        onCloseViewer3D={handleClose3D}
+        onGoToCollection={handleCollectionNavigation}
+        onOpenFactions={handleOpenFactions}
+        printing={printing}
+        revealedFaction={revealedFaction}
+        savedCard={savedCard}
+        viewing3D={viewing3D}
+      />
     </div>
   );
 }

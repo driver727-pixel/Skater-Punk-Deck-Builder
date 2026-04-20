@@ -29,7 +29,7 @@ import {
 } from "firebase/auth";
 import { doc, onSnapshot, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, firebaseUnavailableMessage } from "../lib/firebase";
-import { isAdminEmail } from "../lib/adminUtils";
+import { resolveApiUrl } from "../lib/apiUrls";
 import { syncReferralCredits } from "../services/referrals";
 
 interface UserProfile {
@@ -57,6 +57,10 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const googleProvider = new GoogleAuthProvider();
+const AUTH_SYNC_API_URL = resolveApiUrl(
+  import.meta.env.VITE_AUTH_SYNC_API_URL as string | undefined,
+  "/api/auth/sync-session",
+);
 
 export { RecaptchaVerifier };
 
@@ -68,26 +72,57 @@ function getProfileString(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+function getFallbackDisplayName(user: User): string {
+  return user.displayName ?? user.email?.split("@")[0] ?? "Skater";
+}
+
 async function upsertUserProfile(user: User) {
   if (!db) return;
   const email = user.email ?? "";
-  const admin = isAdminEmail(email);
-  await setDoc(
-    doc(db, "userProfiles", user.uid),
-    {
-      uid: user.uid,
-      email,
-      displayName: user.displayName ?? user.email?.split("@")[0] ?? "Skater",
-      ...(admin ? { isAdmin: true, tier: "tier3" } : {}),
-      updatedAt: serverTimestamp(),
+  const emailLower = email.trim().toLowerCase();
+  const displayName = getFallbackDisplayName(user);
+  const profilePayload = {
+    uid: user.uid,
+    email,
+    emailLower,
+    displayName,
+    updatedAt: serverTimestamp(),
+  };
+  const lookupPayload = {
+    uid: user.uid,
+    emailLower,
+    displayName,
+    updatedAt: serverTimestamp(),
+  };
+  await Promise.all([
+    setDoc(doc(db, "userProfiles", user.uid), profilePayload, { merge: true }),
+    setDoc(doc(db, "userLookup", user.uid), lookupPayload, { merge: true }),
+  ]);
+}
+
+async function syncAdminSession(user: User): Promise<boolean> {
+  const idToken = await user.getIdToken();
+  const resp = await fetch(AUTH_SYNC_API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${idToken}`,
     },
-    { merge: true }
-  );
+  });
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    throw new Error(data.error ?? "Failed to sync auth session.");
+  }
+  if (data?.claimsUpdated) {
+    await user.getIdToken(true);
+  }
+  const tokenResult = await user.getIdTokenResult();
+  return tokenResult.claims.admin === true;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [adminClaim, setAdminClaim] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -106,11 +141,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       setUserProfile(null);
-      setLoading(false);
-      if (u) {
-        await upsertUserProfile(u).catch(() => {/* non-fatal */});
-        syncReferralCredits(u.uid).catch(() => {/* non-fatal */});
+      setAdminClaim(false);
+      if (!u) {
+        setLoading(false);
+        return;
       }
+      await upsertUserProfile(u).catch(() => {/* non-fatal */});
+      const admin = await syncAdminSession(u).catch(async () => {
+        const tokenResult = await u.getIdTokenResult().catch(() => null);
+        return tokenResult?.claims.admin === true;
+      });
+      setAdminClaim(admin);
+      syncReferralCredits(u.uid).catch(() => {/* non-fatal */});
+      setLoading(false);
     });
     return unsubscribe;
   }, []);
@@ -121,12 +164,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     if (!db) {
-      setUserProfile({
-        uid: user.uid,
-        email: user.email ?? "",
-        displayName: user.displayName ?? user.email?.split("@")[0] ?? "Skater",
-        isAdmin: false,
-      });
+        setUserProfile({
+          uid: user.uid,
+          email: user.email ?? "",
+          displayName: getFallbackDisplayName(user),
+          isAdmin: adminClaim,
+        });
       return;
     }
 
@@ -135,28 +178,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (snap) => {
         const data = snap.exists() ? (snap.data() as Partial<UserProfile>) : {};
         const email = getProfileString(data.email) ?? user.email ?? "";
-        const admin = data.isAdmin === true || isAdminEmail(email);
         setUserProfile({
           uid: user.uid,
           email,
           displayName:
             getProfileString(data.displayName)
-            ?? user.displayName
-            ?? user.email?.split("@")[0]
-            ?? "Skater",
-          isAdmin: admin,
+            ?? getFallbackDisplayName(user),
+          isAdmin: adminClaim,
         });
       },
       () => {
         setUserProfile({
           uid: user.uid,
           email: user.email ?? "",
-          displayName: user.displayName ?? user.email?.split("@")[0] ?? "Skater",
-          isAdmin: false,
+          displayName: getFallbackDisplayName(user),
+          isAdmin: adminClaim,
         });
       },
     );
-  }, [user]);
+  }, [user, adminClaim]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     if (!auth) throw createAuthUnavailableError();

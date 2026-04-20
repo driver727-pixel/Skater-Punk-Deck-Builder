@@ -11,12 +11,12 @@ Use the **same filename** as the corresponding print-quality file:
 
 | District      | Filename              |
 |---------------|-----------------------|
-| Airaway       | `airaway.jpg`         |
-| Nightshade    | `nightshade.jpg`      |
-| Batteryville  | `batteryville.jpg`    |
-| The Grid      | `the-grid.jpg`        |
-| The Forest    | `the-forest.jpg`      |
-| Glass City    | `glass-city.jpg`      |
+| Airaway       | `airaway.webp`         |
+| Nightshade    | `nightshade.webp`      |
+| Batteryville  | `batteryville.webp`    |
+| The Grid      | `the-grid.webp`        |
+| The Forest    | `the-forest.webp`      |
+| Glass City    | `glass-city.webp`      |
 
 ## Recommended Dimensions
 
@@ -32,7 +32,7 @@ uncomment) the corresponding entry in `BACKGROUND_ASSETS_SMALL`:
 
 ```ts
 const BACKGROUND_ASSETS_SMALL: Partial<Record<District, string>> = {
-  Airaway: "/assets/backgrounds/small/airaway.jpg",
+  Airaway: "/assets/backgrounds/small/airaway.webp",
   // ... add other districts as you add files
 };
 ```

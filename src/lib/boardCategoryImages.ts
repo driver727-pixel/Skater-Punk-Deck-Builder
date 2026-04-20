@@ -1,20 +1,20 @@
 /**
  * boardCategoryImages.ts
  *
- * Uses the curated PNG images in `public/assets/boards/<category>/` for the
+ * Uses the curated WebP images in `public/assets/boards/<category>/` for the
  * board preview grid.
  *
  * How to add images:
- *   1. Drop any `.png` file into the matching category folder:
+ *   1. Drop any `.webp` file into the matching category folder:
  *        public/assets/boards/motor/        ← motor photos
  *        public/assets/boards/deck/         ← deck photos
  *        public/assets/boards/drivetrain/   ← drivetrain photos
  *        public/assets/boards/wheels/       ← wheel photos
  *        public/assets/boards/battery/      ← battery photos
- *   2. Commit the file and redeploy so browsers can fetch the refreshed PNGs.
+ *   2. Commit the file and redeploy so browsers can fetch the refreshed assets.
  *
  * File names should contain a keyword that identifies the component they
- * represent (e.g. `carbon-fiber.png` for the Street deck, `5055-motor.png`
+ * represent (e.g. `carbon-fiber.webp` for the Street deck, `5055-motor.webp`
  * for the Micro motor).  `getMatchingCategoryImage` uses this naming
  * convention to return the correct image when a specific component is
  * selected on the conveyor belt.
@@ -23,7 +23,7 @@
  * any image from the folder at random.
  *
  * The preview grid now resolves directly from `public/assets/boards/` so the
- * latest uploaded transparent PNGs are always preferred over older bundled
+ * latest uploaded transparent WebPs are always preferred over older bundled
  * source assets.
  */
 
@@ -45,37 +45,37 @@ function createCategoryImageMap(
 
 const CATEGORY_GLOBS = {
   deck: createCategoryImageMap("deck", [
-    "street.png",
-    "street-carbon.png",
-    "mt-board.png",
-    "at-bamboo.png",
-    "surf-skate.png",
+    "street.webp",
+    "street-carbon.webp",
+    "mt-board.webp",
+    "at-bamboo.webp",
+    "surf-skate.webp",
   ]),
   drivetrain: createCategoryImageMap("drivetrain", [
-    "gear-drive.png",
-    "4wd-drive.png",
-    "hub-drive.png",
-    "drivetrain-dual-belt-drive.png",
+    "gear-drive.webp",
+    "4wd-drive.webp",
+    "hub-drive.webp",
+    "drivetrain-dual-belt-drive.webp",
   ]),
   motor: createCategoryImageMap("motor", [
-    "6354-motor.png",
-    "6374-motor.png",
-    "5055-motor.png",
-    "6396-motor.png",
+    "6354-motor.webp",
+    "6374-motor.webp",
+    "5055-motor.webp",
+    "6396-motor.webp",
   ]),
   wheels: createCategoryImageMap("wheels", [
-    "pneumatic-wheels.png",
-    "cloud-wheels.png",
-    "poly-wheels.png",
-    "poly-urethane-wheels.png",
-    "solid-rubber.png",
+    "pneumatic-wheels.webp",
+    "cloud-wheels.webp",
+    "poly-wheels.webp",
+    "poly-urethane-wheels.webp",
+    "solid-rubber.webp",
   ]),
   battery: createCategoryImageMap("battery", [
-    "peli.png",
-    "battery-slim-stealth-pack.png",
-    "top-mount-battery.png",
-    "double-battery.png",
-    "slim-battery.png",
+    "peli.webp",
+    "battery-slim-stealth-pack.webp",
+    "top-mount-battery.webp",
+    "double-battery.webp",
+    "slim-battery.webp",
   ]),
 } satisfies Record<string, Record<string, string>>;
 
@@ -83,9 +83,10 @@ export type BoardCategory = keyof typeof CATEGORY_GLOBS;
 
 // ── Keyword map ────────────────────────────────────────────────────────────────
 // Maps each component option value to the filename keywords that identify its
-// image.  When a user uploads `5055-motor.png` the keyword "5055" links it to
-// the "Micro" motor option; "poly" links `poly-wheels.png` to the "Urethane"
-// option (polyurethane), and so on.
+// image.  When a user uploads `5055-motor.webp` the keyword "5055" links it to
+// the "Micro" motor option; "poly" links `poly-wheels.webp` to the "Urethane"
+// option (polyurethane), and the matcher still accepts legacy .png/.jpg/.jpeg
+// filenames for backward compatibility while the asset migration settles.
 
 const COMPONENT_IMAGE_KEYWORDS: Record<BoardCategory, Record<string, readonly string[]>> = {
   deck: {
@@ -169,7 +170,7 @@ export function getMatchingCategoryImages(
 
   for (const path of paths) {
     const filename =
-      path.split("/").pop()?.replace(/\.png$/i, "").toLowerCase() ?? "";
+      path.split("/").pop()?.replace(/\.(png|jpe?g|webp)$/i, "").toLowerCase() ?? "";
     const parts = filename.split(/[-_\s]+/);
     if (keywords.some((kw) => parts.some((part) => part === kw))) {
       matches.push(glob[path]);

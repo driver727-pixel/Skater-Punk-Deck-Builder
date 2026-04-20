@@ -250,11 +250,11 @@ export function Admin() {
                 <input
                   className="input"
                   type="password"
-                  placeholder="Password (min. 10 chars)"
+                  placeholder="Password (12+ chars, upper/lower/number/symbol)"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
-                  minLength={10}
+                  minLength={12}
                   autoComplete="new-password"
                 />
               </div>

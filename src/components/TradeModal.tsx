@@ -89,7 +89,7 @@ export function TradeModal({ cards, onClose, preselectedCard }: TradeModalProps)
     try {
       // Look up recipient by email
       const snap = await getDocs(
-        query(collection(db, "userProfiles"), where("email", "==", email))
+        query(collection(db, "userLookup"), where("emailLower", "==", email))
       );
       if (snap.empty) {
         setError("No account found with that email address.");
@@ -97,12 +97,12 @@ export function TradeModal({ cards, onClose, preselectedCard }: TradeModalProps)
       }
       const recipientProfile = snap.docs[0].data();
       const tradeId = `trade-${Date.now()}`;
-      await setDoc(doc(db, "trades", tradeId), {
+        await setDoc(doc(db, "trades", tradeId), {
         id: tradeId,
-        fromUid: user.uid,
-        fromEmail: user.email ?? "",
-        toUid: recipientProfile.uid,
-        toEmail: recipientProfile.email,
+          fromUid: user.uid,
+          fromEmail: user.email ?? "",
+          toUid: recipientProfile.uid,
+          toEmail: email,
         offeredCardId: selectedCard.id,
         offeredCard: selectedCard,
         status: "pending",

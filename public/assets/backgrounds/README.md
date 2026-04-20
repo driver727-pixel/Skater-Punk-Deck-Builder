@@ -17,12 +17,12 @@ the user prints or downloads the card.
 
 | District      | Filename              |
 |---------------|-----------------------|
-| Airaway       | `airaway.jpg`         |
-| Nightshade    | `nightshade.jpg`      |
-| Batteryville  | `batteryville.jpg`    |
-| The Grid      | `the-grid.jpg`        |
-| The Forest    | `the-forest.jpg`      |
-| Glass City    | `glass-city.jpg`      |
+| Airaway       | `airaway.webp`         |
+| Nightshade    | `nightshade.webp`      |
+| Batteryville  | `batteryville.webp`    |
+| The Grid      | `the-grid.webp`        |
+| The Forest    | `the-forest.webp`      |
+| Glass City    | `glass-city.webp`      |
 
 ## Accepted Formats
 
@@ -35,7 +35,7 @@ the user prints or downloads the card.
    Download that image and save it here with the correct filename, then register it in
    `src/services/staticAssets.ts`.
 
-2. **Custom artwork:** Drop in your own JPG/PNG that matches the desired district mood.
+2. **Custom artwork:** Drop in your own WebP/PNG/JPG that matches the desired district mood.
    - Print-quality (this folder): **1500 × 2100 px**
    - Screen-quality (`small/` subfolder): **750 × 1050 px** at 72–96 DPI
 
@@ -47,11 +47,11 @@ corresponding entry in **both** `BACKGROUND_ASSETS` (print) and `BACKGROUND_ASSE
 
 ```ts
 const BACKGROUND_ASSETS: Partial<Record<District, string>> = {
-  Airaway: "/assets/backgrounds/airaway.jpg",       // print quality
+  Airaway: "/assets/backgrounds/airaway.webp",       // print quality
 };
 
 const BACKGROUND_ASSETS_SMALL: Partial<Record<District, string>> = {
-  Airaway: "/assets/backgrounds/small/airaway.jpg", // screen quality
+  Airaway: "/assets/backgrounds/small/airaway.webp", // screen quality
 };
 ```
 

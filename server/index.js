@@ -1,7 +1,7 @@
 import express from 'express';
+import compression from 'compression';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import Stripe from 'stripe';
 import { fal } from '@fal-ai/client';
 import 'dotenv/config';
@@ -11,6 +11,28 @@ import { cert, getApps, initializeApp as initializeAdminApp } from 'firebase-adm
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { FieldValue, getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
 import { createBattleCardSnapshot, resolveBattleWithEffects } from './battle.js';
+import {
+  buildUserDisplayName,
+  getConfiguredAdminEmails,
+  isStrongPassword,
+  normalizeEmail,
+  shouldGrantAdminAccess,
+} from './lib/auth.js';
+import {
+  extractFalRequestConfigCandidate,
+  isPlainObject,
+  normalizeBoardReferenceUrls,
+  normalizeFalLoras,
+  parseFalScale,
+  sanitizeFalRequestConfig,
+} from './lib/fal.js';
+import { buildRateLimiter, createRateLimitStore } from './lib/rateLimit.js';
+import { registerAdminRoutes } from './routes/admin.js';
+import { registerBattleRoutes } from './routes/battle.js';
+import { registerImageRoutes } from './routes/images.js';
+import { registerImportRoutes } from './routes/import.js';
+import { registerPaymentRoutes } from './routes/payments.js';
+import { registerWeatherRoutes } from './routes/weather.js';
 
 // Load the shared pricing config — the single source of truth for Stripe
 // price IDs, buy URLs, and display prices.  Update src/lib/tierPricing.json
@@ -21,6 +43,38 @@ const tierPricing = nodeRequire('../src/lib/tierPricing.json');
 const app = express();
 
 const isProduction = process.env.NODE_ENV === 'production';
+const DEFAULT_ALLOWED_APP_ORIGINS = [
+  'https://punchskater.com',
+  'https://driver727-pixel.github.io',
+  'http://localhost:5173',
+];
+const APP_ORIGINS = (process.env.APP_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const ALLOWED_APP_ORIGINS = new Set([
+  ...DEFAULT_ALLOWED_APP_ORIGINS,
+  ...APP_ORIGINS,
+]);
+const MAX_TEXT_FIELD_LENGTH = 4_000;
+const MAX_BOARD_PROMPT_LENGTH = 1_500;
+const MAX_IMAGE_DIMENSION = 1_536;
+const MIN_IMAGE_DIMENSION = 64;
+const MIN_INFERENCE_STEPS = 1;
+const MAX_INFERENCE_STEPS = 40;
+const MIN_GUIDANCE_SCALE = 1;
+const MAX_GUIDANCE_SCALE = 20;
+const ALLOWED_OUTPUT_FORMAT = 'png';
+const BOARD_IMAGE_JOB_TTL_MS = 20 * 60 * 1000;
+const MAX_FAL_CONFIG_CACHE_ENTRIES = 8;
+const ALLOWED_REMOTE_IMAGE_HOST_PATTERNS = [
+  /(^|\.)fal\.media$/i,
+  /^firebasestorage\.googleapis\.com$/i,
+  /^storage\.googleapis\.com$/i,
+];
+const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+const boardImageJobs = new Map();
+const REDIS_URL = process.env.REDIS_URL || '';
 
 // Render (and most PaaS reverse-proxies) add X-Forwarded-For so Express can
 // determine the real client IP.  Without trust proxy = 1, express-rate-limit
@@ -53,7 +107,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=()');
   // HSTS only when the connection is already secure (behind TLS proxy like Render)
   if (req.headers['x-forwarded-proto'] === 'https') {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
@@ -61,84 +115,87 @@ app.use((req, res, next) => {
   next();
 });
 
-// Allow the production site, GitHub Pages, and localhost to call this server
 app.use(cors({
-  origin: ['https://punchskater.com', 'https://driver727-pixel.github.io', 'http://localhost:5173'],
+  origin(origin, callback) {
+    if (!origin || ALLOWED_APP_ORIGINS.has(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error('CORS origin is not allowed.'));
+  },
 }));
 
-app.use(express.json({ limit: '256kb' }));
-
 // ── Rate limiting ─────────────────────────────────────────────────────────────
+const { store: sharedRateLimitStore } = createRateLimitStore(REDIS_URL);
+
 // Each IP may call the image-generation / background-removal endpoints at most
 // 20 times per minute. This prevents abuse that would run up the Fal.ai bill.
-const imageRateLimit = rateLimit({
+const imageRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 20,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
   message: { error: 'Too many image requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
 });
 
 // Status-check polling is cheap (no AI inference), so allow a higher burst.
-const boardImageStatusRateLimit = rateLimit({
+const boardImageStatusRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 120,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
   message: { error: 'Too many status requests — please slow down.' },
+  store: sharedRateLimitStore,
 });
 
 // The import endpoint is cheaper to call, so allow a somewhat higher burst.
-const importRateLimit = rateLimit({
+const importRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 60,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
   message: { error: 'Too many requests — please slow down.' },
+  store: sharedRateLimitStore,
 });
 
 // Stripe checkout sessions — tightly rate-limited to prevent abuse.
-const checkoutRateLimit = rateLimit({
+const checkoutRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 10,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
   message: { error: 'Too many checkout requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
+});
+
+const authSyncRateLimit = buildRateLimiter({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { error: 'Too many auth sync requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
 });
 
 // Admin user-creation — very tightly rate-limited.
-const adminUserRateLimit = rateLimit({
+const adminUserRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 10,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
   message: { error: 'Too many admin requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
 });
 
-const weatherRateLimit = rateLimit({
+const weatherRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 30,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
   message: { error: 'Too many weather requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
 });
 
-const battleRateLimit = rateLimit({
+const battleRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 30,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
   message: { error: 'Too many battle requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
 });
 
 const FAL_KEY = process.env.FAL_KEY || '';
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
-const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || process.env.VITE_FIREBASE_API_KEY || '';
 const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID || '';
 const FIREBASE_ADMIN_CLIENT_EMAIL = process.env.FIREBASE_ADMIN_CLIENT_EMAIL || '';
 const FIREBASE_ADMIN_PRIVATE_KEY = process.env.FIREBASE_ADMIN_PRIVATE_KEY || '';
 const FIREBASE_SERVICE_ACCOUNT_JSON = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '';
-const FIREBASE_AUTH_URL = 'https://identitytoolkit.googleapis.com/v1/accounts';
 const DEFAULT_FAL_URL = process.env.FAL_IMAGE_MODEL_URL || 'https://fal.run/fal-ai/flux-lora';
 const DEFAULT_FAL_CONFIG_URL = process.env.FAL_CONFIG_URL || process.env.FAL_LORA_CONFIG_URL || '';
 const DEFAULT_FAL_LORA_PATH = process.env.FAL_LORA_PATH || 'https://v3b.fal.media/files/b/0a961b80/LZYfVjdfVXWWb7gMl4kL2_pytorch_lora_weights.safetensors';
@@ -169,28 +226,6 @@ const DEFAULT_FAL_ENABLE_SAFETY_CHECKER = true;
 const DEFAULT_FAL_OUTPUT_FORMAT = 'png';
 const FAL_CONFIG_CACHE_TTL_MS = 5 * 60 * 1000;
 const BIREFNET_URL = 'https://fal.run/fal-ai/birefnet';
-const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast';
-const WEATHER_CACHE_TTL_MS = 15 * 60 * 1000;
-const HEAVY_RAIN_MM = 7;
-const HEATWAVE_TEMP_C = 35;
-const STRONG_WIND_KPH = 45;
-const HEAVY_RAIN_CODES = new Set([63, 65, 82, 95, 96, 99]);
-
-const DISTRICT_WEATHER_LOCATIONS = {
-  Airaway: { city: 'Brisbane', state: 'QLD', latitude: -27.4698, longitude: 153.0251 },
-  Electropolis: { city: 'Sydney', state: 'NSW', latitude: -33.8688, longitude: 151.2093 },
-  'Glass City': { city: 'Melbourne', state: 'VIC', latitude: -37.8136, longitude: 144.9631 },
-  'The Grid': { city: 'Canberra', state: 'ACT', latitude: -35.2809, longitude: 149.13 },
-  Batteryville: { city: 'Adelaide', state: 'SA', latitude: -34.9285, longitude: 138.6007 },
-  'The Roads': { city: 'Alice Springs', state: 'NT', latitude: -23.698, longitude: 133.8807 },
-  Nightshade: { city: 'Perth', state: 'WA', latitude: -31.9523, longitude: 115.8613 },
-  'The Forest': { city: 'Hobart', state: 'TAS', latitude: -42.8821, longitude: 147.3272 },
-};
-
-let districtWeatherCache = {
-  payload: null,
-  fetchedAt: 0,
-};
 
 const falRequestConfigCache = new Map();
 
@@ -207,6 +242,220 @@ function resolveTierFromPriceId(priceId) {
     if (config.stripePriceId === priceId) return tier;
   }
   return null;
+}
+
+function isAllowedAppOrigin(origin) {
+  return ALLOWED_APP_ORIGINS.has(origin);
+}
+
+function isAllowedRedirectUrl(value) {
+  if (typeof value !== 'string') return false;
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol === 'https:') {
+      return isAllowedAppOrigin(parsed.origin);
+    }
+    return parsed.protocol === 'http:' && (
+      parsed.hostname === 'localhost' ||
+      parsed.hostname === '127.0.0.1'
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isAllowedRemoteImageUrl(value) {
+  if (typeof value !== 'string') return false;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'https:' &&
+      ALLOWED_REMOTE_IMAGE_HOST_PATTERNS.some((pattern) => pattern.test(parsed.hostname));
+  } catch {
+    return false;
+  }
+}
+
+function getTrimmedString(value, maxLength = MAX_TEXT_FIELD_LENGTH) {
+  if (typeof value !== 'string') return '';
+  return value.trim().slice(0, maxLength);
+}
+
+function sanitizeTextField(value, { fieldName, maxLength = MAX_TEXT_FIELD_LENGTH, required = false } = {}) {
+  const trimmed = getTrimmedString(value, maxLength);
+  if (!trimmed) {
+    if (required) {
+      throw Object.assign(new Error(`${fieldName} is required.`), { statusCode: 400 });
+    }
+    return undefined;
+  }
+  return trimmed;
+}
+
+function sanitizeInteger(value, {
+  fieldName,
+  minimum,
+  maximum,
+  required = false,
+} = {}) {
+  if (value == null || value === '') {
+    if (required) {
+      throw Object.assign(new Error(`${fieldName} is required.`), { statusCode: 400 });
+    }
+    return undefined;
+  }
+  const parsed = Number.parseInt(String(value), 10);
+  if (!Number.isInteger(parsed) || parsed < minimum || parsed > maximum) {
+    throw Object.assign(
+      new Error(`${fieldName} must be an integer between ${minimum} and ${maximum}.`),
+      { statusCode: 400 },
+    );
+  }
+  return parsed;
+}
+
+function sanitizeNumber(value, {
+  fieldName,
+  minimum,
+  maximum,
+} = {}) {
+  if (value == null || value === '') return undefined;
+  const parsed = typeof value === 'number' ? value : Number.parseFloat(String(value));
+  if (!Number.isFinite(parsed) || parsed < minimum || parsed > maximum) {
+    throw Object.assign(
+      new Error(`${fieldName} must be a number between ${minimum} and ${maximum}.`),
+      { statusCode: 400 },
+    );
+  }
+  return parsed;
+}
+
+function sanitizeFalImageSize(value) {
+  if (value == null || value === '') return undefined;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    return trimmed;
+  }
+  if (!isPlainObject(value)) {
+    throw Object.assign(new Error('image_size must be a string or { width, height } object.'), { statusCode: 400 });
+  }
+  const width = sanitizeInteger(value.width, {
+    fieldName: 'image_size.width',
+    minimum: MIN_IMAGE_DIMENSION,
+    maximum: MAX_IMAGE_DIMENSION,
+    required: true,
+  });
+  const height = sanitizeInteger(value.height, {
+    fieldName: 'image_size.height',
+    minimum: MIN_IMAGE_DIMENSION,
+    maximum: MAX_IMAGE_DIMENSION,
+    required: true,
+  });
+  return { width, height };
+}
+
+function sanitizeFalProfileInput(value) {
+  if (value == null || value === '') return undefined;
+  const profile = normalizeFalProfile(getTrimmedString(value, 32));
+  return profile;
+}
+
+function sanitizeGenerateImageBody(body = {}) {
+  if (!isPlainObject(body)) {
+    throw Object.assign(new Error('Request body must be a JSON object.'), { statusCode: 400 });
+  }
+
+  return {
+    prompt: sanitizeTextField(body.prompt, { fieldName: 'prompt', required: true }),
+    negative_prompt: sanitizeTextField(body.negative_prompt, { fieldName: 'negative_prompt' }),
+    seed: sanitizeInteger(body.seed, {
+      fieldName: 'seed',
+      minimum: 0,
+      maximum: 2_147_483_647,
+    }),
+    image_size: sanitizeFalImageSize(body.image_size),
+    num_inference_steps: sanitizeInteger(body.num_inference_steps, {
+      fieldName: 'num_inference_steps',
+      minimum: MIN_INFERENCE_STEPS,
+      maximum: MAX_INFERENCE_STEPS,
+    }),
+    guidance_scale: sanitizeNumber(body.guidance_scale, {
+      fieldName: 'guidance_scale',
+      minimum: MIN_GUIDANCE_SCALE,
+      maximum: MAX_GUIDANCE_SCALE,
+    }),
+    fal_profile: sanitizeFalProfileInput(body.fal_profile),
+    output_format: ALLOWED_OUTPUT_FORMAT,
+    enable_safety_checker: true,
+    num_images: 1,
+  };
+}
+
+function sanitizeBoardImageBody(body = {}) {
+  if (!isPlainObject(body)) {
+    throw Object.assign(new Error('Request body must be a JSON object.'), { statusCode: 400 });
+  }
+  return {
+    prompt: sanitizeTextField(body.prompt, {
+      fieldName: 'prompt',
+      required: true,
+      maxLength: MAX_BOARD_PROMPT_LENGTH,
+    }),
+    imageUrls: normalizeBoardReferenceUrls(body.imageUrls),
+  };
+}
+
+function sanitizeBackgroundRemovalBody(body = {}) {
+  if (!isPlainObject(body)) {
+    throw Object.assign(new Error('Request body must be a JSON object.'), { statusCode: 400 });
+  }
+  const imageUrl = sanitizeTextField(body.image_url, { fieldName: 'image_url', required: true });
+  if (!isAllowedRemoteImageUrl(imageUrl)) {
+    throw Object.assign(new Error('image_url must point to an approved remote image host.'), { statusCode: 400 });
+  }
+  return { image_url: imageUrl };
+}
+
+function pruneBoardImageJobs(now = Date.now()) {
+  for (const [jobId, entry] of boardImageJobs.entries()) {
+    if (!entry || now - entry.createdAt > BOARD_IMAGE_JOB_TTL_MS) {
+      boardImageJobs.delete(jobId);
+    }
+  }
+}
+
+async function syncPurchasedTier({ tier, email, sessionId }) {
+  if (!adminDb || !tier) return;
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) return;
+  const exactEmail = getTrimmedString(email, 320);
+  // Prefer the normalized field, but fall back to legacy exact-email queries so
+  // purchases still sync for older profiles that predate emailLower.
+  const snapshots = await Promise.all([
+    adminDb.collection('userProfiles').where('emailLower', '==', normalizedEmail).limit(25).get(),
+    exactEmail ? adminDb.collection('userProfiles').where('email', '==', exactEmail).limit(25).get() : null,
+    exactEmail && exactEmail !== normalizedEmail
+      ? adminDb.collection('userProfiles').where('email', '==', normalizedEmail).limit(25).get()
+      : null,
+  ]);
+  const matchingDocs = new Map();
+  snapshots.filter(Boolean).forEach((snap) => {
+    snap.docs.forEach((docSnap) => {
+      matchingDocs.set(docSnap.ref.path, docSnap);
+    });
+  });
+  if (matchingDocs.size === 0) return;
+
+  const batch = adminDb.batch();
+  matchingDocs.forEach((docSnap) => {
+    batch.set(docSnap.ref, {
+      tier,
+      purchaseEmail: normalizedEmail,
+      lastCheckoutSessionId: sessionId,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+  });
+  await batch.commit();
 }
 
 // Stripe client — instantiated once at startup so it is reused across requests.
@@ -227,6 +476,21 @@ function sendCheckoutVerificationFailure(res) {
   res.status(409).json({ error: 'Checkout session could not be verified.' });
 }
 
+registerPaymentRoutes(app, {
+  stripe,
+  stripeWebhookSecret,
+  checkoutRateLimit,
+  resolveTierFromPriceId,
+  syncPurchasedTier,
+  isAllowedRedirectUrl,
+  normalizeEmail,
+  timingSafeEmailMatches,
+  sendCheckoutVerificationFailure,
+});
+
+app.use(compression());
+app.use(express.json({ limit: '256kb' }));
+
 if (!FAL_KEY) {
   console.warn('⚠️  FAL_KEY environment variable is not set — requests will be rejected by Fal.ai.');
 } else {
@@ -235,8 +499,8 @@ if (!FAL_KEY) {
 if (!stripe) {
   console.warn('⚠️  STRIPE_SECRET_KEY environment variable is not set — checkout sessions will be unavailable.');
 }
-if (!FIREBASE_API_KEY) {
-  console.warn('⚠️  FIREBASE_API_KEY environment variable is not set — admin user creation will be unavailable.');
+if (!stripeWebhookSecret) {
+  console.warn('⚠️  STRIPE_WEBHOOK_SECRET environment variable is not set — Stripe webhooks will be unavailable.');
 }
 
 function getFirebaseServiceAccount() {
@@ -289,8 +553,11 @@ const { adminAuth, adminDb } = createFirebaseAdminServices();
 
 if (!adminAuth || !adminDb) {
   console.warn(
-    '⚠️  Firebase Admin credentials are not set — set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, and FIREBASE_ADMIN_PRIVATE_KEY to enable secure battle resolution.',
+    '⚠️  Firebase Admin credentials are not set — set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, and FIREBASE_ADMIN_PRIVATE_KEY to enable secure battle resolution, authenticated image proxies, and admin account management.',
   );
+}
+if (REDIS_URL) {
+  console.info('Redis-backed rate limiting enabled.');
 }
 
 async function authenticateFirebaseUser(req) {
@@ -312,21 +579,70 @@ async function authenticateFirebaseUser(req) {
   }
 }
 
-function getConfiguredAdminEmails() {
-  return (process.env.ADMIN_EMAILS || process.env.VITE_ADMIN_EMAILS || '')
-    .split(',')
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
+async function syncAdminClaim(uid, email) {
+  if (!adminAuth) return { admin: false, claimsUpdated: false };
+  const adminEmails = getConfiguredAdminEmails(process.env.ADMIN_EMAILS || process.env.VITE_ADMIN_EMAILS || '');
+  const shouldBeAdmin = shouldGrantAdminAccess(email, adminEmails);
+  const userRecord = await adminAuth.getUser(uid);
+  const currentClaims = userRecord.customClaims ?? {};
+  const currentAdmin = currentClaims.admin === true;
+
+  const syncAdminProfileState = async () => {
+    if (!adminDb) return;
+    await adminDb.collection('userProfiles').doc(uid).set({
+      isAdmin: shouldBeAdmin,
+      ...(shouldBeAdmin ? { tier: 'tier3' } : {}),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+  };
+
+  if (currentAdmin !== shouldBeAdmin) {
+    const nextClaims = { ...currentClaims };
+    if (shouldBeAdmin) nextClaims.admin = true;
+    else delete nextClaims.admin;
+    await adminAuth.setCustomUserClaims(uid, nextClaims);
+    await syncAdminProfileState();
+    return { admin: shouldBeAdmin, claimsUpdated: true };
+  }
+
+  await syncAdminProfileState();
+
+  return { admin: currentAdmin, claimsUpdated: false };
+}
+
+async function upsertUserLookupRecord({ uid, email, displayName }) {
+  if (!adminDb) return;
+  const normalizedEmail = normalizeEmail(email);
+  const resolvedDisplayName = buildUserDisplayName({ email, displayName });
+  const profilePayload = {
+    uid,
+    email: typeof email === 'string' ? email.trim() : '',
+    emailLower: normalizedEmail,
+    displayName: resolvedDisplayName,
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+  const lookupPayload = {
+    uid,
+    emailLower: normalizedEmail,
+    displayName: resolvedDisplayName,
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+  await Promise.all([
+    adminDb.collection('userProfiles').doc(uid).set(profilePayload, { merge: true }),
+    adminDb.collection('userLookup').doc(uid).set(lookupPayload, { merge: true }),
+  ]);
 }
 
 async function authenticateAdminRequest(req) {
   const decodedToken = await authenticateFirebaseUser(req);
-  const adminEmails = getConfiguredAdminEmails();
+  const adminEmails = getConfiguredAdminEmails(process.env.ADMIN_EMAILS || process.env.VITE_ADMIN_EMAILS || '');
+  if (decodedToken.admin === true) {
+    return decodedToken;
+  }
   if (adminEmails.length === 0) {
     throw Object.assign(new Error('Admin email list is not configured on this server.'), { statusCode: 503 });
   }
-  const callerEmail = (decodedToken.email ?? '').trim().toLowerCase();
-  if (!callerEmail || !adminEmails.includes(callerEmail)) {
+  if (!shouldGrantAdminAccess(decodedToken.email ?? '', adminEmails)) {
     throw Object.assign(new Error('Forbidden: admin access required.'), { statusCode: 403 });
   }
   return decodedToken;
@@ -354,160 +670,34 @@ async function deleteQueryDocs(queryRef, pageSize = 200) {
   }
 }
 
-function roundWeatherMetric(value) {
-  if (typeof value !== 'number' || Number.isNaN(value)) return null;
-  return Number(value.toFixed(1));
-}
+registerAdminRoutes(app, {
+  adminAuth,
+  adminDb,
+  authSyncRateLimit,
+  adminUserRateLimit,
+  authenticateFirebaseUser,
+  authenticateAdminRequest,
+  syncAdminClaim,
+  isStrongPassword,
+  buildUserDisplayName,
+  upsertUserLookupRecord,
+  deleteCollectionDocs,
+  deleteQueryDocs,
+});
 
-function resolveWeatherSummary({ rainMm, weatherCode, windSpeedKph, temperatureC }) {
-  if ((rainMm ?? 0) >= HEAVY_RAIN_MM || HEAVY_RAIN_CODES.has(weatherCode ?? -1)) return 'Heavy rain';
-  if ((rainMm ?? 0) > 0) return 'Rain';
-  if ((windSpeedKph ?? 0) >= STRONG_WIND_KPH) return 'Strong wind';
-  if ((temperatureC ?? 0) >= HEATWAVE_TEMP_C) return 'Heatwave';
-  return 'Clear';
-}
+registerWeatherRoutes(app, {
+  weatherRateLimit,
+});
 
-function buildWeatherAccessRule(district, city, summary) {
-  if (summary !== 'Heavy rain') return null;
-  return {
-    requiredBoardType: 'Mountain',
-    reason: `Heavy rain over ${city} has turned ${district} into Mountain-board-only territory.`,
-    source: 'heavy-rain',
-  };
-}
-
-function buildFallbackDistrictWeatherPayload() {
-  const generatedAt = new Date().toISOString();
-  return {
-    generatedAt,
-    stale: true,
-    source: 'fallback',
-    districts: Object.entries(DISTRICT_WEATHER_LOCATIONS).map(([district, location]) => ({
-      district,
-      city: location.city,
-      state: location.state,
-      summary: 'Weather uplink offline',
-      temperatureC: null,
-      windSpeedKph: null,
-      rainMm: null,
-      weatherCode: null,
-      updatedAt: generatedAt,
-      accessRule: null,
-    })),
-  };
-}
-
-function isPlainObject(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function normalizeFalLoraEntry(entry) {
-  if (!isPlainObject(entry)) return null;
-
-  const path = typeof entry.path === 'string' ? entry.path.trim()
-    : typeof entry.url === 'string' ? entry.url.trim()
-    : '';
-  if (!path) return null;
-
-  const rawScale = parseFalScale(entry.scale, 1);
-
-  return {
-    path,
-    scale: Number.isFinite(rawScale) ? rawScale : 1,
-  };
-}
-
-function parseFalScale(value, fallback = 1) {
-  const parsed =
-    value == null
-      ? fallback
-      : typeof value === 'number'
-        ? value
-        : Number.parseFloat(String(value));
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
-
-function normalizeFalLoras(value, fallbackScale = 1) {
-  if (Array.isArray(value)) {
-    const loras = value
-      .map((entry) => normalizeFalLoraEntry(entry))
-      .filter(Boolean);
-    return loras.length ? loras : undefined;
-  }
-
-  if (isPlainObject(value)) {
-    const lora = normalizeFalLoraEntry(value);
-    return lora ? [lora] : undefined;
-  }
-
-  if (typeof value === 'string' && value.trim()) {
-    return [{ path: value.trim(), scale: fallbackScale }];
-  }
-
-  return undefined;
-}
-
-function extractFalRequestConfigCandidate(payload) {
-  if (!isPlainObject(payload)) return null;
-
-  const candidates = [
-    payload.input,
-    payload.config,
-    payload.settings,
-    payload.parameters,
-    payload.defaults,
-    payload.fal,
-    payload.fal_config,
-    payload.falConfig,
-    payload.request,
-    payload.request_body,
-    payload,
-  ];
-
-  return candidates.find((candidate) => {
-    if (!isPlainObject(candidate)) return false;
-
-    return [
-      'image_size',
-      'num_inference_steps',
-      'guidance_scale',
-      'num_images',
-      'enable_safety_checker',
-      'output_format',
-      'loras',
-      'lora',
-      'lora_path',
-      'path',
-      'diffusers_lora_file',
-      'config_file',
-    ].some((key) => candidate[key] !== undefined);
-  }) ?? null;
-}
-
-function sanitizeFalRequestConfig(candidate) {
-  if (!isPlainObject(candidate)) return null;
-
-  const config = {};
-  const loraScale = parseFalScale(candidate.lora_scale, 1);
-  const scale = parseFalScale(candidate.scale, 1);
-
-  const maybeLoras =
-    normalizeFalLoras(candidate.loras) ??
-    normalizeFalLoras(candidate.lora) ??
-    normalizeFalLoras(candidate.lora_path, loraScale) ??
-    normalizeFalLoras(candidate.path, scale) ??
-    normalizeFalLoras(candidate.diffusers_lora_file, loraScale);
-
-  if (candidate.image_size !== undefined) config.image_size = candidate.image_size;
-  if (candidate.num_inference_steps !== undefined) config.num_inference_steps = candidate.num_inference_steps;
-  if (candidate.guidance_scale !== undefined) config.guidance_scale = candidate.guidance_scale;
-  if (candidate.num_images !== undefined) config.num_images = candidate.num_images;
-  if (candidate.enable_safety_checker !== undefined) config.enable_safety_checker = candidate.enable_safety_checker;
-  if (candidate.output_format !== undefined) config.output_format = candidate.output_format;
-  if (maybeLoras !== undefined) config.loras = maybeLoras;
-
-  return Object.keys(config).length ? config : null;
-}
+registerBattleRoutes(app, {
+  adminDb,
+  battleRateLimit,
+  authenticateFirebaseUser,
+  createBattleCardSnapshot,
+  resolveBattleWithEffects,
+  randomUUID,
+  FieldValue,
+});
 
 function normalizeFalProfile(value) {
   return value === 'character' ? 'character' : 'default';
@@ -530,6 +720,10 @@ function resolveFalProfile(profile) {
 }
 
 function cacheFalRequestConfig(configUrl, payload, fetchedAt) {
+  if (!falRequestConfigCache.has(configUrl) && falRequestConfigCache.size >= MAX_FAL_CONFIG_CACHE_ENTRIES) {
+    const oldestKey = falRequestConfigCache.keys().next().value;
+    if (oldestKey) falRequestConfigCache.delete(oldestKey);
+  }
   falRequestConfigCache.set(configUrl, {
     payload,
     fetchedAt,
@@ -598,748 +792,25 @@ async function buildFalImageRequest(body = {}) {
   };
 }
 
-async function fetchDistrictWeatherSnapshot(district, location) {
-  const url = new URL(WEATHER_URL);
-  url.searchParams.set('latitude', String(location.latitude));
-  url.searchParams.set('longitude', String(location.longitude));
-  url.searchParams.set('current', 'temperature_2m,rain,weather_code,wind_speed_10m');
-  url.searchParams.set('timezone', 'Australia/Sydney');
-  url.searchParams.set('forecast_days', '1');
-
-  const upstream = await fetch(url);
-  if (!upstream.ok) {
-    throw new Error(`Weather upstream failed for ${district} with ${upstream.status}.`);
-  }
-
-  const data = await upstream.json();
-  const current = data?.current ?? {};
-  const temperatureC = roundWeatherMetric(current.temperature_2m);
-  const windSpeedKph = roundWeatherMetric(current.wind_speed_10m);
-  const rainMm = roundWeatherMetric(current.rain);
-  const weatherCode = typeof current.weather_code === 'number' ? current.weather_code : null;
-  const summary = resolveWeatherSummary({ rainMm, weatherCode, windSpeedKph, temperatureC });
-
-  return {
-    district,
-    city: location.city,
-    state: location.state,
-    summary,
-    temperatureC,
-    windSpeedKph,
-    rainMm,
-    weatherCode,
-    updatedAt: new Date().toISOString(),
-    accessRule: buildWeatherAccessRule(district, location.city, summary),
-  };
-}
-
-async function buildDistrictWeatherPayload() {
-  const districts = await Promise.all(
-    Object.entries(DISTRICT_WEATHER_LOCATIONS).map(([district, location]) =>
-      fetchDistrictWeatherSnapshot(district, location),
-    ),
-  );
-
-  return {
-    generatedAt: new Date().toISOString(),
-    stale: false,
-    source: 'live',
-    districts,
-  };
-}
-
-async function getDistrictWeatherPayload() {
-  const now = Date.now();
-  const hasFreshCache =
-    districtWeatherCache.payload &&
-    now - districtWeatherCache.fetchedAt < WEATHER_CACHE_TTL_MS;
-
-  if (hasFreshCache) {
-    return {
-      ...districtWeatherCache.payload,
-      stale: false,
-      source: districtWeatherCache.payload.source === 'fallback' ? 'fallback' : 'cache',
-    };
-  }
-
-  try {
-    const payload = await buildDistrictWeatherPayload();
-    districtWeatherCache = { payload, fetchedAt: now };
-    return payload;
-  } catch (err) {
-    console.error('District weather refresh failed:', err);
-
-    if (districtWeatherCache.payload) {
-      return {
-        ...districtWeatherCache.payload,
-        stale: true,
-        source: districtWeatherCache.payload.source === 'fallback' ? 'fallback' : 'cache',
-      };
-    }
-
-    const fallback = buildFallbackDistrictWeatherPayload();
-    districtWeatherCache = { payload: fallback, fetchedAt: now };
-    return fallback;
-  }
-}
-
-// Transparent proxy: the React front-end POSTs to /api/generate-image and
-// this server forwards the request to Fal.ai, attaching the secret key.
-app.post('/api/generate-image', imageRateLimit, async (req, res) => {
-  try {
-    const profile = normalizeFalProfile(typeof req.body?.fal_profile === 'string' ? req.body.fal_profile.trim() : '');
-    const profileSettings = resolveFalProfile(profile);
-    const upstream = await fetch(profileSettings.modelUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Key ${FAL_KEY}`,
-      },
-      body: JSON.stringify(await buildFalImageRequest(req.body)),
-    });
-
-    if (!upstream.ok) {
-      const text = await upstream.text();
-      let body;
-      try { body = JSON.parse(text); } catch { body = { error: text }; }
-      res.status(upstream.status).json(body);
-      return;
-    }
-
-    const data = await upstream.json();
-    res.json(data);
-  } catch (err) {
-    console.error('Proxy error:', err);
-    res.status(500).json({ error: 'Image generation proxy failed.' });
-  }
+registerImageRoutes(app, {
+  fal,
+  FAL_KEY,
+  BIREFNET_URL,
+  imageRateLimit,
+  boardImageStatusRateLimit,
+  authenticateFirebaseUser,
+  sanitizeGenerateImageBody,
+  sanitizeBoardImageBody,
+  sanitizeBackgroundRemovalBody,
+  buildFalImageRequest,
+  normalizeFalProfile,
+  resolveFalProfile,
+  boardImageJobs,
+  pruneBoardImageJobs,
 });
 
-function normalizeBoardReferenceUrls(value) {
-  const BOARD_REFERENCE_IMAGE_PATH_PATTERN =
-    /^\/assets\/boards\/(deck|drivetrain|wheels|battery)\/[a-z0-9-]+\.png$/i;
-
-  if (!Array.isArray(value) || value.length !== 4) return null;
-
-  const urls = [];
-  for (const entry of value) {
-    if (typeof entry !== 'string') return null;
-
-    const trimmed = entry.trim();
-    if (!trimmed) return null;
-
-    let parsed;
-    try {
-      parsed = new URL(trimmed);
-    } catch {
-      return null;
-    }
-
-    if (parsed.origin !== 'https://punchskater.com') return null;
-    if (!BOARD_REFERENCE_IMAGE_PATH_PATTERN.test(parsed.pathname)) {
-      return null;
-    }
-
-    urls.push(parsed.toString());
-  }
-
-  return urls;
-}
-
-function extractBoardImageUrl(result) {
-  // Log the raw structure when debug logging is enabled so we can diagnose
-  // unexpected response shapes without cluttering normal production logs.
-  if (process.env.FAL_DEBUG) console.log('Raw fal board result:', JSON.stringify(result));
-
-  // fal.subscribe / fal.queue.result wraps model output in .data; some paths
-  // fall back to a top-level structure for forward compatibility.
-  const data = result?.data ?? result;
-
-  // { image: "https://..." }
-  if (typeof data?.image === 'string' && data.image) return data.image;
-  // { image: { url: "https://..." } }
-  if (typeof data?.image?.url === 'string' && data.image.url) return data.image.url;
-  // { image_url: "https://..." }
-  if (typeof data?.image_url === 'string' && data.image_url) return data.image_url;
-  // { images: [{ url: "..." }, ...] }  — same shape as Flux models
-  if (Array.isArray(data?.images) && typeof data.images[0]?.url === 'string' && data.images[0].url) {
-    return data.images[0].url;
-  }
-  // { output: "https://..." }  or  { output: { url: "..." } }
-  if (typeof data?.output === 'string' && data.output) return data.output;
-  if (typeof data?.output?.url === 'string' && data.output.url) return data.output.url;
-
-  // Legacy top-level fallback
-  if (typeof result?.image?.url === 'string' && result.image.url) return result.image.url;
-
-  return null;
-}
-
-app.post('/api/generate-board-image', imageRateLimit, async (req, res) => {
-  try {
-    if (!FAL_KEY) {
-      res.status(503).json({ error: 'Board image generation is not configured.' });
-      return;
-    }
-
-    const prompt = typeof req.body?.prompt === 'string' ? req.body.prompt.trim() : '';
-    const imageUrls = normalizeBoardReferenceUrls(req.body?.imageUrls);
-    if (!prompt || !imageUrls) {
-      res.status(400).json({ error: 'A prompt and exactly four Punch Skater board image URLs are required.' });
-      return;
-    }
-
-    // Submit to fal.ai queue and return the jobId immediately so the client
-    // can poll /api/board-image-status/:jobId.  This avoids the 30-second
-    // proxy timeout that occurs when fal.subscribe() blocks the HTTP response.
-    const { request_id: jobId } = await fal.queue.submit('fal-ai/nano-banana-2', {
-      input: {
-        prompt,
-        image_urls: imageUrls,
-        thinking_level: 'high',
-        enable_web_search: false,
-      },
-    });
-
-    res.json({ jobId });
-  } catch (err) {
-    console.error('Board image submit error:', err);
-    res.status(500).json({ error: 'Board image generation submission failed.' });
-  }
-});
-
-// Polls the fal.ai queue for a previously submitted board-image job.
-// Returns { status: 'pending' }, { status: 'completed', imageUrl } or
-// { status: 'failed', error }.
-app.get('/api/board-image-status/:jobId', boardImageStatusRateLimit, async (req, res) => {
-  try {
-    if (!FAL_KEY) {
-      res.status(503).json({ error: 'Board image generation is not configured.' });
-      return;
-    }
-
-    const { jobId } = req.params;
-    if (!jobId || !/^[a-zA-Z0-9_-]+$/.test(jobId)) {
-      res.status(400).json({ error: 'Invalid jobId.' });
-      return;
-    }
-
-    const status = await fal.queue.status('fal-ai/nano-banana-2', {
-      requestId: jobId,
-      logs: false,
-    });
-
-    if (status.status === 'COMPLETED') {
-      const result = await fal.queue.result('fal-ai/nano-banana-2', { requestId: jobId });
-      const imageUrl = extractBoardImageUrl(result);
-      if (!imageUrl) {
-        res.status(502).json({ error: 'Fal.ai did not return a board image URL.' });
-        return;
-      }
-      res.json({ status: 'completed', imageUrl, requestId: jobId });
-      return;
-    }
-
-    if (status.status === 'FAILED' || status.status === 'CANCELLED') {
-      res.status(502).json({ status: 'failed', error: 'Board image generation job failed.' });
-      return;
-    }
-
-    // IN_QUEUE or IN_PROGRESS — ask the client to poll again.
-    res.json({ status: 'pending' });
-  } catch (err) {
-    console.error('Board image status error:', err);
-    res.status(500).json({ error: 'Failed to retrieve board image job status.' });
-  }
-});
-
-// Background removal proxy: strips the white/solid background from a generated
-// character image and returns a transparent PNG via the Fal.ai birefnet model.
-app.post('/api/remove-background', imageRateLimit, async (req, res) => {
-  try {
-    const upstream = await fetch(BIREFNET_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Key ${FAL_KEY}`,
-      },
-      body: JSON.stringify(req.body),
-    });
-
-    if (!upstream.ok) {
-      const text = await upstream.text();
-      let body;
-      try { body = JSON.parse(text); } catch { body = { error: text }; }
-      res.status(upstream.status).json(body);
-      return;
-    }
-
-    const data = await upstream.json();
-    res.json(data);
-  } catch (err) {
-    console.error('Background removal proxy error:', err);
-    res.status(500).json({ error: 'Background removal proxy failed.' });
-  }
-});
-
-// ── JSON Import validation endpoint ──────────────────────────────────────────
-// Accepts a Craftlingua envelope, a collection export, or a raw CardPayload[]
-// array.  Validates structure and returns a report; does NOT persist any data.
-app.post('/api/import', importRateLimit, (req, res) => {
-  const body = req.body;
-
-  if (!body || typeof body !== 'object') {
-    res.status(400).json({ error: 'Request body must be a JSON object or array.' });
-    return;
-  }
-
-  /** Minimal per-card required-key check (mirrors client-side importJson.ts). */
-  const REQUIRED_CARD_KEYS = [
-    'id', 'version', 'prompts', 'seed',
-    'identity', 'stats', 'traits', 'flavorText',
-    'visuals', 'tags', 'createdAt',
-  ];
-
-  let cardEntries = [];
-  let detectedFormat = 'unknown';
-  let language = undefined;
-  let vocabulary = undefined;
-
-  try {
-    if (Array.isArray(body)) {
-      cardEntries = body;
-      detectedFormat = 'raw-array';
-    } else if (body.source === 'craftlingua') {
-      detectedFormat = 'craftlingua-envelope';
-      if (!body.language || typeof body.language !== 'object' || !body.language.name || !body.language.code) {
-        res.status(422).json({ error: 'Craftlingua envelope missing required "language" object with "name" and "code".' });
-        return;
-      }
-      language = body.language;
-      vocabulary = Array.isArray(body.vocabulary) ? body.vocabulary : [];
-      cardEntries = Array.isArray(body.cards) ? body.cards : [];
-    } else if (typeof body.version === 'string' && Array.isArray(body.cards)) {
-      detectedFormat = 'collection-export';
-      cardEntries = body.cards;
-    } else {
-      res.status(422).json({
-        error: 'Unrecognised JSON format. Expected CardPayload[], { version, cards }, or { source: "craftlingua", language, cards }.',
-      });
-      return;
-    }
-  } catch (err) {
-    res.status(400).json({ error: 'Failed to interpret JSON body.' });
-    return;
-  }
-
-  const accepted = [];
-  const rejected = [];
-
-  for (let i = 0; i < cardEntries.length; i++) {
-    const card = cardEntries[i];
-    const errors = [];
-
-    if (!card || typeof card !== 'object' || Array.isArray(card)) {
-      rejected.push({ index: i, errors: ['Entry is not an object.'] });
-      continue;
-    }
-
-    for (const key of REQUIRED_CARD_KEYS) {
-      if (card[key] === undefined || card[key] === null) {
-        errors.push(`Missing required field: "${key}"`);
-      }
-    }
-
-    if (errors.length > 0) {
-      rejected.push({ index: i, id: card.id, errors });
-    } else {
-      accepted.push({ index: i, id: card.id });
-    }
-  }
-
-  res.json({
-    format: detectedFormat,
-    total: cardEntries.length,
-    acceptedCount: accepted.length,
-    rejectedCount: rejected.length,
-    accepted,
-    rejected,
-    ...(language ? { language } : {}),
-    ...(vocabulary ? { vocabularyCount: vocabulary.length } : {}),
-  });
-});
-
-app.get('/api/district-weather', weatherRateLimit, async (_req, res) => {
-  const payload = await getDistrictWeatherPayload();
-  res.json(payload);
-});
-
-app.post('/api/resolve-battle', battleRateLimit, async (req, res) => {
-  if (!adminDb) {
-    res.status(503).json({ error: 'Battle resolution is not configured on this server.' });
-    return;
-  }
-
-  let caller;
-  try {
-    caller = await authenticateFirebaseUser(req);
-  } catch (error) {
-    res.status(error.statusCode ?? 500).json({ error: error.message ?? 'Authentication failed.' });
-    return;
-  }
-
-  const challengerUid = caller.uid;
-  const challengerDeckId = typeof req.body?.challengerDeckId === 'string' ? req.body.challengerDeckId.trim() : '';
-  const defenderUid = typeof req.body?.defenderUid === 'string' ? req.body.defenderUid.trim() : '';
-  const defenderDeckId = typeof req.body?.defenderDeckId === 'string' ? req.body.defenderDeckId.trim() : '';
-
-  if (!challengerDeckId || !defenderUid || !defenderDeckId) {
-    res.status(400).json({ error: 'challengerDeckId, defenderUid, and defenderDeckId are required.' });
-    return;
-  }
-
-  if (challengerUid === defenderUid) {
-    res.status(400).json({ error: 'You cannot challenge yourself.' });
-    return;
-  }
-
-  try {
-    const result = await adminDb.runTransaction(async (tx) => {
-      const challengerArenaRef = adminDb.collection('arena').doc(challengerUid);
-      const defenderArenaRef = adminDb.collection('arena').doc(defenderUid);
-      const challengerDeckRef = adminDb.collection('users').doc(challengerUid).collection('decks').doc(challengerDeckId);
-      const defenderDeckRef = adminDb.collection('users').doc(defenderUid).collection('decks').doc(defenderDeckId);
-      const [challengerArenaSnap, defenderArenaSnap, challengerDeckSnap, defenderDeckSnap] = await Promise.all([
-        tx.get(challengerArenaRef),
-        tx.get(defenderArenaRef),
-        tx.get(challengerDeckRef),
-        tx.get(defenderDeckRef),
-      ]);
-
-      if (!challengerArenaSnap.exists || !defenderArenaSnap.exists) {
-        throw Object.assign(new Error('One of the arena entries is no longer available.'), { statusCode: 409 });
-      }
-
-      const challengerArena = challengerArenaSnap.data();
-      const defenderArena = defenderArenaSnap.data();
-      if (challengerArena.deckId !== challengerDeckId || defenderArena.deckId !== defenderDeckId) {
-        throw Object.assign(new Error('One of the selected decks is no longer readied for battle.'), { statusCode: 409 });
-      }
-
-      if (!challengerDeckSnap.exists || !defenderDeckSnap.exists) {
-        throw Object.assign(new Error('One of the selected decks no longer exists.'), { statusCode: 409 });
-      }
-
-      const challengerDeck = challengerDeckSnap.data();
-      const defenderDeck = defenderDeckSnap.data();
-      if (challengerDeck.battleReady !== true || defenderDeck.battleReady !== true) {
-        throw Object.assign(new Error('One of the selected decks is no longer readied for battle.'), { statusCode: 409 });
-      }
-
-      const challengerCards = Array.isArray(challengerDeck.cards) ? challengerDeck.cards.map(createBattleCardSnapshot) : [];
-      const defenderCards = Array.isArray(defenderDeck.cards) ? defenderDeck.cards.map(createBattleCardSnapshot) : [];
-      if (challengerCards.length === 0 || defenderCards.length === 0) {
-        throw Object.assign(new Error('Both battle decks must contain at least one card.'), { statusCode: 409 });
-      }
-
-      const battleId = `battle-${randomUUID()}`;
-      const battleSeed = randomUUID();
-      const resolution = resolveBattleWithEffects(challengerCards, defenderCards, battleSeed);
-      const winnerUid =
-        resolution.winnerSide === 'challenger'
-          ? challengerUid
-          : resolution.winnerSide === 'defender'
-            ? defenderUid
-            : '';
-      const now = new Date().toISOString();
-      const result = {
-        id: battleId,
-        challengerUid,
-        challengerDeckId,
-        challengerDeckName: challengerDeck.name ?? challengerArena.deckName ?? 'Challenger Deck',
-        defenderUid,
-        defenderDeckId,
-        defenderDeckName: defenderDeck.name ?? defenderArena.deckName ?? 'Defender Deck',
-        winnerUid,
-        challengerScore: resolution.challengerScore,
-        defenderScore: resolution.defenderScore,
-        wagerPoints: resolution.wagerPoints,
-        winningDeckCardIds: resolution.winningDeckCardIds,
-        challengerCardResolutions: resolution.challengerCardResolutions,
-        defenderCardResolutions: resolution.defenderCardResolutions,
-        createdAt: now,
-      };
-
-      tx.set(adminDb.collection('battleResults').doc(battleId), {
-        ...result,
-        _ts: FieldValue.serverTimestamp(),
-      });
-      tx.delete(challengerArenaRef);
-      tx.delete(defenderArenaRef);
-      tx.update(challengerDeckRef, { battleReady: false, updatedAt: now });
-      tx.update(defenderDeckRef, { battleReady: false, updatedAt: now });
-
-      return result;
-    });
-
-    res.status(201).json(result);
-  } catch (error) {
-    console.error('Battle resolution error:', error);
-    res.status(error.statusCode ?? 500).json({ error: error.message ?? 'Failed to resolve battle.' });
-  }
-});
-
-// ── Stripe Checkout Sessions ──────────────────────────────────────────────────
-// Creates a Stripe Checkout Session for one of the two allowed price IDs and
-// returns the hosted payment page URL.  The caller supplies success_url and
-// cancel_url so the user is returned to the correct page after payment.
-app.post('/api/create-checkout-session', checkoutRateLimit, async (req, res) => {
-  if (!stripe) {
-    res.status(503).json({ error: 'Payment processing is not configured.' });
-    return;
-  }
-
-  const { priceId, successUrl, cancelUrl, email } = req.body ?? {};
-
-  if (!priceId || typeof priceId !== 'string' || !ALLOWED_PRICE_IDS.has(priceId)) {
-    res.status(400).json({ error: 'Invalid or unsupported price ID.' });
-    return;
-  }
-
-  const validUrl = (u) => {
-    if (typeof u !== 'string') return false;
-    try {
-      const p = new URL(u);
-      return p.protocol === 'https:' || (p.protocol === 'http:' && p.hostname === 'localhost');
-    } catch { return false; }
-  };
-
-  if (!validUrl(successUrl) || !validUrl(cancelUrl)) {
-    res.status(400).json({ error: 'successUrl and cancelUrl must be valid HTTPS URLs.' });
-    return;
-  }
-
-  try {
-    const session = await stripe.checkout.sessions.create({
-      line_items: [{ price: priceId, quantity: 1 }],
-      mode: 'payment',
-      ...(typeof email === 'string' && email.trim()
-        ? { customer_email: email.trim() }
-        : {}),
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-    });
-    res.json({ url: session.url });
-  } catch (err) {
-    console.error('Stripe checkout error:', err);
-    res.status(500).json({ error: 'Failed to create checkout session.' });
-  }
-});
-
-app.get('/api/verify-checkout-session', checkoutRateLimit, async (req, res) => {
-  if (!stripe) {
-    res.status(503).json({ error: 'Payment processing is not configured.' });
-    return;
-  }
-
-  const sessionId = typeof req.query.session_id === 'string' ? req.query.session_id.trim() : '';
-  const expectedEmail = typeof req.query.email === 'string' ? req.query.email.trim().toLowerCase() : '';
-  if (!sessionId) {
-    res.status(400).json({ error: 'session_id is required.' });
-    return;
-  }
-  if (!expectedEmail) {
-    res.status(400).json({ error: 'email is required.' });
-    return;
-  }
-
-  try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-    const lineItems = await stripe.checkout.sessions.listLineItems(sessionId, { limit: 1 });
-    const priceId = lineItems.data[0]?.price?.id;
-    const paidTier = resolveTierFromPriceId(priceId);
-    const sessionEmail = (session.customer_details?.email ?? session.customer_email ?? '').trim().toLowerCase();
-
-    if (
-      !priceId ||
-      !paidTier ||
-      session.payment_status !== 'paid' ||
-      !sessionEmail ||
-      !timingSafeEmailMatches(sessionEmail, expectedEmail)
-    ) {
-      console.warn('Stripe checkout verification rejected.', {
-        sessionId,
-        hasPriceId: Boolean(priceId),
-        hasPaidTier: Boolean(paidTier),
-        paymentStatus: session.payment_status,
-        hasSessionEmail: Boolean(sessionEmail),
-      });
-      sendCheckoutVerificationFailure(res);
-      return;
-    }
-
-    res.json({
-      tier: paidTier,
-      email: sessionEmail,
-    });
-  } catch (err) {
-    console.error('Stripe checkout verification error:', err);
-    res.status(500).json({ error: 'Failed to verify checkout session.' });
-  }
-});
-
-// ── Admin: Create user ────────────────────────────────────────────────────────
-// Creates a new Firebase Auth user on behalf of an authenticated admin.
-// The caller must supply a valid Firebase ID token in the Authorization header.
-// The token is verified via the Firebase Auth REST API; only emails listed in
-// VITE_ADMIN_EMAILS may use this endpoint.
-app.post('/api/admin/create-user', adminUserRateLimit, async (req, res) => {
-  if (!FIREBASE_API_KEY) {
-    res.status(503).json({ error: 'Firebase is not configured on this server.' });
-    return;
-  }
-
-  // ── 1. Verify caller's ID token ──────────────────────────────────────────
-  const authHeader = req.headers.authorization ?? '';
-  const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-  if (!idToken) {
-    res.status(401).json({ error: 'Missing Authorization header.' });
-    return;
-  }
-
-  let callerEmail;
-  try {
-    const lookupRes = await fetch(
-      `${FIREBASE_AUTH_URL}:lookup?key=${FIREBASE_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      }
-    );
-    const lookupData = await lookupRes.json();
-    if (!lookupRes.ok || !Array.isArray(lookupData.users) || lookupData.users.length === 0) {
-      res.status(401).json({ error: 'Invalid or expired ID token.' });
-      return;
-    }
-    callerEmail = (lookupData.users[0].email ?? '').toLowerCase();
-  } catch (err) {
-    console.error('Token verification error:', err);
-    res.status(500).json({ error: 'Could not verify identity.' });
-    return;
-  }
-
-  // ── 2. Check admin privileges ────────────────────────────────────────────
-  const adminEmails = (process.env.ADMIN_EMAILS || process.env.VITE_ADMIN_EMAILS || '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  if (adminEmails.length === 0) {
-    res.status(503).json({ error: 'Admin email list is not configured on this server.' });
-    return;
-  }
-
-  if (!adminEmails.includes(callerEmail)) {
-    res.status(403).json({ error: 'Forbidden: admin access required.' });
-    return;
-  }
-
-  // ── 3. Validate payload ──────────────────────────────────────────────────
-  const { email, password } = req.body ?? {};
-  if (!email || typeof email !== 'string') {
-    res.status(400).json({ error: 'email is required.' });
-    return;
-  }
-  if (!password || typeof password !== 'string' || password.length < 10) {
-    res.status(400).json({ error: 'password must be at least 10 characters.' });
-    return;
-  }
-
-  // ── 4. Create the new user via Firebase Auth REST API ────────────────────
-  try {
-    const signUpRes = await fetch(
-      `${FIREBASE_AUTH_URL}:signUp?key=${FIREBASE_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password, returnSecureToken: false }),
-      }
-    );
-    const signUpData = await signUpRes.json();
-    if (!signUpRes.ok) {
-      const msg = signUpData?.error?.message ?? 'Failed to create user.';
-      res.status(400).json({ error: msg });
-      return;
-    }
-    res.status(201).json({ uid: signUpData.localId, email: signUpData.email });
-  } catch (err) {
-    console.error('Create user error:', err);
-    res.status(500).json({ error: 'Failed to create user.' });
-  }
-});
-
-app.post('/api/admin/delete-user', adminUserRateLimit, async (req, res) => {
-  if (!adminAuth || !adminDb) {
-    res.status(503).json({ error: 'Firebase Admin is not configured on this server.' });
-    return;
-  }
-
-  let caller;
-  try {
-    caller = await authenticateAdminRequest(req);
-  } catch (error) {
-    const statusCode = error?.statusCode ?? 500;
-    res.status(statusCode).json({ error: error.message ?? 'Could not verify admin access.' });
-    return;
-  }
-
-  const uid = typeof req.body?.uid === 'string' ? req.body.uid.trim() : '';
-  if (!uid) {
-    res.status(400).json({ error: 'uid is required.' });
-    return;
-  }
-  if (uid === caller.uid) {
-    res.status(400).json({ error: 'You cannot delete the account you are currently using.' });
-    return;
-  }
-
-  let userRecord;
-  try {
-    userRecord = await adminAuth.getUser(uid);
-  } catch (error) {
-    if (error?.code === 'auth/user-not-found') {
-      res.status(404).json({ error: 'User not found.' });
-      return;
-    }
-    console.error('Admin delete-user lookup failed:', error);
-    res.status(500).json({ error: 'Failed to load user.' });
-    return;
-  }
-
-  try {
-    const userDocRef = adminDb.collection('users').doc(uid);
-    await Promise.all([
-      deleteCollectionDocs(userDocRef.collection('cards')),
-      deleteCollectionDocs(userDocRef.collection('decks')),
-      deleteQueryDocs(adminDb.collection('trades').where('fromUid', '==', uid)),
-      deleteQueryDocs(adminDb.collection('trades').where('toUid', '==', uid)),
-      deleteQueryDocs(adminDb.collection('battleResults').where('challengerUid', '==', uid)),
-      deleteQueryDocs(adminDb.collection('battleResults').where('defenderUid', '==', uid)),
-      deleteQueryDocs(adminDb.collection('referralClaims').where('referrerUid', '==', uid)),
-    ]);
-
-    await Promise.all([
-      userDocRef.delete(),
-      adminDb.collection('userProfiles').doc(uid).delete(),
-      adminDb.collection('arena').doc(uid).delete(),
-      adminDb.collection('leaderboard').doc(uid).delete(),
-    ]);
-
-    await adminAuth.deleteUser(uid);
-    res.json({ uid, email: userRecord.email ?? '' });
-  } catch (error) {
-    console.error('Admin delete-user failed:', error);
-    res.status(500).json({ error: 'Failed to delete user.' });
-  }
+registerImportRoutes(app, {
+  importRateLimit,
 });
 
 // Health-check route — required so Render's uptime ping returns 200 instead of

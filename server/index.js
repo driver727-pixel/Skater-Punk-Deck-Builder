@@ -939,14 +939,15 @@ async function fetchDistrictWeatherSnapshot(district, location) {
 }
 
 async function buildDistrictWeatherPayload() {
+  const districtEntries = Object.entries(DISTRICT_WEATHER_LOCATIONS);
   const districtFetchResults = await Promise.allSettled(
-    Object.entries(DISTRICT_WEATHER_LOCATIONS).map(([district, location]) =>
+    districtEntries.map(([district, location]) =>
       fetchDistrictWeatherSnapshot(district, location),
     ),
   );
   const fallbackGeneratedAt = new Date().toISOString();
   const districts = districtFetchResults.map((result, index) => {
-    const [district, location] = Object.entries(DISTRICT_WEATHER_LOCATIONS)[index];
+    const [district, location] = districtEntries[index];
     if (result.status === 'fulfilled') {
       return result.value;
     }
@@ -1459,7 +1460,7 @@ app.post('/api/create-checkout-session', checkoutRateLimit, async (req, res) => 
   const normalizedEmail = normalizeEmail(email);
   const paidTier = resolveTierFromPriceId(priceId);
 
-  if (!priceId || typeof priceId !== 'string' || !ALLOWED_PRICE_IDS.has(priceId) || !paidTier) {
+  if (!priceId || typeof priceId !== 'string' || !paidTier) {
     res.status(400).json({ error: 'Invalid or unsupported price ID.' });
     return;
   }

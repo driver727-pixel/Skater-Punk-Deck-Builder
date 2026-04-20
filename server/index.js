@@ -2,7 +2,6 @@ import express from 'express';
 import compression from 'compression';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import Stripe from 'stripe';
 import { fal } from '@fal-ai/client';
 import 'dotenv/config';
@@ -12,6 +11,22 @@ import { cert, getApps, initializeApp as initializeAdminApp } from 'firebase-adm
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { FieldValue, getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
 import { createBattleCardSnapshot, resolveBattleWithEffects } from './battle.js';
+import {
+  buildUserDisplayName,
+  getConfiguredAdminEmails,
+  isStrongPassword,
+  normalizeEmail,
+  shouldGrantAdminAccess,
+} from './lib/auth.js';
+import {
+  extractFalRequestConfigCandidate,
+  isPlainObject,
+  normalizeBoardReferenceUrls,
+  normalizeFalLoras,
+  parseFalScale,
+  sanitizeFalRequestConfig,
+} from './lib/fal.js';
+import { buildRateLimiter, createRateLimitStore } from './lib/rateLimit.js';
 
 // Load the shared pricing config — the single source of truth for Stripe
 // price IDs, buy URLs, and display prices.  Update src/lib/tierPricing.json
@@ -53,10 +68,7 @@ const ALLOWED_REMOTE_IMAGE_HOST_PATTERNS = [
 ];
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
 const boardImageJobs = new Map();
-
-function normalizeEmail(value) {
-  return getTrimmedString(value, 320).toLowerCase();
-}
+const REDIS_URL = process.env.REDIS_URL || '';
 
 // Render (and most PaaS reverse-proxies) add X-Forwarded-For so Express can
 // determine the real client IP.  Without trust proxy = 1, express-rate-limit
@@ -159,66 +171,61 @@ app.use(compression());
 app.use(express.json({ limit: '256kb' }));
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
+const { store: sharedRateLimitStore } = createRateLimitStore(REDIS_URL);
+
 // Each IP may call the image-generation / background-removal endpoints at most
 // 20 times per minute. This prevents abuse that would run up the Fal.ai bill.
-const imageRateLimit = rateLimit({
+const imageRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 20,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
   message: { error: 'Too many image requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
 });
 
 // Status-check polling is cheap (no AI inference), so allow a higher burst.
-const boardImageStatusRateLimit = rateLimit({
+const boardImageStatusRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 120,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
   message: { error: 'Too many status requests — please slow down.' },
+  store: sharedRateLimitStore,
 });
 
 // The import endpoint is cheaper to call, so allow a somewhat higher burst.
-const importRateLimit = rateLimit({
+const importRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 60,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
   message: { error: 'Too many requests — please slow down.' },
+  store: sharedRateLimitStore,
 });
 
 // Stripe checkout sessions — tightly rate-limited to prevent abuse.
-const checkoutRateLimit = rateLimit({
+const checkoutRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 10,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
   message: { error: 'Too many checkout requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
 });
 
 // Admin user-creation — very tightly rate-limited.
-const adminUserRateLimit = rateLimit({
+const adminUserRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 10,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
   message: { error: 'Too many admin requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
 });
 
-const weatherRateLimit = rateLimit({
+const weatherRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 30,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
   message: { error: 'Too many weather requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
 });
 
-const battleRateLimit = rateLimit({
+const battleRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 30,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
   message: { error: 'Too many battle requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
 });
 
 const FAL_KEY = process.env.FAL_KEY || '';
@@ -595,6 +602,9 @@ if (!adminAuth || !adminDb) {
     '⚠️  Firebase Admin credentials are not set — set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, and FIREBASE_ADMIN_PRIVATE_KEY to enable secure battle resolution, authenticated image proxies, and admin account management.',
   );
 }
+if (REDIS_URL) {
+  console.info('Redis-backed rate limiting enabled.');
+}
 
 async function authenticateFirebaseUser(req) {
   if (!adminAuth) {
@@ -615,25 +625,86 @@ async function authenticateFirebaseUser(req) {
   }
 }
 
-function getConfiguredAdminEmails() {
-  return (process.env.ADMIN_EMAILS || process.env.VITE_ADMIN_EMAILS || '')
-    .split(',')
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
+async function syncAdminClaim(uid, email) {
+  if (!adminAuth) return { admin: false, claimsUpdated: false };
+  const adminEmails = getConfiguredAdminEmails(process.env.ADMIN_EMAILS || process.env.VITE_ADMIN_EMAILS || '');
+  const shouldBeAdmin = shouldGrantAdminAccess(email, adminEmails);
+  const userRecord = await adminAuth.getUser(uid);
+  const currentClaims = userRecord.customClaims ?? {};
+  const currentAdmin = currentClaims.admin === true;
+
+  if (currentAdmin !== shouldBeAdmin) {
+    const nextClaims = { ...currentClaims };
+    if (shouldBeAdmin) nextClaims.admin = true;
+    else delete nextClaims.admin;
+    await adminAuth.setCustomUserClaims(uid, nextClaims);
+    if (adminDb) {
+      await adminDb.collection('userProfiles').doc(uid).set({
+        isAdmin: shouldBeAdmin,
+        ...(shouldBeAdmin ? { tier: 'tier3' } : {}),
+        updatedAt: new Date().toISOString(),
+      }, { merge: true });
+    }
+    return { admin: shouldBeAdmin, claimsUpdated: true };
+  }
+
+  if (adminDb) {
+    await adminDb.collection('userProfiles').doc(uid).set({
+      isAdmin: shouldBeAdmin,
+      ...(shouldBeAdmin ? { tier: 'tier3' } : {}),
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+  }
+
+  return { admin: currentAdmin, claimsUpdated: false };
+}
+
+async function upsertUserLookupRecord({ uid, email, displayName }) {
+  if (!adminDb) return;
+  const normalizedEmail = normalizeEmail(email);
+  const resolvedDisplayName = buildUserDisplayName({ email, displayName });
+  const payload = {
+    uid,
+    email: typeof email === 'string' ? email.trim() : '',
+    emailLower: normalizedEmail,
+    displayName: resolvedDisplayName,
+    updatedAt: new Date().toISOString(),
+  };
+  await Promise.all([
+    adminDb.collection('userProfiles').doc(uid).set(payload, { merge: true }),
+    adminDb.collection('userLookup').doc(uid).set(payload, { merge: true }),
+  ]);
 }
 
 async function authenticateAdminRequest(req) {
   const decodedToken = await authenticateFirebaseUser(req);
-  const adminEmails = getConfiguredAdminEmails();
+  const adminEmails = getConfiguredAdminEmails(process.env.ADMIN_EMAILS || process.env.VITE_ADMIN_EMAILS || '');
+  if (decodedToken.admin === true) {
+    return decodedToken;
+  }
   if (adminEmails.length === 0) {
     throw Object.assign(new Error('Admin email list is not configured on this server.'), { statusCode: 503 });
   }
-  const callerEmail = (decodedToken.email ?? '').trim().toLowerCase();
-  if (!callerEmail || !adminEmails.includes(callerEmail)) {
+  if (!shouldGrantAdminAccess(decodedToken.email ?? '', adminEmails)) {
     throw Object.assign(new Error('Forbidden: admin access required.'), { statusCode: 403 });
   }
   return decodedToken;
 }
+
+app.post('/api/auth/sync-session', async (req, res) => {
+  if (!adminAuth) {
+    res.status(503).json({ error: 'Firebase Admin authentication is not configured.' });
+    return;
+  }
+
+  try {
+    const decodedToken = await authenticateFirebaseUser(req);
+    const claimSync = await syncAdminClaim(decodedToken.uid, decodedToken.email ?? '');
+    res.json(claimSync);
+  } catch (error) {
+    res.status(error.statusCode ?? 500).json({ error: error.message ?? 'Failed to sync auth session.' });
+  }
+});
 
 async function deleteCollectionDocs(collectionRef, pageSize = 200) {
   while (true) {
@@ -698,118 +769,6 @@ function buildFallbackDistrictWeatherPayload() {
       accessRule: null,
     })),
   };
-}
-
-function isPlainObject(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function normalizeFalLoraEntry(entry) {
-  if (!isPlainObject(entry)) return null;
-
-  const path = typeof entry.path === 'string' ? entry.path.trim()
-    : typeof entry.url === 'string' ? entry.url.trim()
-    : '';
-  if (!path) return null;
-
-  const rawScale = parseFalScale(entry.scale, 1);
-
-  return {
-    path,
-    scale: Number.isFinite(rawScale) ? rawScale : 1,
-  };
-}
-
-function parseFalScale(value, fallback = 1) {
-  const parsed =
-    value == null
-      ? fallback
-      : typeof value === 'number'
-        ? value
-        : Number.parseFloat(String(value));
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
-
-function normalizeFalLoras(value, fallbackScale = 1) {
-  if (Array.isArray(value)) {
-    const loras = value
-      .map((entry) => normalizeFalLoraEntry(entry))
-      .filter(Boolean);
-    return loras.length ? loras : undefined;
-  }
-
-  if (isPlainObject(value)) {
-    const lora = normalizeFalLoraEntry(value);
-    return lora ? [lora] : undefined;
-  }
-
-  if (typeof value === 'string' && value.trim()) {
-    return [{ path: value.trim(), scale: fallbackScale }];
-  }
-
-  return undefined;
-}
-
-function extractFalRequestConfigCandidate(payload) {
-  if (!isPlainObject(payload)) return null;
-
-  const candidates = [
-    payload.input,
-    payload.config,
-    payload.settings,
-    payload.parameters,
-    payload.defaults,
-    payload.fal,
-    payload.fal_config,
-    payload.falConfig,
-    payload.request,
-    payload.request_body,
-    payload,
-  ];
-
-  return candidates.find((candidate) => {
-    if (!isPlainObject(candidate)) return false;
-
-    return [
-      'image_size',
-      'num_inference_steps',
-      'guidance_scale',
-      'num_images',
-      'enable_safety_checker',
-      'output_format',
-      'loras',
-      'lora',
-      'lora_path',
-      'path',
-      'diffusers_lora_file',
-      'config_file',
-    ].some((key) => candidate[key] !== undefined);
-  }) ?? null;
-}
-
-function sanitizeFalRequestConfig(candidate) {
-  if (!isPlainObject(candidate)) return null;
-
-  const config = {};
-  const loraScale = parseFalScale(candidate.lora_scale, 1);
-  const scale = parseFalScale(candidate.scale, 1);
-
-  const maybeLoras =
-    normalizeFalLoras(candidate.loras) ??
-    normalizeFalLoras(candidate.lora) ??
-    normalizeFalLoras(candidate.lora_path, loraScale) ??
-    normalizeFalLoras(candidate.path, scale) ??
-    normalizeFalLoras(candidate.diffusers_lora_file, loraScale);
-
-  if (candidate.image_size !== undefined) config.image_size = candidate.image_size;
-  if (candidate.num_inference_steps !== undefined) config.num_inference_steps = candidate.num_inference_steps;
-  if (candidate.guidance_scale !== undefined) config.guidance_scale = candidate.guidance_scale;
-  if (candidate.num_images !== undefined) config.num_images = candidate.num_images;
-  if (candidate.enable_safety_checker !== undefined) config.enable_safety_checker = candidate.enable_safety_checker;
-  if (candidate.output_format !== undefined) config.output_format = candidate.output_format;
-  if (maybeLoras !== undefined) config.loras = maybeLoras;
-
-  return Object.keys(config).length ? config : null;
 }
 
 function normalizeFalProfile(value) {
@@ -1055,36 +1014,6 @@ app.post('/api/generate-image', imageRateLimit, async (req, res) => {
   }
 });
 
-function normalizeBoardReferenceUrls(value) {
-  const BOARD_REFERENCE_IMAGE_PATH_PATTERN =
-    /^\/assets\/boards\/(deck|drivetrain|wheels|battery)\/[a-z0-9-]+\.png$/i;
-
-  if (!Array.isArray(value) || value.length !== 4) return null;
-
-  const urls = [];
-  for (const entry of value) {
-    if (typeof entry !== 'string') return null;
-
-    const trimmed = entry.trim();
-    if (!trimmed) return null;
-
-    let parsed;
-    try {
-      parsed = new URL(trimmed);
-    } catch {
-      return null;
-    }
-
-    if (parsed.origin !== 'https://punchskater.com') return null;
-    if (!BOARD_REFERENCE_IMAGE_PATH_PATTERN.test(parsed.pathname)) {
-      return null;
-    }
-
-    urls.push(parsed.toString());
-  }
-
-  return urls;
-}
 
 function extractBoardImageUrl(result) {
   // Log the raw structure when debug logging is enabled so we can diagnose
@@ -1560,8 +1489,8 @@ app.get('/api/verify-checkout-session', checkoutRateLimit, async (req, res) => {
 // ── Admin: Create user ────────────────────────────────────────────────────────
 // Creates a new Firebase Auth user on behalf of an authenticated admin.
 // The caller must supply a valid Firebase ID token in the Authorization header.
-// The token is verified via the Firebase Auth REST API; only emails listed in
-// VITE_ADMIN_EMAILS may use this endpoint.
+// Custom admin claims are preferred, with the configured admin-email allow-list
+// acting as a bootstrap path until the claim has been refreshed on the client.
 app.post('/api/admin/create-user', adminUserRateLimit, async (req, res) => {
   if (!adminAuth) {
     res.status(503).json({ error: 'Firebase Admin is not configured on this server.' });
@@ -1580,8 +1509,8 @@ app.post('/api/admin/create-user', adminUserRateLimit, async (req, res) => {
     res.status(400).json({ error: 'email is required.' });
     return;
   }
-  if (!password || typeof password !== 'string' || password.length < 10) {
-    res.status(400).json({ error: 'password must be at least 10 characters.' });
+  if (!isStrongPassword(password)) {
+    res.status(400).json({ error: 'password must be at least 12 characters and include upper, lower, number, and symbol.' });
     return;
   }
 
@@ -1590,6 +1519,12 @@ app.post('/api/admin/create-user', adminUserRateLimit, async (req, res) => {
       email: email.trim(),
       password,
     });
+    await upsertUserLookupRecord({
+      uid: userRecord.uid,
+      email: userRecord.email ?? email.trim(),
+      displayName: buildUserDisplayName({ email: userRecord.email ?? email.trim() }),
+    });
+    await syncAdminClaim(userRecord.uid, userRecord.email ?? email.trim());
     res.status(201).json({ uid: userRecord.uid, email: userRecord.email ?? email.trim() });
   } catch (err) {
     console.error('Create user error:', err);
@@ -1658,6 +1593,7 @@ app.post('/api/admin/delete-user', adminUserRateLimit, async (req, res) => {
     await Promise.all([
       userDocRef.delete(),
       adminDb.collection('userProfiles').doc(uid).delete(),
+      adminDb.collection('userLookup').doc(uid).delete(),
       adminDb.collection('arena').doc(uid).delete(),
       adminDb.collection('leaderboard').doc(uid).delete(),
     ]);

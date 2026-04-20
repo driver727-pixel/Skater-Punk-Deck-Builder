@@ -10,21 +10,21 @@
  *  Two resolutions are tracked for each district:
  *
  *  • BACKGROUND_ASSETS_SMALL  — screen / standard quality (750 × 1050 px).
- *    Place files in  public/assets/backgrounds/small/<slug>.jpg
+ *    Place files in  public/assets/backgrounds/small/<slug>.webp
  *    Used for the live card preview and collection thumbnails (fast load).
  *
  *  • BACKGROUND_ASSETS        — print quality (1500 × 2100 px).
- *    Place files in  public/assets/backgrounds/<slug>.jpg
+ *    Place files in  public/assets/backgrounds/<slug>.webp
  *    Used only when the user prints or downloads the card (high fidelity).
  *
  * ── How to add a background ──────────────────────────────────────────────────
- *  1. Place the print-quality image in  public/assets/backgrounds/<slug>.jpg
+ *  1. Place the print-quality image in  public/assets/backgrounds/<slug>.webp
  *     and register it in BACKGROUND_ASSETS below.
- *  2. Place the screen-quality image in public/assets/backgrounds/small/<slug>.jpg
+ *  2. Place the screen-quality image in public/assets/backgrounds/small/<slug>.webp
  *     and register it in BACKGROUND_ASSETS_SMALL below.
  *
  * ── How to add a frame ───────────────────────────────────────────────────────
- *  1. Place the image in   public/assets/frames/<slug>.png        (see README there).
+ *  1. Place the image in   public/assets/frames/<slug>.webp       (see README there).
  *  2. Add (or uncomment) the rarity key below in FRAME_ASSETS.
  *
  * ── Getting the first-run URLs ───────────────────────────────────────────────
@@ -47,32 +47,32 @@ interface FrameAssetConfig {
 
 // ── Background registry — print / full quality ────────────────────────────────
 //
-// Files live in  public/assets/backgrounds/<slug>.jpg  (1500 × 2100 px).
+// Files live in  public/assets/backgrounds/<slug>.webp  (1500 × 2100 px).
 // Used for print and JPEG download.  Uncomment an entry once you have placed
 // the corresponding file.
 
 const BACKGROUND_ASSETS: Partial<Record<District, string>> = {
-  Airaway:      "/assets/backgrounds/airaway.jpg",
-  Nightshade:   "/assets/backgrounds/nightshade.jpg",
-  Batteryville: "/assets/backgrounds/batteryville.jpg",
-  "The Grid":   "/assets/backgrounds/the-grid.jpg",
-  "The Forest": "/assets/backgrounds/the-forest.jpg",
-  "Glass City": "/assets/backgrounds/glass-city.jpg",
+  Airaway:      "/assets/backgrounds/airaway.webp",
+  Nightshade:   "/assets/backgrounds/nightshade.webp",
+  Batteryville: "/assets/backgrounds/batteryville.webp",
+  "The Grid":   "/assets/backgrounds/the-grid.webp",
+  "The Forest": "/assets/backgrounds/the-forest.webp",
+  "Glass City": "/assets/backgrounds/glass-city.webp",
 };
 
 // ── Background registry — screen / standard quality ───────────────────────────
 //
-// Files live in  public/assets/backgrounds/small/<slug>.jpg  (750 × 1050 px).
+// Files live in  public/assets/backgrounds/small/<slug>.webp  (750 × 1050 px).
 // Used for the live card preview and collection thumbnails (faster load).
 // Uncomment an entry once you have placed the corresponding file.
 
 const BACKGROUND_ASSETS_SMALL: Partial<Record<District, string>> = {
-  Airaway:      "/assets/backgrounds/small/airaway.jpg",
-  Nightshade:   "/assets/backgrounds/small/nightshade.jpg",
-  Batteryville: "/assets/backgrounds/small/batteryville.jpg",
-  "The Grid":   "/assets/backgrounds/small/the-grid.jpg",
-  "The Forest": "/assets/backgrounds/small/the-forest.jpg",
-  "Glass City": "/assets/backgrounds/small/glass-city.jpg",
+  Airaway:      "/assets/backgrounds/small/airaway.webp",
+  Nightshade:   "/assets/backgrounds/small/nightshade.webp",
+  Batteryville: "/assets/backgrounds/small/batteryville.webp",
+  "The Grid":   "/assets/backgrounds/small/the-grid.webp",
+  "The Forest": "/assets/backgrounds/small/the-forest.webp",
+  "Glass City": "/assets/backgrounds/small/glass-city.webp",
 };
 
 // ── Frame registry ─────────────────────────────────────────────────────────────
@@ -81,14 +81,14 @@ const BACKGROUND_ASSETS_SMALL: Partial<Record<District, string>> = {
 // public/assets/frames/.
 //
 // Example:
-//   Legendary: { url: "/assets/frames/legendary.png" },
+//   Legendary: { url: "/assets/frames/legendary.webp" },
 
 const FRAME_ASSETS: Partial<Record<Rarity, FrameAssetConfig>> = {
-  "Punch Skater": { url: "/assets/frames/punch-skater.png" },
-  Apprentice:     { url: "/assets/frames/apprentice.png" },
-  Master:         { url: "/assets/frames/master.png" },
-  Rare:           { url: "/assets/frames/rare.png" },
-  Legendary:      { url: "/assets/frames/legendary.png" },
+  "Punch Skater": { url: "/assets/frames/punch-skater.webp" },
+  Apprentice:     { url: "/assets/frames/apprentice.webp" },
+  Master:         { url: "/assets/frames/master.webp" },
+  Rare:           { url: "/assets/frames/rare.webp" },
+  Legendary:      { url: "/assets/frames/legendary.webp" },
 };
 
 // ── Public API ─────────────────────────────────────────────────────────────────
@@ -151,24 +151,24 @@ export function shouldInsetBackgroundForFrame(rarity: Rarity, frameUrl?: string)
 
 // ── Faction background registry ───────────────────────────────────────────────
 //
-// Files live in  public/assets/factions/<slug>.jpg
+// Files live in  public/assets/factions/<slug>.webp
 // Used as the background image on the Factions page faction cards.
 // Firebase-uploaded images (from the Admin panel) take precedence over these.
 // Add an entry here once you have placed the corresponding file in that folder.
 
 const FACTION_ASSETS: Partial<Record<Faction, string>> = {
-  "D4rk $pider":                          "/assets/factions/d4rk_pider.jpg",
-  "Hermes' Squirmies":                    "/assets/factions/hermes_squirmies.jpg",
-  "Iron Curtains":                        "/assets/factions/iron_curtains.jpg",
-  "Ne0n Legion":                          "/assets/factions/ne0n_legion.jpg",
-  "Qu111s (Quills)":                      "/assets/factions/qu111s_quills.jpg",
-  "The Asclepians":                       "/assets/factions/the_asclepians.jpg",
-  "The Knights Technarchy":               "/assets/factions/the_knights_technarchy.jpg",
-  "The Mesopotamian Society":             "/assets/factions/the_mesopotamian_society.jpg",
-  "The Team":                             "/assets/factions/the_team.jpg",
-  "The Wooders":                          "/assets/factions/the_wooders.jpg",
-  "United Corporations of America (UCA)": "/assets/factions/uca.jpg",
-  "UCPS Workers":                         "/assets/factions/ucps_workers.jpg",
+  "D4rk $pider":                          "/assets/factions/d4rk_pider.webp",
+  "Hermes' Squirmies":                    "/assets/factions/hermes_squirmies.webp",
+  "Iron Curtains":                        "/assets/factions/iron_curtains.webp",
+  "Ne0n Legion":                          "/assets/factions/ne0n_legion.webp",
+  "Qu111s (Quills)":                      "/assets/factions/qu111s_quills.webp",
+  "The Asclepians":                       "/assets/factions/the_asclepians.webp",
+  "The Knights Technarchy":               "/assets/factions/the_knights_technarchy.webp",
+  "The Mesopotamian Society":             "/assets/factions/the_mesopotamian_society.webp",
+  "The Team":                             "/assets/factions/the_team.webp",
+  "The Wooders":                          "/assets/factions/the_wooders.webp",
+  "United Corporations of America (UCA)": "/assets/factions/uca.webp",
+  "UCPS Workers":                         "/assets/factions/ucps_workers.webp",
 };
 
 /**

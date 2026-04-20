@@ -12,6 +12,7 @@
     "deploy": "gh-pages -d dist",
     "start": "node server/index.js",
     "optimize:assets": "node scripts/optimize-assets.mjs",
+    "test:server": "node --test server/test/*.test.js",
     "test:e2e": "playwright test",
     "test:e2e:report": "playwright show-report"
   },
@@ -29,6 +30,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.5.0",
+    "rate-limit-redis": "^4.3.0",
+    "redis": "^5.8.3",
     "stripe": "^22.0.0"
   },
   "devDependencies": {

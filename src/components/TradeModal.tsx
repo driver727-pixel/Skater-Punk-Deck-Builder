@@ -89,7 +89,7 @@ export function TradeModal({ cards, onClose, preselectedCard }: TradeModalProps)
     try {
       // Look up recipient by email
       const snap = await getDocs(
-        query(collection(db, "userProfiles"), where("email", "==", email))
+        query(collection(db, "userLookup"), where("emailLower", "==", email))
       );
       if (snap.empty) {
         setError("No account found with that email address.");

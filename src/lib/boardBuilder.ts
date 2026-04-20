@@ -507,7 +507,7 @@ const MOTOR_SEED: Record<MotorType, string | null> = {
 
 /**
  * Returns the public asset URLs for all four board layers based on the active
- * `BoardConfig`. Assets live at `public/assets/boards/<seedKey>.png`.
+ * `BoardConfig`. Assets live at `public/assets/boards/<seedKey>.webp`.
  * Returns `null` for any component that has no catalog asset yet.
  */
 export function getBoardAssetUrls(config: BoardConfig): {
@@ -526,11 +526,11 @@ export function getBoardAssetUrls(config: BoardConfig): {
   const batteryOpt  = BATTERY_OPTIONS.find((o) => o.value === normalizedConfig.battery);
 
   return {
-    deckUrl:             deckSeed    ? `/assets/boards/${deckSeed}.png`    : null,
-    drivetrainUrl:       driveSeed   ? `/assets/boards/${driveSeed}.png`   : null,
-    motorUrl:            motorSeed   ? `/assets/boards/${motorSeed}.png`   : null,
-    wheelsUrl:           wheelSeed   ? `/assets/boards/${wheelSeed}.png`   : null,
-    batteryUrl:          batterySeed ? `/assets/boards/${batterySeed}.png` : null,
+    deckUrl:             deckSeed    ? `/assets/boards/${deckSeed}.webp`    : null,
+    drivetrainUrl:       driveSeed   ? `/assets/boards/${driveSeed}.webp`   : null,
+    motorUrl:            motorSeed   ? `/assets/boards/${motorSeed}.webp`   : null,
+    wheelsUrl:           wheelSeed   ? `/assets/boards/${wheelSeed}.webp`   : null,
+    batteryUrl:          batterySeed ? `/assets/boards/${batterySeed}.webp` : null,
     batteryIsTopMounted: batteryOpt?.isTopMounted ?? false,
   };
 }
@@ -539,7 +539,7 @@ export function getBoardAssetUrls(config: BoardConfig): {
 
 /**
  * Returns the image URL for each selected component from the per-category
- * folders under `public/assets/boards/<category>/<Value>.png`.
+ * folders under `public/assets/boards/<category>/<Value>.webp`.
  *
  * The user uploads real product photos into these folders:
  *   deck/       — one PNG per BoardType   (e.g. Street.png, AT.png)
@@ -559,11 +559,11 @@ export interface BoardComponentImageUrls {
 export function getBoardComponentImageUrls(config: BoardConfig): BoardComponentImageUrls {
   const normalizedConfig = normalizeBoardConfig(config);
   return {
-    deckUrl:       withBoardComponentAssetVersion(`/assets/boards/deck/${normalizedConfig.boardType}.png`),
-    drivetrainUrl: withBoardComponentAssetVersion(`/assets/boards/drivetrain/${normalizedConfig.drivetrain}.png`),
-    motorUrl:      withBoardComponentAssetVersion(`/assets/boards/motor/${normalizedConfig.motor}.png`),
-    wheelsUrl:     withBoardComponentAssetVersion(`/assets/boards/wheels/${normalizedConfig.wheels}.png`),
-    batteryUrl:    withBoardComponentAssetVersion(`/assets/boards/battery/${normalizedConfig.battery}.png`),
+    deckUrl:       withBoardComponentAssetVersion(`/assets/boards/deck/${normalizedConfig.boardType}.webp`),
+    drivetrainUrl: withBoardComponentAssetVersion(`/assets/boards/drivetrain/${normalizedConfig.drivetrain}.webp`),
+    motorUrl:      withBoardComponentAssetVersion(`/assets/boards/motor/${normalizedConfig.motor}.webp`),
+    wheelsUrl:     withBoardComponentAssetVersion(`/assets/boards/wheels/${normalizedConfig.wheels}.webp`),
+    batteryUrl:    withBoardComponentAssetVersion(`/assets/boards/battery/${normalizedConfig.battery}.webp`),
   };
 }
 

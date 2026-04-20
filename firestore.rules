@@ -12,14 +12,44 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
 
-    // ── Public user profiles (email look-up for trading) ─────────────────────
+    // ── Private user profiles ────────────────────────────────────────────────
     match /userProfiles/{uid} {
-      allow read:  if request.auth != null;
-      allow write: if request.auth != null && (
-        // Owners may always update their own profile
-        request.auth.uid == uid
-        // Admins (marked isAdmin: true in their own profile) may update any profile
-        || (get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.isAdmin == true)
+      allow read: if request.auth != null
+        && (request.auth.uid == uid || request.auth.token.admin == true);
+      allow create: if request.auth != null && (
+        (request.auth.uid == uid
+          && request.resource.data.keys().hasOnly([
+            'uid', 'email', 'emailLower', 'displayName', 'discoveredFactions', 'updatedAt'
+          ]))
+        || request.auth.token.admin == true
+      );
+      allow update: if request.auth != null && (
+        (request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'email', 'emailLower', 'displayName', 'discoveredFactions', 'updatedAt'
+          ]))
+        || request.auth.token.admin == true
+      );
+      allow delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // ── Public user lookup (trade/address book) ──────────────────────────────
+    match /userLookup/{uid} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && (
+        (request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['uid', 'email', 'emailLower', 'displayName', 'updatedAt']))
+        || request.auth.token.admin == true
+      );
+      allow update: if request.auth != null && (
+        (request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'email', 'emailLower', 'displayName', 'updatedAt'
+          ]))
+        || request.auth.token.admin == true
+      );
+      allow delete: if request.auth != null && (
+        request.auth.uid == uid || request.auth.token.admin == true
       );
     }
 
@@ -46,8 +76,7 @@ service cloud.firestore {
         && (!request.resource.data.keys().hasAny(['seed'])
           || (request.resource.data.seed is string && request.resource.data.seed.size() <= 512));
       allow update: if false;
-      allow delete: if request.auth != null
-        && get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.isAdmin == true;
+      allow delete: if request.auth != null && request.auth.token.admin == true;
     }
 
     // ── Trades ───────────────────────────────────────────────────────────────
@@ -121,10 +150,10 @@ service cloud.firestore {
     // ── Faction images ───────────────────────────────────────────────────────
     // Stores the uploaded background image URL for each faction (keyed by
     // a sanitized faction slug).  Anyone may read; only admins may write.
-    match /factionImages/{factionKey} {
+      match /factionImages/{factionKey} {
       allow read: if true;
       allow write, delete: if request.auth != null
-        && get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.isAdmin == true;
+        && request.auth.token.admin == true;
     }
 
   }

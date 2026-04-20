@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import {
   saveTier,
   loadEmail,
@@ -84,7 +84,7 @@ function extractReferrerUid(): string | null {
 }
 
 export function TierProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [tier, setTierState] = useState<TierLevel>("free");
   const [email, setEmailState] = useState<string>(resolveInitialEmail);
   const [generateCredits, setGenerateCredits] = useState<number>(loadStoredCredits);
@@ -175,15 +175,10 @@ export function TierProvider({ children }: { children: ReactNode }) {
       const data = snap.exists() ? snap.data() : null;
 
       // Admin users always get tier3
-      if (data?.isAdmin) {
+      if (userProfile?.isAdmin) {
         setTierState("tier3");
         saveTier("tier3");
         clearCheckoutSessionId();
-        // Persist tier to Firestore so the admin panel shows the correct value
-        if (data?.tier !== "tier3") {
-          setDoc(profileRef, { tier: "tier3" }, { merge: true })
-            .catch(() => {/* non-fatal */});
-        }
         return;
       }
 
@@ -213,13 +208,7 @@ export function TierProvider({ children }: { children: ReactNode }) {
       ) {
         setTierState(verifiedCheckout.tier);
         saveTier(verifiedCheckout.tier);
-        setDoc(
-          profileRef,
-          { tier: verifiedCheckout.tier },
-          { merge: true },
-        )
-          .then(() => clearCheckoutSessionId())
-          .catch(() => {/* non-fatal */});
+        clearCheckoutSessionId();
         return;
       }
 
@@ -228,7 +217,7 @@ export function TierProvider({ children }: { children: ReactNode }) {
         saveTier("free");
       }
     }, () => {/* non-fatal */});
-  }, [user, verifiedCheckout]);
+  }, [user, userProfile?.isAdmin, verifiedCheckout]);
 
   // ── Handle referral link on first mount ───────────────────────────────────
   useEffect(() => {
@@ -260,11 +249,7 @@ export function TierProvider({ children }: { children: ReactNode }) {
       setEmailState(newEmail);
       saveEmail(newEmail);
     }
-    if (user && db) {
-      setDoc(doc(db, "userProfiles", user.uid), { tier: level }, { merge: true })
-        .catch(() => {/* non-fatal */});
-    }
-  }, [user]);
+  }, []);
 
   const logout = useCallback(() => {
     clearAccount();

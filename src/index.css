@@ -4663,6 +4663,10 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 /* Front */
 .viewer3d-face--front {
   background: #0a0a0f;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 6px;
 }
 
 .viewer3d-art-composite,
@@ -4723,6 +4727,91 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   z-index: 10;
 }
 
+.viewer3d-front-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 6px;
+  letter-spacing: 0.8px;
+  color: #b8b8d4;
+  flex-shrink: 0;
+}
+
+.viewer3d-front-rarity {
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.viewer3d-front-art {
+  position: relative;
+  flex: 0 0 56%;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(7, 11, 22, 0.95), rgba(12, 16, 28, 0.98));
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.viewer3d-front-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+
+.viewer3d-front-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.viewer3d-front-name {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.1;
+  color: #f3f3ff;
+}
+
+.viewer3d-front-age {
+  margin: 0;
+  font-size: 8px;
+  color: #8f8fb2;
+}
+
+.viewer3d-front-bio,
+.viewer3d-front-catchphrase {
+  margin: 0;
+  font-size: 7px;
+  line-height: 1.45;
+}
+
+.viewer3d-front-bio {
+  color: #c9c9df;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.viewer3d-front-catchphrase {
+  color: #8f8fb2;
+  font-style: italic;
+}
+
+.viewer3d-front-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+  font-size: 6px;
+  color: #8f8fb2;
+  letter-spacing: 0.5px;
+}
+
+.viewer3d-front-meta-sep {
+  color: rgba(255,255,255,0.18);
+}
+
 /* Back */
 .viewer3d-face--back {
   background: #0f0f1a;
@@ -4748,80 +4837,131 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .viewer3d-back-name { font-size: 9px; letter-spacing: 1px; }
 .viewer3d-back-rarity { font-size: 7px; opacity: 0.75; }
 
-.viewer3d-back-portrait {
-  position: absolute;
-  top: 26px;
-  right: 6px;
-  width: 44px;
-  height: 44px;
-  object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid rgba(255,255,255,0.2);
-}
-
-.viewer3d-back-info {
-  padding: 4px 8px;
+.viewer3d-back-body {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding-right: 58px; /* space for portrait */
+  gap: 6px;
+  flex: 1;
+  min-height: 0;
+  padding: 8px;
 }
-.viewer3d-back-row { display: flex; gap: 4px; align-items: baseline; }
-.viewer3d-back-row-label { color: #7070a0; width: 52px; flex-shrink: 0; letter-spacing: 0.5px; }
-.viewer3d-back-row-value { color: #e0e0f0; }
+
+.viewer3d-back-section-label {
+  display: block;
+  font-size: 6px;
+  letter-spacing: 1.2px;
+  color: #8f8fb2;
+  text-transform: uppercase;
+}
+
+.viewer3d-back-board {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.viewer3d-back-board-image,
+.viewer3d-back-board-placeholder {
+  width: 100%;
+  min-height: 78px;
+  max-height: 96px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: radial-gradient(circle at top, rgba(0, 255, 136, 0.12), transparent 55%), rgba(255,255,255,0.03);
+}
+
+.viewer3d-back-board-image {
+  object-fit: contain;
+  padding: 6px;
+}
+
+.viewer3d-back-board-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  color: rgba(255,255,255,0.38);
+}
+
+.viewer3d-back-loadout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 8px;
+  flex-shrink: 0;
+}
+
+.viewer3d-back-loadout-item {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 3px;
+  align-items: center;
+  min-width: 0;
+  font-size: 6px;
+}
+
+.viewer3d-back-loadout-icon {
+  font-size: 8px;
+  line-height: 1;
+}
+
+.viewer3d-back-loadout-key {
+  color: #8f8fb2;
+  letter-spacing: 0.5px;
+}
+
+.viewer3d-back-loadout-value {
+  color: #f0f0ff;
+  font-weight: bold;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .viewer3d-back-stats {
-  padding: 4px 8px;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  border-top: 1px solid #1e1e3a;
-  margin-top: 2px;
 }
-/* Scale down StatBar inside viewer */
+
+.viewer3d-back-board-stats,
+.viewer3d-back-player-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 6px;
+  border-top: 1px solid #1e1e3a;
+}
+
+.viewer3d-back-board-stats .skate-stats-panel {
+  margin-top: 0;
+  padding: 4px;
+  gap: 3px;
+}
+
+.viewer3d-back-board-stats .skate-stats-title,
+.viewer3d-back-board-stats .skate-stat-label,
+.viewer3d-back-board-stats .skate-stat-value,
+.viewer3d-back-board-stats .skate-text-key,
+.viewer3d-back-board-stats .skate-text-val {
+  font-size: 6px;
+}
+
+.viewer3d-back-board-stats .skate-stat-label {
+  width: 26px;
+}
+
+.viewer3d-back-board-stats .neon-tube {
+  height: 4px;
+}
+
 .viewer3d-back-stats .stat-bar { gap: 2px; }
 .viewer3d-back-stats .stat-label { font-size: 6px; width: 24px; }
 .viewer3d-back-stats .stat-value { font-size: 6px; width: 8px; }
 .viewer3d-back-stats .stat-track { height: 2px; }
 
-.viewer3d-back-trait {
-  padding: 3px 8px;
-  border-top: 1px solid #1e1e3a;
-}
-.viewer3d-back-trait-label {
-  display: block;
-  font-size: 6px;
-  color: #7070a0;
-  letter-spacing: 0.5px;
-  margin-bottom: 1px;
-}
-.viewer3d-back-trait-desc { font-size: 6px; color: #b0b0c8; margin: 0; line-height: 1.35; }
-
-.viewer3d-back-flavor {
-  padding: 3px 8px;
-  font-size: 6px;
-  font-style: italic;
-  color: #7070a0;
-  line-height: 1.35;
-  border-top: 1px solid #1e1e3a;
-}
-
-.viewer3d-back-tags {
-  padding: 3px 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-}
-.viewer3d-back-tag {
-  font-size: 5px;
-  padding: 1px 3px;
-  border: 1px solid;
-  border-radius: 4px;
-  opacity: 0.75;
-}
-
 .viewer3d-back-serial {
-  padding: 2px 8px 6px;
   font-size: 6px;
   color: #7070a0;
   letter-spacing: 1px;

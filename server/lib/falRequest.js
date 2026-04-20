@@ -26,6 +26,10 @@ function buildDefaultLoras(path, scale) {
   return path ? [{ path, scale }] : [];
 }
 
+function buildSavedCacheEntry(payload, fetchedAt) {
+  return { payload, fetchedAt };
+}
+
 export function normalizeFalProfile(value) {
   return value === 'character' ? 'character' : 'default';
 }
@@ -86,14 +90,13 @@ export function createFalRequestConfigLoader({
 
   function cacheFalRequestConfig(configUrl, payload, fetchedAt) {
     if (!falRequestConfigCache.has(configUrl) && falRequestConfigCache.size >= maxCacheEntries) {
+      // This cache intentionally uses FIFO eviction because configs are refreshed
+      // on a short TTL and do not need full LRU bookkeeping.
       const oldestKey = falRequestConfigCache.keys().next().value;
       if (oldestKey) falRequestConfigCache.delete(oldestKey);
     }
 
-    falRequestConfigCache.set(configUrl, {
-      payload,
-      fetchedAt,
-    });
+    falRequestConfigCache.set(configUrl, buildSavedCacheEntry(payload, fetchedAt));
     return payload;
   }
 

@@ -92,6 +92,14 @@ test('readFalRequestConfig normalizes env-backed Fal profiles and warns on inval
   assert.deepEqual(warnings, ['⚠️  FAL_CHARACTER_LORA_SCALE is invalid — falling back to 1.']);
 });
 
+test('normalizeFalProfile falls back to default for invalid values', () => {
+  assert.equal(normalizeFalProfile(''), 'default');
+  assert.equal(normalizeFalProfile(null), 'default');
+  assert.equal(normalizeFalProfile(undefined), 'default');
+  assert.equal(normalizeFalProfile(123), 'default');
+  assert.equal(normalizeFalProfile({ profile: 'character' }), 'default');
+});
+
 test('createFalImageRequestBuilder merges remote config with request and profile defaults', async () => {
   const fetchCalls = [];
   const getRemoteFalRequestConfig = createFalRequestConfigLoader({

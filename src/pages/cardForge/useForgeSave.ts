@@ -14,6 +14,15 @@ interface UseForgeSaveOptions {
   tier: TierLevel;
 }
 
+function buildSavedCard(generated: CardPayload, layers: LayerState): CardPayload {
+  return {
+    ...generated,
+    ...(layers.backgroundUrl != null ? { backgroundImageUrl: layers.backgroundUrl } : {}),
+    ...(layers.characterUrl != null ? { characterImageUrl: layers.characterUrl } : {}),
+    ...(layers.frameUrl != null ? { frameImageUrl: layers.frameUrl } : {}),
+  };
+}
+
 export function useForgeSave({
   characterBlend,
   generated,
@@ -44,12 +53,7 @@ export function useForgeSave({
     setSaving(true);
     setSaveError(null);
     const firstCard = cards.length === 0;
-    const cardToSave: CardPayload = {
-      ...generated,
-      ...(layers.backgroundUrl != null ? { backgroundImageUrl: layers.backgroundUrl } : {}),
-      ...(layers.characterUrl != null ? { characterImageUrl: layers.characterUrl } : {}),
-      ...(layers.frameUrl != null ? { frameImageUrl: layers.frameUrl } : {}),
-    };
+    const cardToSave = buildSavedCard(generated, layers);
 
     try {
       await addCard(cardToSave);

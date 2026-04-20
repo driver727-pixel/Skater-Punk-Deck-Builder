@@ -2,6 +2,8 @@ import { applicationDefault, cert, getApps, initializeApp as initializeAdminApp 
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
 
+const MAX_SERVICE_ACCOUNT_PARSE_ATTEMPTS = 3;
+
 function getFirebaseProjectId(env) {
   return env.FIREBASE_PROJECT_ID || env.VITE_FIREBASE_PROJECT_ID || env.GOOGLE_CLOUD_PROJECT || env.GCLOUD_PROJECT || '';
 }
@@ -14,7 +16,7 @@ function parseServiceAccountJson(rawValue) {
   let candidate = typeof rawValue === 'string' ? rawValue.trim() : '';
   if (!candidate) return null;
 
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  for (let attempt = 0; attempt < MAX_SERVICE_ACCOUNT_PARSE_ATTEMPTS; attempt += 1) {
     try {
       const parsed = JSON.parse(candidate);
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
@@ -25,7 +27,9 @@ function parseServiceAccountJson(rawValue) {
         continue;
       }
       return null;
-    } catch {}
+    } catch {
+      // Ignore parse failures while probing wrapped/base64-encoded credential formats.
+    }
 
     try {
       const decoded = Buffer.from(candidate, 'base64').toString('utf8').trim();
@@ -103,7 +107,7 @@ export function createFirebaseAdminServices({
       adminDb: getAdminFirestoreImpl(app),
     };
   } catch (error) {
-    if (!serviceAccount) logger.warn('Firebase Admin credentials are unavailable.', error);
+    if (!serviceAccount) logger.warn('Firebase Admin initialization failed using application default credentials.', error);
     else logger.error('Firebase Admin initialization failed.', error);
     return { adminAuth: null, adminDb: null };
   }

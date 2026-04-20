@@ -206,6 +206,13 @@ const checkoutRateLimit = buildRateLimiter({
   store: sharedRateLimitStore,
 });
 
+const authSyncRateLimit = buildRateLimiter({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { error: 'Too many auth sync requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
+});
+
 // Admin user-creation — very tightly rate-limited.
 const adminUserRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
@@ -632,28 +639,25 @@ async function syncAdminClaim(uid, email) {
   const currentClaims = userRecord.customClaims ?? {};
   const currentAdmin = currentClaims.admin === true;
 
-  if (currentAdmin !== shouldBeAdmin) {
-    const nextClaims = { ...currentClaims };
-    if (shouldBeAdmin) nextClaims.admin = true;
-    else delete nextClaims.admin;
-    await adminAuth.setCustomUserClaims(uid, nextClaims);
-    if (adminDb) {
-        await adminDb.collection('userProfiles').doc(uid).set({
-          isAdmin: shouldBeAdmin,
-          ...(shouldBeAdmin ? { tier: 'tier3' } : {}),
-          updatedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
-    }
-    return { admin: shouldBeAdmin, claimsUpdated: true };
-  }
-
-  if (adminDb) {
+  const syncAdminProfileState = async () => {
+    if (!adminDb) return;
     await adminDb.collection('userProfiles').doc(uid).set({
       isAdmin: shouldBeAdmin,
       ...(shouldBeAdmin ? { tier: 'tier3' } : {}),
       updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
+  };
+
+  if (currentAdmin !== shouldBeAdmin) {
+    const nextClaims = { ...currentClaims };
+    if (shouldBeAdmin) nextClaims.admin = true;
+    else delete nextClaims.admin;
+    await adminAuth.setCustomUserClaims(uid, nextClaims);
+    await syncAdminProfileState();
+    return { admin: shouldBeAdmin, claimsUpdated: true };
   }
+
+  await syncAdminProfileState();
 
   return { admin: currentAdmin, claimsUpdated: false };
 }
@@ -696,7 +700,7 @@ async function authenticateAdminRequest(req) {
   return decodedToken;
 }
 
-app.post('/api/auth/sync-session', async (req, res) => {
+app.post('/api/auth/sync-session', authSyncRateLimit, async (req, res) => {
   if (!adminAuth) {
     res.status(503).json({ error: 'Firebase Admin authentication is not configured.' });
     return;

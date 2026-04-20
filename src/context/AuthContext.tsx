@@ -72,6 +72,10 @@ function getProfileString(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+function getFallbackDisplayName(user: User): string {
+  return user.displayName ?? user.email?.split("@")[0] ?? "Skater";
+}
+
 async function upsertUserProfile(user: User) {
   if (!db) return;
   const email = user.email ?? "";
@@ -79,13 +83,13 @@ async function upsertUserProfile(user: User) {
     uid: user.uid,
     email,
     emailLower: email.trim().toLowerCase(),
-    displayName: user.displayName ?? user.email?.split("@")[0] ?? "Skater",
+    displayName: getFallbackDisplayName(user),
     updatedAt: serverTimestamp(),
   };
   const lookupPayload = {
     uid: user.uid,
     emailLower: email.trim().toLowerCase(),
-    displayName: user.displayName ?? user.email?.split("@")[0] ?? "Skater",
+    displayName: getFallbackDisplayName(user),
     updatedAt: serverTimestamp(),
   };
   await Promise.all([
@@ -161,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUserProfile({
           uid: user.uid,
           email: user.email ?? "",
-          displayName: user.displayName ?? user.email?.split("@")[0] ?? "Skater",
+          displayName: getFallbackDisplayName(user),
           isAdmin: adminClaim,
         });
       return;
@@ -177,9 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           displayName:
             getProfileString(data.displayName)
-            ?? user.displayName
-            ?? user.email?.split("@")[0]
-            ?? "Skater",
+            ?? getFallbackDisplayName(user),
           isAdmin: adminClaim,
         });
       },
@@ -187,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUserProfile({
           uid: user.uid,
           email: user.email ?? "",
-          displayName: user.displayName ?? user.email?.split("@")[0] ?? "Skater",
+          displayName: getFallbackDisplayName(user),
           isAdmin: adminClaim,
         });
       },

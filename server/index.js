@@ -1036,6 +1036,8 @@ app.post('/api/generate-board-image', imageRateLimit, async (req, res) => {
     // Submit to fal.ai queue and return the jobId immediately so the client
     // can poll /api/board-image-status/:jobId.  This avoids the 30-second
     // proxy timeout that occurs when fal.subscribe() blocks the HTTP response.
+    // Ownership is tracked in-memory only, so a server restart drops pending
+    // job access state and affected users must resubmit the board generation.
     const { request_id: jobId } = await fal.queue.submit('fal-ai/nano-banana-2', {
       input: {
         prompt,

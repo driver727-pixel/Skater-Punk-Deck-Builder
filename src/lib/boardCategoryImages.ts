@@ -169,7 +169,7 @@ export function getMatchingCategoryImages(
 
   for (const path of paths) {
     const filename =
-      path.split("/").pop()?.replace(/\.(png|webp)$/i, "").toLowerCase() ?? "";
+      path.split("/").pop()?.replace(/\.(png|jpe?g|webp)$/i, "").toLowerCase() ?? "";
     const parts = filename.split(/[-_\s]+/);
     if (keywords.some((kw) => parts.some((part) => part === kw))) {
       matches.push(glob[path]);

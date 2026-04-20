@@ -68,9 +68,9 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['imageUrl', 'createdAt', 'prompt', 'layer', 'seed'])
         && request.resource.data.imageUrl is string
         && (
-          request.resource.data.imageUrl.matches('https://([a-z0-9-]+\\.)*fal\\.media/.+')
-          || request.resource.data.imageUrl.matches('https://firebasestorage\\.googleapis\\.com/.+')
-          || request.resource.data.imageUrl.matches('https://storage\\.googleapis\\.com/.+')
+          request.resource.data.imageUrl.matches('https://([a-z0-9-]+\\.)*fal\\.media(/.*)?$')
+          || request.resource.data.imageUrl.matches('https://firebasestorage\\.googleapis\\.com(/.*)?$')
+          || request.resource.data.imageUrl.matches('https://storage\\.googleapis\\.com(/.*)?$')
         )
         && (!request.resource.data.keys().hasAny(['prompt'])
           || (request.resource.data.prompt is string && request.resource.data.prompt.size() <= 512))

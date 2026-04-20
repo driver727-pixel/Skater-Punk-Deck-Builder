@@ -156,7 +156,7 @@ export async function generateImage(
     }
     const authHint =
       response.status === 401
-        ? " Sign in again and confirm the proxy server has Firebase Admin + FAL_KEY configured."
+        ? " Confirm you are signed in and that the proxy server has Firebase Admin + FAL_KEY configured."
         : "";
     throw new Error(
       `Image generation failed: ${response.status} ${response.statusText}${detail ? ` — ${detail}` : ""}${authHint}`,

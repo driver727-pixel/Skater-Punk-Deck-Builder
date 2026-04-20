@@ -12,7 +12,11 @@ export function registerAdminRoutes(app, {
   deleteCollectionDocs,
   deleteQueryDocs,
 }) {
-  app.post('/api/auth/sync-session', authSyncRateLimit, async (req, res) => {
+  app.use('/api/auth/sync-session', authSyncRateLimit);
+  app.use('/api/admin/create-user', adminUserRateLimit);
+  app.use('/api/admin/delete-user', adminUserRateLimit);
+
+  app.post('/api/auth/sync-session', async (req, res) => {
     if (!adminAuth) {
       res.status(503).json({ error: 'Firebase Admin authentication is not configured.' });
       return;
@@ -27,7 +31,7 @@ export function registerAdminRoutes(app, {
     }
   });
 
-  app.post('/api/admin/create-user', adminUserRateLimit, async (req, res) => {
+  app.post('/api/admin/create-user', async (req, res) => {
     if (!adminAuth) {
       res.status(503).json({ error: 'Firebase Admin is not configured on this server.' });
       return;
@@ -76,7 +80,7 @@ export function registerAdminRoutes(app, {
     }
   });
 
-  app.post('/api/admin/delete-user', adminUserRateLimit, async (req, res) => {
+  app.post('/api/admin/delete-user', async (req, res) => {
     if (!adminAuth || !adminDb) {
       res.status(503).json({ error: 'Firebase Admin is not configured on this server.' });
       return;

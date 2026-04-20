@@ -42,8 +42,8 @@ body {
   background-size: 100% 4px, 22px 22px, 4px 4px, 4px 4px;
   color: var(--text);
   font-family: var(--font);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.55;
 }
 
 /* ===== 90s Vending Machine CRT Overlay ===== */
@@ -326,7 +326,7 @@ body::after {
 }
 .page-title {
   font-family: var(--font-display);
-  font-size: 34px;
+  font-size: clamp(34px, 4vw, 40px);
   color: var(--accent);
   letter-spacing: 5px;
   margin-bottom: 4px;
@@ -345,7 +345,7 @@ body::after {
 }
 .page-sub {
   color: var(--accent2);
-  font-size: 13px;
+  font-size: 14px;
   margin-bottom: 12px;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -430,7 +430,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   --soda-dead-zone: rgba(21, 31, 18, 0.48);
   --soda-corner-cut: 10px;
   padding: 8px 18px;
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 2px;
   font-weight: bold;
   text-transform: uppercase;
@@ -496,7 +496,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   --soda-bezel-highlight: rgba(208, 212, 225, 0.32);
   --soda-corner-cut: 10px;
   padding: 8px 16px;
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 1px;
 }
 .btn-outline:hover:not(:disabled) {
@@ -541,7 +541,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 .btn-danger:hover:not(:disabled) { transform: translateY(-1px); }
 .btn-danger:active:not(:disabled) { transform: translateY(4px); }
-.btn-sm { padding: 4px 10px; font-size: 11px; margin-top: 4px; }
+.btn-sm { padding: 4px 10px; font-size: 12px; margin-top: 4px; }
 
 .icon-btn {
   background: transparent;
@@ -577,15 +577,19 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 /* ===== Pills ===== */
 .form-group { margin-bottom: 12px; }
 .form-group label {
-  display: block;
-  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
   color: var(--text-dim);
   letter-spacing: 2px;
   margin-bottom: 8px;
   text-transform: uppercase;
   font-weight: bold;
 }
-.form-hint { font-size: 11px; color: var(--text-dim); margin: 6px 0 0; opacity: 0.75; }
+.form-hint { font-size: 12px; color: var(--text-dim); margin: 6px 0 0; opacity: 0.75; line-height: 1.5; }
 
 /* ── Locked form section (free tier) ──────────────────────────────────────── */
 .form-group--locked {
@@ -620,10 +624,11 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   --soda-dead-zone: rgba(18, 10, 22, 0.36);
   --soda-corner-cut: 7px;
   padding: 7px 14px;
-  min-height: 34px;
-  font-size: 12px;
+  min-height: 40px;
+  font-size: 13px;
   font-family: var(--font);
   letter-spacing: 0.5px;
+  line-height: 1.35;
   transition: transform 0.12s ease, box-shadow 0.12s ease, color 0.12s ease;
 }
 .pill:hover {
@@ -690,9 +695,17 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   align-items: start;
 }
 
+.forge-layout > * {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .forge-quick-actions {
   display: flex;
   justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
   margin-bottom: 12px;
 }
 
@@ -979,7 +992,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 
 .forge-form .pill {
   width: 100%;
-  padding: 6px 10px;
+  padding: 8px 12px;
   text-align: center;
 }
 
@@ -1880,14 +1893,53 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 
 @media (max-width: 768px) {
+  .nav-inner {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
   .nav-hamburger { display: inline-flex; align-items: center; }
   .nav-links { display: none; }
   .nav-desktop-only { display: none !important; }
   .nav-mobile-menu { display: flex; }
-  .nav-brand { padding: 4px 8px; }
-  .nav-title { font-size: 13px; }
-  .nav-subtitle { font-size: 9px; }
-  .nav-game-badge { font-size: 8px; }
+  .nav-brand {
+    align-items: flex-start;
+    max-width: calc(100% - 92px);
+    padding: 4px 8px;
+  }
+  .nav-title {
+    font-size: 15px;
+    letter-spacing: 2px;
+  }
+  .nav-subtitle {
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+  .nav-game-badge {
+    font-size: 8px;
+    max-width: 100%;
+    text-align: center;
+  }
+  .nav-right {
+    margin-left: auto;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .nav-logout {
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  .nav-hamburger {
+    min-width: 40px;
+    min-height: 40px;
+    justify-content: center;
+    padding: 0 10px;
+  }
+  .nav-mobile-menu .nav-link {
+    min-height: 44px;
+    font-size: 13px;
+  }
 }
 
 @media (min-width: 769px) {
@@ -7134,11 +7186,22 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 
 @media (max-width: 640px) {
   :root {
-    --conveyor-item-size: 108px;
+    --conveyor-item-size: 100px;
   }
 
   .page {
     padding: 20px 12px;
+  }
+
+  .page-title {
+    font-size: clamp(30px, 9vw, 36px);
+    letter-spacing: 3px;
+  }
+
+  .page-sub {
+    font-size: 14px;
+    letter-spacing: 1px;
+    line-height: 1.5;
   }
 
   .forge-form,
@@ -7146,14 +7209,43 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
     padding: 14px;
   }
 
+  .forge-welcome-panel {
+    padding: 20px 18px;
+  }
+
+  .forge-welcome__title {
+    font-size: clamp(24px, 8vw, 30px);
+  }
+
+  .forge-welcome__actions {
+    justify-content: stretch;
+  }
+
+  .forge-welcome__actions .btn-primary {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .forge-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .forge-quick-actions > button {
+    width: 100%;
+    min-height: 44px;
+  }
+
   .forge-form .pill-group {
-    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .forge-form .pill {
-    padding: 7px 10px;
-    font-size: 11px;
-    line-height: 1.3;
+    min-height: 44px;
+    padding: 9px 10px;
+    font-size: 12px;
+    line-height: 1.35;
     letter-spacing: 0.2px;
   }
 
@@ -7162,19 +7254,79 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   }
 
   .conveyor__header {
-    padding: 6px 8px 4px;
+    padding: 8px 10px 6px;
   }
 
   .conveyor__selected-name {
     min-width: 0;
     width: 100%;
     text-align: left;
+    font-size: 11px;
+  }
+
+  .conveyor__track {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px;
+    overflow: visible;
+    scroll-snap-type: none;
+    animation: none;
+  }
+
+  .conveyor__edge-spacer {
+    display: none;
+  }
+
+  .conveyor__item {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  .conveyor__item--selected {
+    transform: translateY(-2px);
+  }
+
+  .conveyor__item-copy {
+    padding: 26px 8px 12px;
+  }
+
+  .conveyor__item-name {
+    font-size: 11px;
+    line-height: 1.25;
+  }
+
+  .conveyor__item-tagline {
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
+  .board-builder__lock-row .psb {
+    width: 100%;
+  }
+
+  .psb {
+    min-width: 0;
+  }
+
+  .psb__label {
+    font-size: 14px;
+    letter-spacing: 3px;
   }
 }
 
 @media (max-width: 520px) {
+  .forge-quick-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .forge-form .pill-group {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .conveyor__track {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

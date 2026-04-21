@@ -1022,6 +1022,13 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   text-transform: uppercase;
   color: var(--accent);
 }
+.forge-preview-hint {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+  letter-spacing: 0.5px;
+}
 
 /* Generated-action strip in the form — blend slider + icon buttons */
 .forge-generated-actions {
@@ -7166,7 +7173,13 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   }
 
   .conveyor__track {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 380px) {
+  .conveyor__track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

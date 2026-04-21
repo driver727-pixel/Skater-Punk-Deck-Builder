@@ -1,7 +1,5 @@
-import { CardViewer3D } from "../../components/CardViewer3D";
 import {
-  PrintedCardBackContent,
-  PrintedCardPreviewPair,
+  PrintedCardFrontContent,
 } from "../../components/PrintedCardFaces";
 import type { CardPayload } from "../../lib/types";
 import type { LayerState } from "./useForgeLayers";
@@ -41,36 +39,21 @@ export function ForgePreviewPanel({
             )}
 
             <section className="forge-preview-section">
-              <h2 className="forge-preview-heading">3D Viewer</h2>
-              <CardViewer3D
-                card={card}
-                backgroundImageUrl={layers.backgroundUrl}
-                characterImageUrl={layers.characterUrl}
-                frameImageUrl={layers.frameUrl}
-                characterBlend={characterBlend}
-                inline
-              />
-            </section>
-
-            <section className="forge-preview-section">
-              <h2 className="forge-preview-heading">Printed Version</h2>
-              <PrintedCardPreviewPair
-                card={card}
-                backgroundImageUrl={layers.backgroundUrl}
-                characterImageUrl={layers.characterUrl}
-                frameImageUrl={layers.frameUrl}
-                characterBlend={characterBlend}
-                className="print-preview-area--forge"
-              />
-            </section>
-
-            <section className="forge-preview-section">
-              <h2 className="forge-preview-heading">Final Stat Card</h2>
-              <div className="print-card-wrap forge-stat-card-wrap">
-                <div className="print-card print-card--back">
-                  <PrintedCardBackContent card={card} />
+              <h2 className="forge-preview-heading">Card Preview</h2>
+              <div className="print-card-wrap">
+                <div className="print-card print-card--front">
+                  <PrintedCardFrontContent
+                    card={card}
+                    backgroundImageUrl={layers.backgroundUrl}
+                    characterImageUrl={layers.characterUrl}
+                    frameImageUrl={layers.frameUrl}
+                    characterBlend={characterBlend}
+                  />
                 </div>
               </div>
+              <p className="forge-preview-hint">
+                Use the ◈ 3D and 🖨 Print buttons to view the full card.
+              </p>
             </section>
           </div>
         </div>

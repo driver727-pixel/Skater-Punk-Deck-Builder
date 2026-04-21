@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
 const STORAGE_KEY = "ambience-enabled";
-const AMBIENCE_SRC = "/assets/sounds/buzzing crt.mp3";
+const AMBIENCE_SRC = "/assets/sounds/buzzing%20crt.mp3";
 
 /**
  * Manages the looping CRT-buzzing background ambience.

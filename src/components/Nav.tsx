@@ -14,6 +14,7 @@ import { TierModal } from "./TierModal";
 import { useFactionDiscovery } from "../hooks/useFactionDiscovery";
 import { sfxNavigate } from "../lib/sfx";
 import { GeoAtlas } from "./GeoAtlas";
+import { useAmbience } from "../hooks/useAmbience";
 
 export function Nav() {
   const { tier, logout: tierLogout, showUpgradeModal, openUpgradeModal, closeUpgradeModal } = useTier();
@@ -24,6 +25,7 @@ export function Nav() {
   const isAdmin = userProfile?.isAdmin === true;
   const { discoveredFactions } = useFactionDiscovery();
 
+  const [ambienceEnabled, toggleAmbience] = useAmbience();
   const [menuOpen, setMenuOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [pendingTrades, setPendingTrades] = useState(0);
@@ -137,6 +139,15 @@ export function Nav() {
           </div>
 
           <div className="nav-right">
+            <button
+              className={`ambience-btn nav-desktop-only${ambienceEnabled ? " ambience-btn--on" : ""}`}
+              onClick={toggleAmbience}
+              title={ambienceEnabled ? "Disable CRT ambience" : "Enable CRT ambience"}
+              aria-pressed={ambienceEnabled}
+            >
+              {ambienceEnabled ? "📺 CRT ON" : "📺 CRT OFF"}
+            </button>
+
             <button
               className={`tier-badge-btn tier-badge-btn--${tier} nav-desktop-only`}
               onClick={openUpgradeModal}

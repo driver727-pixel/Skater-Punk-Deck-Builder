@@ -1946,6 +1946,27 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 .nav-hamburger:hover { border-color: var(--accent); color: var(--accent); }
 
+/* ===== CRT Ambience Toggle Button ===== */
+.ambience-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--font);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: border-color 0.15s, color 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+.ambience-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+.ambience-btn--on {
+  border-color: var(--accent2);
+  color: var(--accent2);
+  box-shadow: 0 0 6px rgba(0, 204, 255, 0.35);
+}
+
 .nav-mobile-menu {
   display: none;
   flex-direction: column;

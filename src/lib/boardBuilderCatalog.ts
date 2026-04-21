@@ -240,6 +240,7 @@ export const BOARD_COMPONENT_IMAGE_URLS = {
   } satisfies Record<MotorType, string>,
   wheels: {
     Urethane: withBoardComponentAssetVersion("/assets/boards/wheels/poly-wheels.png"),
+    // The deployed public asset still uses the "-new" suffix.
     Pneumatic: withBoardComponentAssetVersion("/assets/boards/wheels/pneumatic-wheels-new.png"),
     Rubber: withBoardComponentAssetVersion("/assets/boards/wheels/solid-rubber.png"),
     Cloud: withBoardComponentAssetVersion("/assets/boards/wheels/cloud-wheels.png"),

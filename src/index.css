@@ -1963,7 +1963,10 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 
 /* ===== Nav Container & Mobile Menu ===== */
-.nav-container { position: relative; }
+.nav-container {
+  position: relative;
+  z-index: 20;
+}
 
 .nav-hamburger {
   display: none;
@@ -2030,7 +2033,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
     padding: 10px 12px;
     gap: 10px;
     justify-content: flex-start;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .nav-hamburger { display: inline-flex; align-items: center; }

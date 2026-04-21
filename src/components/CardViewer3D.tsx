@@ -19,11 +19,11 @@ function getProjectedCardCenterY(rotateX: number, rotateY: number) {
   // right-to-left, so we project each corner after a Y rotation followed by X.
   for (const x of [-halfWidth, halfWidth]) {
     for (const y of [-halfHeight, halfHeight]) {
-      const yRotatedZ = -x * Math.sin(rotateYRad);
-      const xRotatedY = y * Math.cos(rotateXRad) - yRotatedZ * Math.sin(rotateXRad);
-      const xRotatedZ = y * Math.sin(rotateXRad) + yRotatedZ * Math.cos(rotateXRad);
-      const perspectiveScale = VIEWER_PERSPECTIVE / (VIEWER_PERSPECTIVE - xRotatedZ);
-      const screenY = xRotatedY * perspectiveScale;
+      const zAfterYRotation = -x * Math.sin(rotateYRad);
+      const yAfterXRotation = y * Math.cos(rotateXRad) - zAfterYRotation * Math.sin(rotateXRad);
+      const zAfterXRotation = y * Math.sin(rotateXRad) + zAfterYRotation * Math.cos(rotateXRad);
+      const perspectiveScale = VIEWER_PERSPECTIVE / (VIEWER_PERSPECTIVE - zAfterXRotation);
+      const screenY = yAfterXRotation * perspectiveScale;
 
       minY = Math.min(minY, screenY);
       maxY = Math.max(maxY, screenY);

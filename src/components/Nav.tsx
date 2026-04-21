@@ -218,6 +218,14 @@ export function Nav() {
             {renderNavLinks(() => setNavOpen(false))}
             <div className="nav-mobile-menu-footer">
               <button
+                className={`ambience-btn${ambienceEnabled ? " ambience-btn--on" : ""}`}
+                onClick={toggleAmbience}
+                title={ambienceEnabled ? "Disable CRT ambience" : "Enable CRT ambience"}
+                aria-pressed={ambienceEnabled}
+              >
+                {ambienceEnabled ? "📺 CRT ON" : "📺 CRT OFF"}
+              </button>
+              <button
                 className={`tier-badge-btn tier-badge-btn--${tier}`}
                 onClick={() => { setNavOpen(false); openUpgradeModal(); }}
                 title={`Pricing Tier: ${tierData.name}`}

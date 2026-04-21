@@ -134,11 +134,11 @@ export function CardViewer3D({
     setAutoSpin((v) => !v);
   };
 
-  const anchorOffsetY = useMemo(() => {
-    const frontCenterY = getProjectedCardCenterY(rotateX, 0);
-    const currentCenterY = getProjectedCardCenterY(rotateX, rotateY);
-    return frontCenterY - currentCenterY;
-  }, [rotateX, rotateY]);
+  const frontCenterY = useMemo(() => getProjectedCardCenterY(rotateX, 0), [rotateX]);
+  const anchorOffsetY = useMemo(
+    () => frontCenterY - getProjectedCardCenterY(rotateX, rotateY),
+    [frontCenterY, rotateX, rotateY],
+  );
 
   const cardTransform = `translateY(${anchorOffsetY}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
 

@@ -5243,10 +5243,10 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   font-size: 13px;
 }
 .print-preview-area--forge .print-front-bio {
-  font-size: 8px;
+  font-size: 10px;
 }
 .print-preview-area--forge .print-card--back {
-  font-size: 9px;
+  font-size: 10px;
 }
 .print-preview-area--forge .print-back-name {
   font-size: 12px;
@@ -5259,7 +5259,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .print-preview-area--forge .print-back-trait-label,
 .print-preview-area--forge .print-back-trait-desc,
 .print-preview-area--forge .print-back-serial {
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .forge-stat-card-wrap {

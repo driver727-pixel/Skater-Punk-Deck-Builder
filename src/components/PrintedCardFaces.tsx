@@ -23,6 +23,7 @@ export function PrintedCardBackContent(props: Omit<SkaterCardFaceProps, "face">)
 
 interface PrintedCardPreviewPairProps extends Omit<SkaterCardFaceProps, "face"> {
   className?: string;
+  boardImageLoading?: boolean;
 }
 
 export function PrintedCardPreviewPair({
@@ -37,6 +38,7 @@ export function PrintedCardPreviewPair({
   onBioChange,
   onAgeChange,
   onStatChange,
+  boardImageLoading,
 }: PrintedCardPreviewPairProps) {
   const previewClassName = className ? `print-preview-area ${className}` : "print-preview-area";
 
@@ -71,6 +73,7 @@ export function PrintedCardPreviewPair({
               card={card}
               editable={editable}
               onStatChange={onStatChange}
+              boardImageLoading={boardImageLoading}
             />
           </div>
         </div>

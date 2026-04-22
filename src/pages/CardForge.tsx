@@ -20,6 +20,7 @@ import { isImageGenConfigured } from "../services/imageGen";
 export function CardForge() {
   const {
     boardConfig,
+    boardImageLoading,
     canForge,
     characterBlend,
     closeWelcome,
@@ -133,6 +134,7 @@ export function CardForge() {
         />
 
         <ForgePreviewPanel
+          boardImageLoading={boardImageLoading}
           card={generated}
           characterBlend={characterBlend}
           isImageGenConfigured={isImageGenConfigured}

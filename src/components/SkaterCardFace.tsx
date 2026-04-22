@@ -60,6 +60,12 @@ export interface SkaterCardFaceProps {
   onBioChange?: (value: string) => void;
   onAgeChange?: (value: string) => void;
   onStatChange?: (key: keyof CardPayload["stats"], value: number) => void;
+  /**
+   * When true, the board image slot on the back face shows a loading spinner
+   * instead of the 🛹 placeholder.  Used by the Card Editor while
+   * generateGouacheBoard() is in flight.
+   */
+  boardImageLoading?: boolean;
 }
 
 // ── Front face ────────────────────────────────────────────────────────────────
@@ -164,7 +170,8 @@ function CardBack({
   card,
   editable = false,
   onStatChange,
-}: Pick<SkaterCardFaceProps, "card" | "editable" | "onStatChange">) {
+  boardImageLoading = false,
+}: Pick<SkaterCardFaceProps, "card" | "editable" | "onStatChange" | "boardImageLoading">) {
   const accent = card.visuals.accentColor || "#00ff88";
   const rarityColor = RARITY_COLORS[card.prompts.rarity] || "#aaaaaa";
 
@@ -179,6 +186,26 @@ function CardBack({
         <div className="print-back-board">
           {card.boardImageUrl ? (
             <img src={card.boardImageUrl} alt="Electric skateboard" className="print-back-board-image" />
+          ) : boardImageLoading ? (
+            /* 1:1 square spinner — matches the final image container so there
+               is no layout shift when the board image finishes loading.
+               Drop a hourglass-spinner.gif at public/assets/hourglass-spinner.gif
+               and it will appear here automatically; falls back to the standard
+               animated loading gif if the file is not yet present. */
+            <div className="print-back-board-loading">
+              <img
+                src="/assets/hourglass-spinner.gif"
+                alt="Generating skateboard…"
+                className="print-back-board-spinner"
+                onError={(e) => {
+                  const img = e.currentTarget as HTMLImageElement;
+                  if (!img.dataset.fallback) {
+                    img.dataset.fallback = "1";
+                    img.src = "/assets/loading_2.gif";
+                  }
+                }}
+              />
+            </div>
           ) : (
             <div className="print-back-board-placeholder">🛹</div>
           )}
@@ -303,6 +330,7 @@ export function SkaterCardFace({
       card={card}
       editable={editable}
       onStatChange={onStatChange}
+      boardImageLoading={boardImageLoading}
     />
   );
 }

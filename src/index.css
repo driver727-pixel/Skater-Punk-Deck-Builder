@@ -5123,6 +5123,8 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 /* Print back face – skateboard art becomes the hero image under the back copy */
 .print-back-hero {
   --print-back-hero-info-right: 24%;
+  --print-back-board-scale: 1.2;
+  --print-back-label-width: 7.5ch;
   position: relative;
   height: 40%;
   overflow: hidden;
@@ -5152,7 +5154,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   height: 100%;
   object-fit: cover;
   object-position: center 50%;
-  transform: scale(1.2);
+  transform: scale(var(--print-back-board-scale));
   filter: saturate(1.05) contrast(1.04) drop-shadow(0 6px 12px rgba(0,0,0,0.55));
 }
 .print-back-hero-scrim {
@@ -5232,7 +5234,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 .print-back-row {
   display: grid;
-  grid-template-columns: 7.5ch minmax(0, 1fr);
+  grid-template-columns: var(--print-back-label-width) minmax(0, 1fr);
   gap: 4px;
   align-items: baseline;
 }
@@ -5537,11 +5539,10 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
     top: 24pt; right: 6pt;
     width: 0.55in; height: 0.55in;
   }
-  .print-only-card .print-back-hero   { --print-back-hero-info-right: 22%; height: 40%; }
+  .print-only-card .print-back-hero   { --print-back-hero-info-right: 22%; --print-back-label-width: 0.6in; height: 40%; }
   .print-only-card .print-back-board  { inset: 0; }
   .print-only-card .print-back-info   { gap: 2pt; }
   .print-only-card .print-back-info--overlay { padding: 6pt 8pt 0; }
-  .print-only-card .print-back-row { grid-template-columns: 0.6in minmax(0, 1fr); }
   .print-only-card .print-back-row-label { font-size: 5pt; width: 0.6in; }
   .print-only-card .print-back-row-value { font-size: 5pt; }
   .print-only-card .print-back-stats  { gap: 2pt; }

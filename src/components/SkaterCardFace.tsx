@@ -78,6 +78,7 @@ function CardFront({
   onAgeChange,
 }: Omit<SkaterCardFaceProps, "face" | "onStatChange">) {
   const hasAnyLayer = backgroundImageUrl || characterImageUrl || frameImageUrl;
+  const revealedFaction = card.discovery?.revealedFaction;
   const bgClass = shouldInsetBackgroundForFrame(card.prompts.rarity, frameImageUrl)
     ? "print-art-layer print-art-layer--bg print-art-layer--bg-inset"
     : "print-art-layer print-art-layer--bg";
@@ -143,6 +144,9 @@ function CardFront({
               placeholder="Bio / flavor text"
               rows={2}
             />
+            {revealedFaction && (
+              <p className="print-front-faction">Faction Reveal · {revealedFaction}</p>
+            )}
           </>
         ) : (
           <>
@@ -151,6 +155,9 @@ function CardFront({
               <span className="print-front-age">{card.identity.age}</span>
             )}
             <p className="print-front-bio">&ldquo;{card.flavorText}&rdquo;</p>
+            {revealedFaction && (
+              <p className="print-front-faction">Faction Reveal · {revealedFaction}</p>
+            )}
           </>
         )}
       </div>

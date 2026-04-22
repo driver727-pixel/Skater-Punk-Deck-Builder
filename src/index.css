@@ -27,6 +27,9 @@
   --danger: #ff4444;
   --font: 'Courier New', Courier, monospace;
   --font-display: 'Bangers', 'Impact', 'Arial Black', cursive;
+  /* Canonical poker-card aspect ratio used by .print-card, .viewer3d-card, and
+     the forge preview variant.  Update once here to change all three. */
+  --card-aspect-ratio: 2.5 / 3.5;
 }
 
 html, body { height: 100%; }
@@ -4863,7 +4866,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 
 .viewer3d-card {
   width: 189px;
-  aspect-ratio: 2.5 / 3.5;
+  aspect-ratio: var(--card-aspect-ratio);
   position: relative;
   transform-style: preserve-3d;
   transform-origin: center center;
@@ -5016,7 +5019,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   --card-back-body-size: 0.375rem;    /* ≈  6 px */
   --stat-font-size:      var(--card-back-body-size); /* explicit named alias */
   width: 189px;
-  aspect-ratio: 2.5 / 3.5;
+  aspect-ratio: var(--card-aspect-ratio);
   border: 2px solid var(--border);
   border-radius: 6px;
   overflow: hidden;
@@ -5254,7 +5257,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .print-preview-area--forge .print-card {
   width: 100%;
   height: auto;
-  aspect-ratio: 2.5 / 3.5;
+  aspect-ratio: var(--card-aspect-ratio);
 }
 .print-preview-area--forge .print-preview-label {
   font-size: 16px;

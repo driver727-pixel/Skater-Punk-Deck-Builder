@@ -25,6 +25,11 @@ import {
   shouldRenderSvgFrame,
 } from "../services/staticAssets";
 
+// ── Module-level typed constant to avoid repeated inline type assertions ──────
+
+type StatEntry = [keyof CardPayload["stats"], { label: string; tooltip: string }];
+const STAT_ENTRIES = Object.entries(CARD_STAT_LABELS) as StatEntry[];
+
 // ── Rarity colour map used on the card-back header ───────────────────────────
 
 const RARITY_COLORS: Record<string, string> = {
@@ -34,8 +39,6 @@ const RARITY_COLORS: Record<string, string> = {
   Rare: "#4488ff",
   Legendary: "#ffaa00",
 };
-
-// ── Shared prop interface ─────────────────────────────────────────────────────
 
 export interface SkaterCardFaceProps {
   /** The fully generated card to render. */
@@ -184,8 +187,7 @@ function CardBack({
 
       <div className="print-back-stats">
         {editable ? (
-          (Object.entries(CARD_STAT_LABELS) as [keyof CardPayload["stats"], { label: string; tooltip: string }][]).map(
-            ([key, { label, tooltip }]) => (
+          (STAT_ENTRIES).map(([key, { label, tooltip }]) => (
               <div key={key} className="stat-bar card-stat-editor-row">
                 <span className="stat-label" title={tooltip}>{label}</span>
                 <input

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import type { CardPayload } from "../lib/types";
-import { PrintedCardBackContent, PrintedCardFrontContent } from "./PrintedCardFaces";
+import { SkaterCardFace } from "./SkaterCardFace";
 import { buildCardVars } from "../lib/cardVars";
 
 interface CardViewer3DBaseProps {
@@ -121,7 +121,8 @@ export function CardViewer3D({
           onTouchCancel={onMouseUp}
         >
           <div className="viewer3d-face viewer3d-face--front print-card print-card--front">
-            <PrintedCardFrontContent
+            <SkaterCardFace
+              face="front"
               card={card}
               backgroundImageUrl={backgroundImageUrl}
               characterImageUrl={characterImageUrl}
@@ -134,7 +135,7 @@ export function CardViewer3D({
             className="viewer3d-face viewer3d-face--back print-card print-card--back"
             style={{ "--accent": card.visuals.accentColor || "#00ff88" } as React.CSSProperties}
           >
-            <PrintedCardBackContent card={card} />
+            <SkaterCardFace face="back" card={card} />
           </div>
         </div>
       </div>

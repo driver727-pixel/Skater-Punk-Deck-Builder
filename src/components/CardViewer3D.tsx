@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import type { CardPayload } from "../lib/types";
-import { PrintedCardBackContent, PrintedCardFrontContent } from "./PrintedCardFaces";
+import { SkaterCardFace } from "./SkaterCardFace";
+import { buildCardVars } from "../lib/cardVars";
 
 interface CardViewer3DBaseProps {
   card: CardPayload;
@@ -14,6 +15,10 @@ type CardViewer3DProps =
   | (CardViewer3DBaseProps & { inline: true; onClose?: () => void })
   | (CardViewer3DBaseProps & { inline?: false; onClose: () => void });
 
+const NEUTRAL_X = -5;
+const NEUTRAL_Y = 15;
+const HOVER_TILT = 15; // ± degrees from card center during hover
+
 export function CardViewer3D({
   card,
   backgroundImageUrl,
@@ -23,14 +28,28 @@ export function CardViewer3D({
   inline = false,
   onClose,
 }: CardViewer3DProps) {
-  const [rotateX, setRotateX] = useState(-5);
-  const [rotateY, setRotateY] = useState(15);
+  const [rotateX, setRotateX] = useState(NEUTRAL_X);
+  const [rotateY, setRotateY] = useState(NEUTRAL_Y);
   const [autoSpin, setAutoSpin] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
   const maxTiltX = inline ? 28 : 35;
 
   const dragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
   const spinRef = useRef<number | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  // Cache getBoundingClientRect to avoid forced layout reflow on every mousemove.
+  const cardRectRef = useRef<DOMRect | null>(null);
+
+  // Refresh the cached rect on window resize so the tilt origin stays accurate.
+  useEffect(() => {
+    const updateRect = () => {
+      if (cardRef.current) cardRectRef.current = cardRef.current.getBoundingClientRect();
+    };
+    updateRect();
+    window.addEventListener("resize", updateRect);
+    return () => window.removeEventListener("resize", updateRect);
+  }, []);
 
   // ── Close on Escape ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -58,20 +77,43 @@ export function CardViewer3D({
   // ── Mouse drag ───────────────────────────────────────────────────────────────
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     if (autoSpin) return;
+    // Entering drag mode: disable hover tilt so there's no CSS transition lag.
+    setIsHovering(false);
     dragging.current = true;
     lastPos.current = { x: e.clientX, y: e.clientY };
   }, [autoSpin]);
 
   const onMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragging.current) return;
-    const dx = e.clientX - lastPos.current.x;
-    const dy = e.clientY - lastPos.current.y;
-    lastPos.current = { x: e.clientX, y: e.clientY };
-    setRotateY((y) => y + dx * 0.5);
-    setRotateX((x) => Math.max(-maxTiltX, Math.min(maxTiltX, x - dy * 0.5)));
-  }, [maxTiltX]);
+    if (dragging.current) {
+      // Manual drag — accumulate deltas as before.
+      const dx = e.clientX - lastPos.current.x;
+      const dy = e.clientY - lastPos.current.y;
+      lastPos.current = { x: e.clientX, y: e.clientY };
+      setRotateY((y) => y + dx * 0.5);
+      setRotateX((x) => Math.max(-maxTiltX, Math.min(maxTiltX, x - dy * 0.5)));
+      return;
+    }
+
+    if (autoSpin || !cardRectRef.current) return;
+
+    // Hover tilt — map cursor offset from card center to ±HOVER_TILT degrees.
+    const rect = cardRectRef.current;
+    const offsetX = (e.clientX - (rect.left + rect.width  / 2)) / (rect.width  / 2); // -1..1
+    const offsetY = (e.clientY - (rect.top  + rect.height / 2)) / (rect.height / 2); // -1..1
+    setRotateY(NEUTRAL_Y + offsetX * HOVER_TILT);
+    setRotateX(NEUTRAL_X - offsetY * HOVER_TILT);
+    setIsHovering(true);
+  }, [autoSpin, maxTiltX]);
 
   const onMouseUp = useCallback(() => { dragging.current = false; }, []);
+
+  // ── Hover leave — smooth reset to neutral ────────────────────────────────────
+  const onMouseLeave = useCallback(() => {
+    if (dragging.current || autoSpin) return;
+    setRotateX(NEUTRAL_X);
+    setRotateY(NEUTRAL_Y);
+    setIsHovering(false);
+  }, [autoSpin]);
 
   // ── Touch drag ───────────────────────────────────────────────────────────────
   const onTouchStart = useCallback((e: React.TouchEvent) => {
@@ -104,13 +146,20 @@ export function CardViewer3D({
   };
 
   const cardTransform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+  const cardVars = buildCardVars(card, "3d");
+
+  // .is-tilting adds a smooth transition during hover; it's absent while
+  // dragging so there's no input lag during manual rotation.
+  const cardClassName = `viewer3d-card${isHovering && !dragging.current ? " is-tilting" : ""}`;
 
   const scene = (
     <div className={`viewer3d-scene${inline ? " viewer3d-scene--inline" : ""}`} onClick={(e) => e.stopPropagation()}>
       <div className={`viewer3d-stage${inline ? " viewer3d-stage--inline" : ""}`}>
         <div
-          className="viewer3d-card"
-          style={{ transform: cardTransform }}
+          ref={cardRef}
+          className={cardClassName}
+          style={{ ...cardVars, transform: cardTransform }}
+          onMouseEnter={() => { if (cardRef.current) cardRectRef.current = cardRef.current.getBoundingClientRect(); }}
           onMouseDown={onMouseDown}
           onDragStart={(e) => e.preventDefault()}
           onTouchStart={onTouchStart}
@@ -119,7 +168,8 @@ export function CardViewer3D({
           onTouchCancel={onMouseUp}
         >
           <div className="viewer3d-face viewer3d-face--front print-card print-card--front">
-            <PrintedCardFrontContent
+            <SkaterCardFace
+              face="front"
               card={card}
               backgroundImageUrl={backgroundImageUrl}
               characterImageUrl={characterImageUrl}
@@ -132,7 +182,7 @@ export function CardViewer3D({
             className="viewer3d-face viewer3d-face--back print-card print-card--back"
             style={{ "--accent": card.visuals.accentColor || "#00ff88" } as React.CSSProperties}
           >
-            <PrintedCardBackContent card={card} />
+            <SkaterCardFace face="back" card={card} />
           </div>
         </div>
       </div>
@@ -165,6 +215,7 @@ export function CardViewer3D({
         className="viewer3d-inline"
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
+        onMouseLeave={onMouseLeave}
       >
         {scene}
       </div>
@@ -177,8 +228,10 @@ export function CardViewer3D({
       onClick={() => onClose?.()}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
+      onMouseLeave={onMouseLeave}
     >
       {scene}
     </div>
   );
 }
+

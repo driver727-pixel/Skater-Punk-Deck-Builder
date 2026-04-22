@@ -1,10 +1,9 @@
 import { useState } from "react";
 import type { CardPayload } from "../lib/types";
-import {
-  PrintedCardBackContent,
-  PrintedCardFrontContent,
-  PrintedCardPreviewPair,
-} from "./PrintedCardFaces";
+import { PrintedCardPreviewPair } from "./PrintedCardFaces";
+import { SkaterCardFace } from "./SkaterCardFace";
+import { CardContainer } from "./CardContainer";
+import { buildCardVars } from "../lib/cardVars";
 
 interface PrintModalProps {
   card: CardPayload;
@@ -82,13 +81,15 @@ export function PrintModal({
           </div>
 
           {/* Print preview */}
-          <PrintedCardPreviewPair
-            card={card}
-            backgroundImageUrl={backgroundImageUrl}
-            characterImageUrl={characterImageUrl}
-            frameImageUrl={frameImageUrl}
-            characterBlend={characterBlend}
-          />
+          <CardContainer cardVars={buildCardVars(card, "print-screen")}>
+            <PrintedCardPreviewPair
+              card={card}
+              backgroundImageUrl={backgroundImageUrl}
+              characterImageUrl={characterImageUrl}
+              frameImageUrl={frameImageUrl}
+              characterBlend={characterBlend}
+            />
+          </CardContainer>
 
           <div className="print-modal-actions">
             <button className="btn-primary" onClick={handlePrint}>
@@ -109,7 +110,8 @@ export function PrintModal({
           <div className="print-only-bleed">
             <BleedMarks />
             <div className="print-only-card">
-              <PrintedCardFrontContent
+              <SkaterCardFace
+                face="front"
                 card={card}
                 backgroundImageUrl={printBackgroundUrl}
                 characterImageUrl={characterImageUrl}
@@ -132,7 +134,7 @@ export function PrintModal({
               className="print-only-card print-only-card--back"
               style={{ "--accent": card.visuals.accentColor || "#00ff88" } as React.CSSProperties}
             >
-              <PrintedCardBackContent card={card} />
+              <SkaterCardFace face="back" card={card} />
             </div>
           </div>
         </div>

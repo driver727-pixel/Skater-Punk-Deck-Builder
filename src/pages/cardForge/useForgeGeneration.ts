@@ -202,6 +202,26 @@ export function useForgeGeneration() {
     setGenerated((current) => applyPreviewUpdates(current, updates));
   }, []);
 
+  /** Shallow-merge a partial CardPayload into the generated card. */
+  const patchGeneratedCard = useCallback((updates: Partial<CardPayload>) => {
+    setGenerated((prev) => (prev ? { ...prev, ...updates } : prev));
+  }, []);
+
+  /** Deep-merge a partial identity object into the generated card's identity. */
+  const patchIdentity = useCallback((updates: Partial<CardPayload["identity"]>) => {
+    setGenerated((prev) =>
+      prev ? { ...prev, identity: { ...prev.identity, ...updates } } : prev,
+    );
+  }, []);
+
+  /** Deep-merge partial stats into the generated card. Callers should pass
+   *  already-validated values (within 0–10); clamp only happens in the UI. */
+  const patchStats = useCallback((updates: Partial<CardPayload["stats"]>) => {
+    setGenerated((prev) =>
+      prev ? { ...prev, stats: { ...prev.stats, ...updates } } : prev,
+    );
+  }, []);
+
   const handleCloseFactionReveal = useCallback(() => {
     setRevealedFaction(null);
   }, []);
@@ -223,6 +243,9 @@ export function useForgeGeneration() {
     isAnyLayerLoading,
     layers,
     openUpgradeModal,
+    patchGeneratedCard,
+    patchIdentity,
+    patchStats,
     prompts,
     revealedFaction,
     setArchetype,
@@ -247,6 +270,9 @@ export function useForgeGeneration() {
     isAnyLayerLoading,
     layers,
     openUpgradeModal,
+    patchGeneratedCard,
+    patchIdentity,
+    patchStats,
     prompts,
     revealedFaction,
     setArchetype,

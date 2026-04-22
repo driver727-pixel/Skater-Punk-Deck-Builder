@@ -27,6 +27,9 @@
   --danger: #ff4444;
   --font: 'Courier New', Courier, monospace;
   --font-display: 'Bangers', 'Impact', 'Arial Black', cursive;
+  /* Canonical poker-card aspect ratio used by .print-card, .viewer3d-card, and
+     the forge preview variant.  Update once here to change all three. */
+  --card-aspect-ratio: 2.5 / 3.5;
 }
 
 html, body { height: 100%; }
@@ -4863,10 +4866,11 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 
 .viewer3d-card {
   width: 189px;
-  height: 264px;
+  aspect-ratio: var(--card-aspect-ratio);
   position: relative;
   transform-style: preserve-3d;
   transform-origin: center center;
+  /* Base transition: tight, for drag and auto-spin frames */
   transition: transform 0.05s linear;
   cursor: grab;
   touch-action: none;
@@ -4874,6 +4878,14 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   will-change: transform;
 }
 .viewer3d-card:active { cursor: grabbing; }
+
+/* During hover-tilt (not dragging) use a slightly longer ease so the card
+   glides smoothly as the cursor moves, and eases back to neutral on leave.
+   This class is removed the moment a drag starts, restoring the fast linear
+   transition so there is zero input lag while the user manually spins. */
+.viewer3d-card.is-tilting {
+  transition: transform 0.1s ease-out;
+}
 
 /* Both faces */
 .viewer3d-face {
@@ -5001,8 +5013,22 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 
 /* Card face in preview — scaled-down (189×264 = 72% of 2.625×3.625in @96dpi) */
 .print-card {
+  /* ── Sizing tokens ── override per context via CardContainer style ──────────
+   * All card-internal font-sizes use these variables so a single override on
+   * a parent container (e.g. the Card Editor) rescales every text element.
+   * The Print preview can likewise override them for high-res output without
+   * touching the positioning or layout rules.
+   *
+   * --stat-font-size is the canonical alias for stat-row text so callers that
+   * need to set just one variable can use it (e.g. --stat-font-size: 6pt).   */
+  --card-name-size:      0.5625rem;   /* ≈  9 px — base (3D viewer / Print modal) */
+  --card-bio-size:       0.3125rem;   /* ≈  5 px */
+  --card-age-size:       0.3125rem;   /* ≈  5 px */
+  --card-back-name-size: 0.5rem;      /* ≈  8 px */
+  --card-back-body-size: 0.375rem;    /* ≈  6 px */
+  --stat-font-size:      var(--card-back-body-size); /* explicit named alias */
   width: 189px;
-  height: 264px;
+  aspect-ratio: var(--card-aspect-ratio);
   border: 2px solid var(--border);
   border-radius: 6px;
   overflow: hidden;
@@ -5055,22 +5081,28 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 6px 8px;
+  /* Use % so padding scales with the card's width regardless of context */
+  padding: 3.2% 4.2%;
   background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
   z-index: 5;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1%;
 }
 .print-front-name {
-  font-size: 9px;
+  font-size: var(--card-name-size);
   font-weight: bold;
   color: #fff;
   letter-spacing: 0.5px;
   text-shadow: 0 1px 3px rgba(0,0,0,0.7);
 }
+.print-front-age {
+  font-size: var(--card-age-size);
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 0.3px;
+}
 .print-front-bio {
-  font-size: 5px;
+  font-size: var(--card-bio-size);
   color: rgba(255,255,255,0.85);
   font-style: italic;
   line-height: 1.3;
@@ -5126,13 +5158,14 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 5px 7px;
+  /* % padding scales with card width so header proportions hold at all sizes */
+  padding: 2.6% 3.7%;
   color: #000;
   font-weight: bold;
   flex-shrink: 0;
 }
-.print-back-name  { font-size: 8px; letter-spacing: 0.5px; }
-.print-back-rarity { font-size: 6px; opacity: 0.7; }
+.print-back-name  { font-size: var(--card-back-name-size); letter-spacing: 0.5px; }
+.print-back-rarity { font-size: var(--card-back-body-size); opacity: 0.7; }
 
 .print-back-portrait {
   position: absolute;
@@ -5146,40 +5179,40 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 
 .print-back-info {
-  padding: 3px 6px;
+  padding: 1.6% 3.2%;
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  padding-right: 50px;
+  gap: 0.5%;
+  padding-right: 26%;
 }
 .print-back-row { display: flex; gap: 3px; align-items: baseline; }
-.print-back-row-label { color: #7070a0; width: 42px; flex-shrink: 0; font-size: 5px; letter-spacing: 0.3px; }
-.print-back-row-value { color: #e0e0f0; font-size: 5px; }
+.print-back-row-label { color: #7070a0; width: 42px; flex-shrink: 0; font-size: var(--card-back-body-size); letter-spacing: 0.3px; }
+.print-back-row-value { color: #e0e0f0; font-size: var(--card-back-body-size); }
 
 .print-back-stats {
-  padding: 3px 6px;
+  padding: 1.6% 3.2%;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 0.5%;
   border-top: 1px solid #1e1e3a;
 }
-.print-back-stats .stat-bar  { gap: 2px; }
-.print-back-stats .stat-label { font-size: 5px; width: 22px; }
-.print-back-stats .stat-value { font-size: 5px; width: 8px; }
+.print-back-stats .stat-bar  { gap: 1%; }
+.print-back-stats .stat-label { font-size: var(--stat-font-size); width: 22px; }
+.print-back-stats .stat-value { font-size: var(--stat-font-size); width: 8px; }
 .print-back-stats .stat-track { height: 2px; }
 
 .print-back-trait {
-  padding: 2px 6px;
+  padding: 1.1% 3.2%;
   border-top: 1px solid #1e1e3a;
 }
 .print-back-trait-label {
   display: block;
-  font-size: 5px;
+  font-size: var(--card-back-body-size);
   color: #7070a0;
   letter-spacing: 0.3px;
   margin-bottom: 1px;
 }
-.print-back-trait-desc { font-size: 5px; color: #b0b0c8; margin: 0; line-height: 1.3; }
+.print-back-trait-desc { font-size: var(--card-back-body-size); color: #b0b0c8; margin: 0; line-height: 1.3; }
 
 .print-back-flavor {
   padding: 2px 6px;
@@ -5191,10 +5224,10 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 
 .print-back-tags {
-  padding: 2px 6px;
+  padding: 1.1% 3.2%;
   display: flex;
   flex-wrap: wrap;
-  gap: 1px;
+  gap: 0.5%;
 }
 .print-back-tag {
   font-size: 4px;
@@ -5206,7 +5239,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 
 .print-back-serial {
   padding: 2px 6px 4px;
-  font-size: 5px;
+  font-size: var(--card-back-body-size);
   color: #7070a0;
   letter-spacing: 0.5px;
   margin-top: auto;
@@ -5233,23 +5266,21 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .print-preview-area--forge .print-card {
   width: 100%;
   height: auto;
-  aspect-ratio: 189 / 264;
+  aspect-ratio: var(--card-aspect-ratio);
 }
 .print-preview-area--forge .print-preview-label {
   font-size: 16px;
   letter-spacing: 1.5px;
 }
 .print-preview-area--forge .print-front-name {
-  font-size: 13px;
+  /* font-size driven by --card-name-size set on the CardContainer */
+  font-size: var(--card-name-size);
 }
 .print-preview-area--forge .print-front-bio {
-  font-size: 10px;
-}
-.print-preview-area--forge .print-card--back {
-  font-size: 10px;
+  font-size: var(--card-bio-size);
 }
 .print-preview-area--forge .print-back-name {
-  font-size: 12px;
+  font-size: var(--card-back-name-size);
 }
 .print-preview-area--forge .print-back-rarity,
 .print-preview-area--forge .print-back-row-label,
@@ -5259,7 +5290,73 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .print-preview-area--forge .print-back-trait-label,
 .print-preview-area--forge .print-back-trait-desc,
 .print-preview-area--forge .print-back-serial {
-  font-size: 10px;
+  font-size: var(--card-back-body-size);
+  /* --stat-font-size is set to --card-back-body-size by the .print-card token,
+     so overriding --card-back-body-size cascades automatically. */
+}
+
+/* ── Card Editor: inline editable inputs overlaid on the card faces ─────── */
+
+.card-name-input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.4);
+  color: #fff;
+  font-family: inherit;
+  font-size: var(--card-name-size);
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  outline: none;
+  padding: 0;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+  width: 100%;
+}
+.card-age-input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.7);
+  font-family: inherit;
+  font-size: var(--card-age-size);
+  outline: none;
+  padding: 0;
+  width: 55%;
+}
+.card-bio-input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.85);
+  font-family: inherit;
+  font-size: var(--card-bio-size);
+  font-style: italic;
+  line-height: 1.3;
+  outline: none;
+  padding: 0;
+  resize: none;
+  width: 100%;
+}
+.card-stat-input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.3);
+  color: #e0e0f0;
+  font-family: inherit;
+  font-size: var(--card-back-body-size);
+  outline: none;
+  padding: 0;
+  text-align: right;
+  width: 2em;
+}
+/* Hide number input spinners inside the tiny stat cells */
+.card-stat-input::-webkit-inner-spin-button,
+.card-stat-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.card-stat-input { -moz-appearance: textfield; }
+
+.card-stat-editor-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .forge-stat-card-wrap {

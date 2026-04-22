@@ -5400,6 +5400,21 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
      so overriding --card-back-body-size cascades automatically. */
 }
 
+.print-preview-area--collection {
+  width: 100%;
+  margin-bottom: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.print-preview-area--collection .print-card-wrap {
+  padding: 0;
+}
+.print-preview-area--collection .print-preview-slot {
+  width: 100%;
+  gap: 6px;
+}
+
 /* ── Card Editor: inline editable inputs overlaid on the card faces ─────── */
 
 .card-name-input {

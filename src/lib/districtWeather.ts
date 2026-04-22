@@ -43,7 +43,7 @@ const WHEEL_LABELS: Record<WheelType, string> = {
   Urethane: "Street wheels (Urethane)",
   Pneumatic: "Pneumatic wheels",
   Rubber: "Solid Rubber wheels",
-  Cloud: "Cloud wheels",
+  Cloud: "Vapor Wheels",
 };
 
 export const DISTRICT_WHEEL_ACCESS_RULES: Record<District, DistrictWheelAccessRule> = {

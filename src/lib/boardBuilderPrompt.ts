@@ -26,7 +26,7 @@ const WHEEL_IMAGE_DESCRIPTIONS: Record<WheelType, string> = {
   Urethane: "It has 4 poly-urethane wheels.",
   Pneumatic: "It has 4 large pneumatic all-terrain tires with visible tread.",
   Rubber: "It has 4 solid rubber all-terrain wheels with thick puncture-proof sidewalls.",
-  Cloud: "It has 4 oversized cloud wheels with a soft semi-transparent cushioned look.",
+  Cloud: "It has 4 oversized vapor wheels with a soft semi-transparent cushioned look.",
 };
 
 const BATTERY_IMAGE_DESCRIPTIONS: Record<BatteryType, string> = {

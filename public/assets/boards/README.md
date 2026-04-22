@@ -63,7 +63,7 @@ mapping is:
 | `urethane` or `poly` | Urethane |
 | `pneumatic` | Pneumatic |
 | `rubber` or `solid` | Solid Rubber |
-| `cloud` | Cloud Wheels |
+| `cloud` | Vapor Wheels |
 
 #### Battery
 

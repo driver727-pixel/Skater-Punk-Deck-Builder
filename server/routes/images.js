@@ -1,3 +1,5 @@
+const BOARD_IMAGE_SIZE = { width: 1024, height: 1024 };
+
 function extractBoardImageUrl(result) {
   if (process.env.FAL_DEBUG) console.log('Raw fal board result:', JSON.stringify(result));
 
@@ -85,6 +87,7 @@ export function registerImageRoutes(app, {
         input: {
           prompt,
           image_urls: imageUrls,
+          image_size: BOARD_IMAGE_SIZE,
           thinking_level: 'high',
           enable_web_search: false,
         },

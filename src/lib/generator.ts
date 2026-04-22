@@ -239,6 +239,7 @@ export const generateCard = (prompts: CardPrompts, options: GenerateCardOptions 
       name,
       crew:         ARCHETYPE_TO_FACTION[prompts.archetype],
       serialNumber,
+      age:          "",
     },
     stats: { speed, stealth, tech, grit, rep },
     traits: {

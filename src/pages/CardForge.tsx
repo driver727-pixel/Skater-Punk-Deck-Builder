@@ -45,6 +45,9 @@ export function CardForge() {
     isFirstCard,
     layers,
     openUpgradeModal,
+    patchGeneratedCard,
+    patchIdentity,
+    patchStats,
     printing,
     prompts,
     revealedFaction,
@@ -134,6 +137,9 @@ export function CardForge() {
           characterBlend={characterBlend}
           isImageGenConfigured={isImageGenConfigured}
           layers={layers}
+          patchGeneratedCard={patchGeneratedCard}
+          patchIdentity={patchIdentity}
+          patchStats={patchStats}
         />
       </div>
 

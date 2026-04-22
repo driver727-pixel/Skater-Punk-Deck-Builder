@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import type { CardPayload } from "../lib/types";
 import { PrintedCardBackContent, PrintedCardFrontContent } from "./PrintedCardFaces";
+import { buildCardVars } from "../lib/cardVars";
 
 interface CardViewer3DBaseProps {
   card: CardPayload;
@@ -104,13 +105,14 @@ export function CardViewer3D({
   };
 
   const cardTransform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+  const cardVars = buildCardVars(card, "3d");
 
   const scene = (
     <div className={`viewer3d-scene${inline ? " viewer3d-scene--inline" : ""}`} onClick={(e) => e.stopPropagation()}>
       <div className={`viewer3d-stage${inline ? " viewer3d-stage--inline" : ""}`}>
         <div
           className="viewer3d-card"
-          style={{ transform: cardTransform }}
+          style={{ ...cardVars, transform: cardTransform }}
           onMouseDown={onMouseDown}
           onDragStart={(e) => e.preventDefault()}
           onTouchStart={onTouchStart}

@@ -14,6 +14,12 @@ export interface PrintedCardFaceProps {
   characterBlend?: number;
   fallbackWidth?: number;
   fallbackHeight?: number;
+  /** When true, text fields are replaced with interactive inputs. */
+  editable?: boolean;
+  onNameChange?: (value: string) => void;
+  onBioChange?: (value: string) => void;
+  onAgeChange?: (value: string) => void;
+  onStatChange?: (key: keyof CardPayload["stats"], value: number) => void;
 }
 
 const PRINT_RARITY_COLORS: Record<string, string> = {
@@ -32,6 +38,10 @@ export function PrintedCardFrontContent({
   characterBlend,
   fallbackWidth = 189,
   fallbackHeight = 264,
+  editable = false,
+  onNameChange,
+  onBioChange,
+  onAgeChange,
 }: PrintedCardFaceProps) {
   const hasAnyLayer = backgroundImageUrl || characterImageUrl || frameImageUrl;
   const backgroundLayerClassName = shouldInsetBackgroundForFrame(card.prompts.rarity, frameImageUrl)
@@ -72,14 +82,43 @@ export function PrintedCardFrontContent({
         <CardArt card={card} width={fallbackWidth} height={fallbackHeight} />
       )}
       <div className="print-front-overlay">
-        <span className="print-front-name">{card.identity.name}</span>
-        <p className="print-front-bio">&ldquo;{card.flavorText}&rdquo;</p>
+        {editable ? (
+          <>
+            <input
+              className="card-name-input"
+              value={card.identity.name}
+              onChange={(e) => onNameChange?.(e.target.value)}
+              placeholder="Name"
+            />
+            <input
+              className="card-age-input"
+              value={card.identity.age ?? ""}
+              onChange={(e) => onAgeChange?.(e.target.value)}
+              placeholder="Age"
+            />
+            <textarea
+              className="card-bio-input"
+              value={card.flavorText}
+              onChange={(e) => onBioChange?.(e.target.value)}
+              placeholder="Bio / flavor text"
+              rows={2}
+            />
+          </>
+        ) : (
+          <>
+            <span className="print-front-name">{card.identity.name}</span>
+            {card.identity.age && (
+              <span className="print-front-age">{card.identity.age}</span>
+            )}
+            <p className="print-front-bio">&ldquo;{card.flavorText}&rdquo;</p>
+          </>
+        )}
       </div>
     </>
   );
 }
 
-export function PrintedCardBackContent({ card }: PrintedCardFaceProps) {
+export function PrintedCardBackContent({ card, editable = false, onStatChange }: PrintedCardFaceProps) {
   const accent = card.visuals.accentColor || "#00ff88";
   const rarityColor = PRINT_RARITY_COLORS[card.prompts.rarity] || "#aaaaaa";
 
@@ -101,11 +140,33 @@ export function PrintedCardBackContent({ card }: PrintedCardFaceProps) {
       )}
 
       <div className="print-back-stats">
-        <StatBar label={CARD_STAT_LABELS.speed.label} value={card.stats.speed} color={accent} tooltip={CARD_STAT_LABELS.speed.tooltip} />
-        <StatBar label={CARD_STAT_LABELS.stealth.label} value={card.stats.stealth} color={accent} tooltip={CARD_STAT_LABELS.stealth.tooltip} />
-        <StatBar label={CARD_STAT_LABELS.tech.label} value={card.stats.tech} color={accent} tooltip={CARD_STAT_LABELS.tech.tooltip} />
-        <StatBar label={CARD_STAT_LABELS.grit.label} value={card.stats.grit} color={accent} tooltip={CARD_STAT_LABELS.grit.tooltip} />
-        <StatBar label={CARD_STAT_LABELS.rep.label} value={card.stats.rep} color={accent} tooltip={CARD_STAT_LABELS.rep.tooltip} />
+        {editable ? (
+          (Object.entries(CARD_STAT_LABELS) as [keyof CardPayload["stats"], { label: string; tooltip: string }][]).map(
+            ([key, { label, tooltip }]) => (
+              <div key={key} className="stat-bar card-stat-editor-row">
+                <span className="stat-label" title={tooltip}>{label}</span>
+                <input
+                  type="number"
+                  className="card-stat-input"
+                  min={0}
+                  max={10}
+                  value={card.stats[key]}
+                  onChange={(e) =>
+                    onStatChange?.(key, Math.max(0, Math.min(10, Number(e.target.value))))
+                  }
+                />
+              </div>
+            ),
+          )
+        ) : (
+          <>
+            <StatBar label={CARD_STAT_LABELS.speed.label}   value={card.stats.speed}   color={accent} tooltip={CARD_STAT_LABELS.speed.tooltip} />
+            <StatBar label={CARD_STAT_LABELS.stealth.label} value={card.stats.stealth} color={accent} tooltip={CARD_STAT_LABELS.stealth.tooltip} />
+            <StatBar label={CARD_STAT_LABELS.tech.label}    value={card.stats.tech}    color={accent} tooltip={CARD_STAT_LABELS.tech.tooltip} />
+            <StatBar label={CARD_STAT_LABELS.grit.label}    value={card.stats.grit}    color={accent} tooltip={CARD_STAT_LABELS.grit.tooltip} />
+            <StatBar label={CARD_STAT_LABELS.rep.label}     value={card.stats.rep}     color={accent} tooltip={CARD_STAT_LABELS.rep.tooltip} />
+          </>
+        )}
       </div>
 
       <div className="print-back-info">
@@ -158,6 +219,11 @@ export function PrintedCardPreviewPair({
   frameImageUrl,
   characterBlend,
   className,
+  editable,
+  onNameChange,
+  onBioChange,
+  onAgeChange,
+  onStatChange,
 }: PrintedCardPreviewPairProps) {
   const previewClassName = className ? `print-preview-area ${className}` : "print-preview-area";
 
@@ -173,6 +239,10 @@ export function PrintedCardPreviewPair({
               characterImageUrl={characterImageUrl}
               frameImageUrl={frameImageUrl}
               characterBlend={characterBlend}
+              editable={editable}
+              onNameChange={onNameChange}
+              onBioChange={onBioChange}
+              onAgeChange={onAgeChange}
             />
           </div>
         </div>
@@ -182,7 +252,11 @@ export function PrintedCardPreviewPair({
         <p className="print-preview-label">Back</p>
         <div className="print-card-wrap">
           <div className="print-card print-card--back">
-            <PrintedCardBackContent card={card} />
+            <PrintedCardBackContent
+              card={card}
+              editable={editable}
+              onStatChange={onStatChange}
+            />
           </div>
         </div>
       </div>

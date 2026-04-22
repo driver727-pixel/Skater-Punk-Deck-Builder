@@ -5,6 +5,8 @@ import {
   PrintedCardFrontContent,
   PrintedCardPreviewPair,
 } from "./PrintedCardFaces";
+import { CardContainer } from "./CardContainer";
+import { buildCardVars } from "../lib/cardVars";
 
 interface PrintModalProps {
   card: CardPayload;
@@ -82,13 +84,15 @@ export function PrintModal({
           </div>
 
           {/* Print preview */}
-          <PrintedCardPreviewPair
-            card={card}
-            backgroundImageUrl={backgroundImageUrl}
-            characterImageUrl={characterImageUrl}
-            frameImageUrl={frameImageUrl}
-            characterBlend={characterBlend}
-          />
+          <CardContainer cardVars={buildCardVars(card, "print-screen")}>
+            <PrintedCardPreviewPair
+              card={card}
+              backgroundImageUrl={backgroundImageUrl}
+              characterImageUrl={characterImageUrl}
+              frameImageUrl={frameImageUrl}
+              characterBlend={characterBlend}
+            />
+          </CardContainer>
 
           <div className="print-modal-actions">
             <button className="btn-primary" onClick={handlePrint}>

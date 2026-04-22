@@ -42,6 +42,7 @@ export function useForgeGeneration() {
   const [generated, setGenerated] = useState<CardPayload | null>(null);
   const [characterBlend, setCharacterBlend] = useState(1);
   const [forging, setForging] = useState(false);
+  const [boardImageLoading, setBoardImageLoading] = useState(false);
   const [revealedFaction, setRevealedFaction] = useState<{ faction: Faction; isNew: boolean } | null>(null);
   const {
     abortRef,
@@ -111,12 +112,15 @@ export function useForgeGeneration() {
     resetLayerSession();
 
     (async () => {
+      setBoardImageLoading(true);
       try {
         const boardImageUrl = await generateGouacheBoard(boardConfig);
         if (signal.aborted) return;
         setGenerated((current) => (current ? { ...current, boardImageUrl } : current));
       } catch (error) {
         console.warn("Board image generation failed:", error);
+      } finally {
+        if (!signal.aborted) setBoardImageLoading(false);
       }
     })();
 
@@ -228,6 +232,7 @@ export function useForgeGeneration() {
 
   return useMemo(() => ({
     boardConfig,
+    boardImageLoading,
     canForge,
     characterBlend,
     forging,
@@ -255,6 +260,7 @@ export function useForgeGeneration() {
     tier,
   }), [
     boardConfig,
+    boardImageLoading,
     canForge,
     characterBlend,
     forging,

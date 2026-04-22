@@ -19,6 +19,7 @@ export function useCardForgeController() {
 
   return useMemo(() => ({
     boardConfig: forge.boardConfig,
+    boardImageLoading: forge.boardImageLoading,
     canForge: forge.canForge,
     characterBlend: forge.characterBlend,
     closeWelcome: navigation.closeWelcome,

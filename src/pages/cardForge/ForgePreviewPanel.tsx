@@ -6,6 +6,7 @@ import type { CardPayload } from "../../lib/types";
 import type { LayerState } from "./useForgeLayers";
 
 interface ForgePreviewPanelProps {
+  boardImageLoading: boolean;
   card: CardPayload | null;
   characterBlend: number;
   isImageGenConfigured: boolean;
@@ -16,6 +17,7 @@ interface ForgePreviewPanelProps {
 }
 
 export function ForgePreviewPanel({
+  boardImageLoading,
   card,
   characterBlend,
   isImageGenConfigured,
@@ -68,6 +70,7 @@ export function ForgePreviewPanel({
               <h2 className="forge-preview-heading">Card Editor</h2>
               <CardContainer cardVars={cardVars}>
                 <PrintedCardPreviewPair
+                  boardImageLoading={boardImageLoading}
                   card={card}
                   backgroundImageUrl={layers.backgroundUrl}
                   characterImageUrl={layers.characterUrl}

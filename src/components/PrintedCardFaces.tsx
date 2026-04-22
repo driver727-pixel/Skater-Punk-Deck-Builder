@@ -151,7 +151,8 @@ export function PrintedCardBackContent({ card, editable = false, onStatChange }:
                   min={0}
                   max={10}
                   value={card.stats[key]}
-                  onChange={(e) =>
+                  onChange={(e) => onStatChange?.(key, Number(e.target.value))}
+                  onBlur={(e) =>
                     onStatChange?.(key, Math.max(0, Math.min(10, Number(e.target.value))))
                   }
                 />

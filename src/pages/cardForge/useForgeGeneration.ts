@@ -214,7 +214,8 @@ export function useForgeGeneration() {
     );
   }, []);
 
-  /** Deep-merge partial stats into the generated card. */
+  /** Deep-merge partial stats into the generated card. Callers should pass
+   *  already-validated values (within 0–10); clamp only happens in the UI. */
   const patchStats = useCallback((updates: Partial<CardPayload["stats"]>) => {
     setGenerated((prev) =>
       prev ? { ...prev, stats: { ...prev.stats, ...updates } } : prev,

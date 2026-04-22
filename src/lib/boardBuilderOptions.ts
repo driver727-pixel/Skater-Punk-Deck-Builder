@@ -144,7 +144,7 @@ export const WHEEL_OPTIONS: BoardOption<WheelType>[] = [
   },
   {
     value: "Cloud",
-    label: "Cloud Wheels",
+    label: "Vapor Wheels",
     icon: "⚪",
     tagline: "Smooth and floaty",
     description: "Semi-transparent foam-core wheels with a wide contact patch. Absorbs road buzz and flows through carves.",

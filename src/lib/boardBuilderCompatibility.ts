@@ -39,7 +39,7 @@ export function validateBoardCompatibility(config: BoardConfig): CompatibilityEr
         errors.push({ component: "wheels", message: "Mountain board cannot use Poly (Urethane) wheels." });
       }
       if (normalizedConfig.wheels === "Cloud") {
-        errors.push({ component: "wheels", message: "Mountain board cannot use Cloud wheels." });
+        errors.push({ component: "wheels", message: "Mountain board cannot use Vapor Wheels." });
       }
       if (!isTopMount) {
         errors.push({ component: "battery", message: "Mountain board must use a top-mounted battery." });

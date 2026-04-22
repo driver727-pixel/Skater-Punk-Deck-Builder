@@ -198,7 +198,11 @@ function CardBack({
                 alt="Generating skateboard…"
                 className="print-back-board-spinner"
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = "/assets/loading_2.gif";
+                  const img = e.currentTarget as HTMLImageElement;
+                  if (!img.dataset.fallback) {
+                    img.dataset.fallback = "1";
+                    img.src = "/assets/loading_2.gif";
+                  }
                 }}
               />
             </div>

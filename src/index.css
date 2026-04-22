@@ -5258,6 +5258,9 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   gap: 0.5em;
 }
 .print-back-stats--overlay {
+  --print-back-stat-label-color: rgba(255, 202, 115, 0.92);
+  --print-back-stat-value-color: #fff5d9;
+  --print-back-stat-track-bg: rgba(90, 63, 16, 0.78);
   position: absolute;
   left: 0;
   right: 0;
@@ -5270,18 +5273,18 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .print-back-stats .stat-label {
   font-size: var(--stat-font-size);
   width: 7ch;
-  color: rgba(255, 202, 115, 0.92);
+  color: var(--print-back-stat-label-color);
   text-shadow: 0 1px 2px rgba(0,0,0,0.55);
 }
 .print-back-stats .stat-value {
   font-size: var(--stat-font-size);
   width: 2ch;
-  color: #fff5d9;
+  color: var(--print-back-stat-value-color);
   text-shadow: 0 1px 2px rgba(0,0,0,0.55);
 }
 .print-back-stats .stat-track {
   height: max(2px, calc(var(--stat-font-size) * 0.28));
-  background: rgba(90, 63, 16, 0.78);
+  background: var(--print-back-stat-track-bg);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
 }
 

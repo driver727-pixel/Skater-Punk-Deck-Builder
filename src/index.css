@@ -5125,6 +5125,11 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   --print-back-hero-info-right: 24%;
   --print-back-board-scale: 1.2;
   --print-back-label-width: 7.5ch;
+  --print-back-spinner-width: 28%;
+  --print-back-info-top-padding: 3.2%;
+  --print-back-info-side-padding: 4%;
+  --print-back-info-bottom-padding: 1.2%;
+  --print-back-stats-top-padding: 10%;
   --print-back-spinner-max: 72px;
   position: relative;
   height: 40%;
@@ -5182,7 +5187,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   justify-content: center;
 }
 .print-back-board-spinner {
-  width: min(35%, var(--print-back-spinner-max));
+  width: min(var(--print-back-spinner-width), var(--print-back-spinner-max));
   aspect-ratio: 1 / 1;
   object-fit: contain;
 }
@@ -5230,7 +5235,10 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   left: 0;
   right: var(--print-back-hero-info-right);
   z-index: 2;
-  padding: 3.2% 4% 0;
+  padding:
+    var(--print-back-info-top-padding)
+    var(--print-back-info-side-padding)
+    var(--print-back-info-bottom-padding);
   background: linear-gradient(90deg, rgba(9,9,18,0.72) 0%, rgba(9,9,18,0.18) 78%, rgba(9,9,18,0) 100%);
 }
 .print-back-row {
@@ -5266,7 +5274,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   right: 0;
   bottom: 0;
   z-index: 2;
-  padding: 10% 4% 3.4%;
+  padding: var(--print-back-stats-top-padding) 4% 3.4%;
   background: linear-gradient(180deg, rgba(9,9,18,0) 0%, rgba(9,9,18,0.82) 42%, rgba(9,9,18,0.96) 100%);
 }
 .print-back-stats .stat-bar  { gap: 2%; }
@@ -5542,14 +5550,21 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
     top: 24pt; right: 6pt;
     width: 0.55in; height: 0.55in;
   }
-  .print-only-card .print-back-hero   { --print-back-hero-info-right: 22%; --print-back-label-width: 0.6in; height: 40%; }
+  .print-only-card .print-back-hero   {
+    --print-back-hero-info-right: 22%;
+    --print-back-label-width: 0.6in;
+    --print-back-info-top-padding: 6pt;
+    --print-back-info-side-padding: 8pt;
+    --print-back-info-bottom-padding: 1pt;
+    --print-back-stats-top-padding: 16pt;
+    height: 40%;
+  }
   .print-only-card .print-back-board  { inset: 0; }
   .print-only-card .print-back-info   { gap: 2pt; }
-  .print-only-card .print-back-info--overlay { padding: 6pt 8pt 0; }
   .print-only-card .print-back-row-label { font-size: 5pt; width: 0.6in; }
   .print-only-card .print-back-row-value { font-size: 5pt; }
   .print-only-card .print-back-stats  { gap: 2pt; }
-  .print-only-card .print-back-stats--overlay { padding: 16pt 8pt 6pt; }
+  .print-only-card .print-back-stats--overlay { padding: var(--print-back-stats-top-padding) 8pt 6pt; }
   .print-only-card .print-back-stats .stat-label { font-size: 5pt; }
   .print-only-card .print-back-stats .stat-value { font-size: 5pt; }
   .print-only-card .print-back-stats .stat-track { height: 2pt; }

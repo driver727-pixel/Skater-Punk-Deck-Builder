@@ -36,14 +36,6 @@ export function normalizeStyle(style: unknown): Style {
 }
 
 /**
- * Cover identity no longer forces a wardrobe/style bundle; the style picker is
- * the single source of truth for image-generation clothing and visual loadout.
- */
-export function resolveArchetypeStyle(_archetype: unknown, style: unknown): Style {
-  return normalizeStyle(style);
-}
-
-/**
  * Applies only the first legacy hop so old style-linked gameplay/faction rules
  * can be reassigned exactly as requested before full style normalization.
  */
@@ -54,7 +46,7 @@ export function remapStyleConnection(style: unknown): string {
 
 export function normalizeCardPayload(card: CardPayload): CardPayload {
   const rawStyle = typeof card.prompts?.style === "string" ? card.prompts.style : "Street";
-  const style = resolveArchetypeStyle(card.prompts?.archetype, rawStyle);
+  const style = normalizeStyle(rawStyle);
   const normalizedStats = normalizeCardStats(card.stats);
   const hasStyleChange = style !== rawStyle;
   const hasStatChange = (Object.keys(card.stats) as Array<keyof typeof card.stats>)

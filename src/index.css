@@ -5236,20 +5236,20 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   aspect-ratio: 189 / 264;
 }
 .print-preview-area--forge .print-preview-label {
-  font-size: 12px;
+  font-size: 16px;
   letter-spacing: 1.5px;
 }
 .print-preview-area--forge .print-front-name {
-  font-size: 10px;
+  font-size: 13px;
 }
 .print-preview-area--forge .print-front-bio {
-  font-size: 6px;
+  font-size: 8px;
 }
 .print-preview-area--forge .print-card--back {
-  font-size: 7px;
+  font-size: 9px;
 }
 .print-preview-area--forge .print-back-name {
-  font-size: 9px;
+  font-size: 12px;
 }
 .print-preview-area--forge .print-back-rarity,
 .print-preview-area--forge .print-back-row-label,
@@ -5259,7 +5259,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .print-preview-area--forge .print-back-trait-label,
 .print-preview-area--forge .print-back-trait-desc,
 .print-preview-area--forge .print-back-serial {
-  font-size: 6px;
+  font-size: 8px;
 }
 
 .forge-stat-card-wrap {

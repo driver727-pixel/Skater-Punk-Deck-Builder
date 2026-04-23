@@ -235,15 +235,6 @@ function CardBack({
             <div className="print-back-board-placeholder">🛹</div>
           )}
         </div>
-        <div className="print-back-hero-overlay">
-          {boardRows.map(({ icon, label, value }) => (
-            <div key={label} className="print-back-board-row">
-              <span className="print-back-board-icon">{icon}</span>
-              <span className="print-back-board-key">{label}</span>
-              <span className="print-back-board-val">{value}</span>
-            </div>
-          ))}
-        </div>
       </div>
 
       <div className="print-back-info">
@@ -254,6 +245,17 @@ function CardBack({
           </div>
         ))}
       </div>
+
+      <div className="print-back-lower">
+        <div className="print-back-components">
+          {boardRows.map(({ icon, label, value }) => (
+            <div key={label} className="print-back-board-row">
+              <span className="print-back-board-icon">{icon}</span>
+              <span className="print-back-board-key">{label}</span>
+              <span className="print-back-board-val">{value}</span>
+            </div>
+          ))}
+        </div>
 
       <div className="print-back-stats">
         {editable ? (
@@ -285,6 +287,7 @@ function CardBack({
             </div>
           </>
         )}
+      </div>
       </div>
 
       <div className="print-back-trait">

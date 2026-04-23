@@ -197,6 +197,13 @@ function CardBack({
   const mt = MOTOR_OPTIONS.find((o) => o.value === card.board.config.motor);
   const wh = WHEEL_OPTIONS.find((o) => o.value === card.board.config.wheels);
   const ba = BATTERY_OPTIONS.find((o) => o.value === card.board.config.battery);
+  const boardRows = [
+    { icon: bt?.icon ?? "🛹",  label: "TYPE",    value: bt?.label ?? card.board.components.boardType },
+    { icon: dr?.icon ?? "⚙️", label: "DRIVE",   value: dr?.label ?? card.board.components.drivetrain },
+    { icon: mt?.icon ?? "⚡",  label: "MOTOR",   value: mt?.label ?? card.board.components.motor },
+    { icon: wh?.icon ?? "⚫",  label: "WHEELS",  value: wh?.label ?? card.board.components.wheels },
+    { icon: ba?.icon ?? "🔋",  label: "BATTERY", value: ba?.label ?? card.board.components.battery },
+  ];
 
   return (
     <>
@@ -228,22 +235,15 @@ function CardBack({
             <div className="print-back-board-placeholder">🛹</div>
           )}
         </div>
-      </div>
-
-      <div className="print-back-board-rows">
-        {[
-          { icon: bt?.icon ?? "🛹",  label: "TYPE",    value: bt?.label ?? card.board.components.boardType },
-          { icon: dr?.icon ?? "⚙️", label: "DRIVE",   value: dr?.label ?? card.board.components.drivetrain },
-          { icon: mt?.icon ?? "⚡",  label: "MOTOR",   value: mt?.label ?? card.board.components.motor },
-          { icon: wh?.icon ?? "⚫",  label: "WHEELS",  value: wh?.label ?? card.board.components.wheels },
-          { icon: ba?.icon ?? "🔋",  label: "BATTERY", value: ba?.label ?? card.board.components.battery },
-        ].map(({ icon, label, value }) => (
-          <div key={label} className="print-back-board-row">
-            <span className="print-back-board-icon">{icon}</span>
-            <span className="print-back-board-key">{label}</span>
-            <span className="print-back-board-val">{value}</span>
-          </div>
-        ))}
+        <div className="print-back-hero-overlay">
+          {boardRows.map(({ icon, label, value }) => (
+            <div key={label} className="print-back-board-row">
+              <span className="print-back-board-icon">{icon}</span>
+              <span className="print-back-board-key">{label}</span>
+              <span className="print-back-board-val">{value}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="print-back-info">

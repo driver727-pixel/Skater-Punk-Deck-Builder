@@ -41,7 +41,7 @@ async function buildAuthorizedJsonHeaders(): Promise<HeadersInit> {
 }
 
 type BoardImageCategoryValue = {
-  category: "deck" | "drivetrain" | "wheels" | "battery";
+  category: "deck" | "drivetrain" | "motor" | "wheels" | "battery";
   value: string;
 };
 
@@ -54,6 +54,11 @@ function getResolvedBoardReferenceUrls(config: BoardConfig): string[] {
   ];
   if (normalizedConfig.battery !== "SlimStealth") {
     selections.push({ category: "battery", value: normalizedConfig.battery });
+  } else {
+    // SlimStealth is an integrated battery that is not visually prominent,
+    // so use the motor image as the fourth reference to keep the required
+    // count of four URLs the server expects.
+    selections.push({ category: "motor", value: normalizedConfig.motor });
   }
 
   return selections.map(({ category, value }) => {

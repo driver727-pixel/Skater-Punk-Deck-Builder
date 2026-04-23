@@ -126,12 +126,16 @@ export function computeSkateStats(
     WHEEL_WEIGHT[c.wheels] +
     BATTERY_WEIGHT[c.battery];
 
-  const totalWeight = criticalForge
-    ? Math.round(rawWeight * (1 - CRITICAL_FORGE_WEIGHT_REDUCTION))
+  // Use full-precision effective weight for the penalty so that Critical Forge
+  // produces a measurably different result even at low raw weights.
+  // The stored totalWeight is rounded for display purposes only.
+  const effectiveWeight = criticalForge
+    ? rawWeight * (1 - CRITICAL_FORGE_WEIGHT_REDUCTION)
     : rawWeight;
+  const totalWeight = Math.round(effectiveWeight);
 
   // ── Apply weight penalty to SPD and STL ─────────────────────────────────
-  const penalty = totalWeight * 0.5;
+  const penalty = effectiveWeight * 0.5;
   const spd = Math.max(0, Math.round(baseSpd - penalty));
   const stl = Math.max(0, Math.round(baseStl - penalty));
 

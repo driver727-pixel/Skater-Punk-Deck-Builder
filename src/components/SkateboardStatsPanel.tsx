@@ -30,7 +30,13 @@ function NeonBar({ label, value, max, colorClass, tooltip }: NeonBarProps) {
   );
 }
 
-/** Maximum raw value for Stat Envelope bars (SPD / RNG / STL / GRT). */
+/**
+ * Maximum raw value used to scale Stat Envelope bars in the UI.
+ * Derived from the highest theoretical single-stat total across all components:
+ * e.g. GRT on a max-GRT build (Mountain + 4WD + Mtn Runner 10000 + Rubber + TopPeli)
+ * yields 55 + 55 + 50 + 45 + 25 = 230. 220 is used as a slightly conservative
+ * ceiling so the heaviest builds still show a visible bar.
+ */
 const SKATE_STAT_MAX = 220;
 
 export function SkateboardStatsPanel({ loadout }: SkateboardStatsPanelProps) {

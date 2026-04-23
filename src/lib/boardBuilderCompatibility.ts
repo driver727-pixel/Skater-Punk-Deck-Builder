@@ -71,10 +71,10 @@ export function validateBoardCompatibility(config: BoardConfig): CompatibilityEr
         errors.push({ component: "drivetrain", message: "Surf skateboard cannot use 4WD drivetrain." });
       }
       if (normalizedConfig.motor === "Torque") {
-        errors.push({ component: "motor", message: "Surf skateboard cannot use the Torque 6374 motor." });
+        errors.push({ component: "motor", message: "Surf skateboard cannot use the Torque 7000 motor." });
       }
       if (normalizedConfig.motor === "Outrunner") {
-        errors.push({ component: "motor", message: "Surf skateboard cannot use the Outrunner 6396 motor." });
+        errors.push({ component: "motor", message: "Surf skateboard cannot use the Mtn Runner 10000 motor." });
       }
       break;
     case "AT":
@@ -85,7 +85,7 @@ export function validateBoardCompatibility(config: BoardConfig): CompatibilityEr
         errors.push({ component: "drivetrain", message: "All-Terrain board cannot use 4WD drivetrain." });
       }
       if (normalizedConfig.motor === "Micro") {
-        errors.push({ component: "motor", message: "All-Terrain board cannot use the Micro 5055 motor." });
+        errors.push({ component: "motor", message: "All-Terrain board cannot use the Micro 500x2 motor." });
       }
       break;
   }

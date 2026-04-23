@@ -165,6 +165,13 @@ service cloud.firestore {
     // until the corresponding feature passes QA and the flag is enabled.
     // ══════════════════════════════════════════════════════════════════════════
 
+    // ── Charge Ups ─────────────────────────────────────────────────────────
+    // Per-user Charge Up state. Doc ID = uid.
+    match /chargeUps/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update, delete: if false;
+    }
+
     // ── Daily Streaks ────────────────────────────────────────────────────────
     // Per-user daily login streak. Doc ID = uid.
     match /dailyStreaks/{uid} {

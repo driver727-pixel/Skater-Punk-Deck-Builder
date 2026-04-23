@@ -18,6 +18,9 @@ function envFlag(key: string, fallback: boolean = false): boolean {
 }
 
 export const featureFlags = {
+  /** 8-hour free forge timer ("Charge Up"). @owner gamma */
+  CHARGE_UP: envFlag("VITE_FF_CHARGE_UP", false),
+
   /** Daily login streaks + rewards UI. @owner gamma */
   DAILY_REWARDS: envFlag("VITE_FF_DAILY_REWARDS", false),
 

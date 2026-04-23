@@ -10,6 +10,16 @@
 
 import type { CardPayload } from "./types";
 
+// ── Charge Up (Gamma) ────────────────────────────────────────────────────────
+
+/** @sprint 1 @owner gamma — Charge Up forge event persisted per-user. Doc ID = uid. */
+export interface ChargeUpState {
+  uid: string;
+  lastUsedAt: string;
+  totalChargesUsed: number;
+  updatedAt: string;
+}
+
 // ── Daily Streaks (Gamma) ────────────────────────────────────────────────────
 
 /** @sprint 0 @owner gamma — Per-user daily login streak. Doc ID = uid. */

@@ -16,6 +16,8 @@ import { buildBackgroundPrompt, buildCharacterPrompt, buildFramePrompt } from ".
 import { useTier } from "../../context/TierContext";
 import { useAuth } from "../../context/AuthContext";
 import { useFactionDiscovery } from "../../hooks/useFactionDiscovery";
+import { clampToChargeRarity } from "../../lib/chargeUp";
+import { TIERS } from "../../lib/tiers";
 import type { Archetype, CardPayload, CardPrompts, Faction } from "../../lib/types";
 import { createCharacterLayerValidator, useForgeLayers } from "./useForgeLayers";
 import {
@@ -29,7 +31,7 @@ import { applyPreviewUpdates, buildRandomizedBoardConfig, buildRandomizedPrompts
 const ARCHETYPE_VALUES = FORGE_ARCHETYPE_OPTIONS.map((option) => option.value);
 
 export function useForgeGeneration() {
-  const { tier, canForge, generateCredits, consumeCredit, openUpgradeModal, freeCardUsed, markFreeCardUsed } = useTier();
+  const { tier, canForge, generateCredits, consumeCredit, openUpgradeModal, freeCardUsed, markFreeCardUsed, chargeUp } = useTier();
   const { user } = useAuth();
   const { hasFaction, unlockFaction } = useFactionDiscovery();
   const [prompts, setPrompts] = useState<CardPrompts>({
@@ -79,7 +81,9 @@ export function useForgeGeneration() {
     abortRef.current = controller;
     const { signal } = controller;
 
-    const forgePrompts = { ...prompts, style: resolveArchetypeStyle(prompts.archetype, prompts.style) };
+    const isChargeForge = chargeUp.available && !TIERS[tier].canGenerate && !(tier === "free" && !freeCardUsed) && generateCredits <= 0;
+    const effectiveRarity = isChargeForge ? clampToChargeRarity(prompts.rarity) : prompts.rarity;
+    const forgePrompts = { ...prompts, rarity: effectiveRarity, style: resolveArchetypeStyle(prompts.archetype, prompts.style) };
     const displayArchetype = getForgeArchetypeLabel(forgePrompts.archetype);
     const secretFaction = tier === "free" ? null : resolveSecretFaction(forgePrompts);
     const generationPrompts =
@@ -103,7 +107,9 @@ export function useForgeGeneration() {
       setRevealedFaction(null);
     }
 
-    if (tier === "free" && !freeCardUsed) {
+    if (isChargeForge) {
+      chargeUp.useCharge();
+    } else if (tier === "free" && !freeCardUsed) {
       markFreeCardUsed();
     } else if (generateCredits > 0) {
       consumeCredit();
@@ -181,6 +187,7 @@ export function useForgeGeneration() {
     abortRef,
     boardConfig,
     canForge,
+    chargeUp,
     consumeCredit,
     freeCardUsed,
     generateCredits,
@@ -235,6 +242,7 @@ export function useForgeGeneration() {
     boardImageLoading,
     canForge,
     characterBlend,
+    chargeUp,
     forging,
     freeCardUsed,
     generated,
@@ -263,6 +271,7 @@ export function useForgeGeneration() {
     boardImageLoading,
     canForge,
     characterBlend,
+    chargeUp,
     forging,
     freeCardUsed,
     generated,

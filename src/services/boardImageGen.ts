@@ -18,7 +18,7 @@ const BOARD_IMAGE_STATUS_BASE_URL = BOARD_IMAGE_API_URL.replace(
 );
 // Increment when the board-generation prompt, model, or cache-key inputs change
 // in a way that should invalidate previously generated board art.
-const BOARD_IMAGE_CACHE_VERSION = "v5-fal-gouache-board-square";
+export const BOARD_IMAGE_CACHE_VERSION = "v5-fal-gouache-board-square";
 const BOARD_IMAGE_LOCAL_CACHE_PREFIX = "skpd_board_image_cache::";
 const BOARD_IMAGE_PUBLIC_ORIGIN = "https://punchskater.com";
 

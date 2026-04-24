@@ -2457,6 +2457,18 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   width: 118.335901%;
   height: 110.107527%;
 }
+/* Wrap-around frame content insets — mirror of .print-card--wrap-frame.
+ * The bandage frame's visible hollow occupies roughly the central 72% × 83%
+ * of the card box (top ≈11%, bottom ≈7%, left/right ≈14%).  Inset the
+ * background and character layers to that hollow so they don't bleed past
+ * the visible frame border in thumbnails / inline card displays.
+ * The frame layer itself is a sibling and keeps its overscan. */
+.card-art-composite--wrap-frame .card-art-layer--background,
+.card-art-composite--wrap-frame .card-art-layer--character {
+  inset: 11% 14% 7%;
+  width: auto;
+  height: auto;
+}
 .card-art-layer--svg-frame {
   /* SVG neon border overlay for the four redesigned rarity frames (Apprentice, Master,
      Rare, Legendary).  Sits above the AI frame image layer so the deterministic neon
@@ -5115,6 +5127,43 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   left: -9.399076%;
 }
 
+/* ── Wrap-around frame content insets ────────────────────────────────────────
+ * The Punch Skater PNG frame has a visible bandage border around a roughly
+ * rectangular hollow.  In card-box coordinates (after the frame layer is
+ * scaled with overscan so its outer artwork meets the card edge), the hollow
+ * spans roughly:  top ≈11%, bottom ≈7%, left/right ≈14%.
+ *
+ * To honour "background, character, bio text and stats ALL must fit
+ * comfortably inside this frame", inset every interior layer to that hollow
+ * while leaving the frame itself at full card size.
+ */
+.print-card--wrap-frame .print-art-layer--bg,
+.print-card--wrap-frame .print-art-layer--char {
+  inset: 11% 14% 7%;
+  width: auto;
+  height: auto;
+}
+.print-card--wrap-frame .print-front-overlay {
+  left: 14%;
+  right: 14%;
+  bottom: 7%;
+}
+/* Back face: pad the flex column so every section (header, hero, info, lower,
+ * trait, maintenance, serial) lands inside the hollow.  The back-frame
+ * composite is absolutely positioned and uses the padding-box as its
+ * containing block, so cancel the padding with negative insets so it still
+ * spans the full card box.
+ *   left/right cancel:  -14% / (1 - 14% - 14%) = -19.444%
+ *   top  cancel:        -11% / (1 - 11% - 7%)  = -13.415%
+ *   bottom cancel:      -7%  / (1 - 11% - 7%)  = -8.537%
+ */
+.print-card--wrap-frame.print-card--back {
+  padding: 11% 14% 7%;
+}
+.print-card--wrap-frame .print-art-composite--frame-back {
+  inset: -13.415% -19.444% -8.537%;
+}
+
 /* Front face info overlay (name + bio shown over the character art) */
 .print-front-overlay {
   position: absolute;
@@ -5749,6 +5798,25 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   }
   .print-only-card .print-art-layer--frame-wrap.print-art-layer--frame-back {
     left: -9.399076%;
+  }
+  /* Wrap-around frame: inset interior layers so background, character,
+   * bio text and stats fit inside the frame's visible hollow. */
+  .print-only-card .print-card--wrap-frame .print-art-layer--bg,
+  .print-only-card .print-card--wrap-frame .print-art-layer--char {
+    inset: 11% 14% 7%;
+    width: auto;
+    height: auto;
+  }
+  .print-only-card .print-card--wrap-frame .print-front-overlay {
+    left: 14%;
+    right: 14%;
+    bottom: 7%;
+  }
+  .print-only-card .print-card--wrap-frame.print-card--back {
+    padding: 11% 14% 7%;
+  }
+  .print-only-card .print-card--wrap-frame .print-art-composite--frame-back {
+    inset: -13.415% -19.444% -8.537%;
   }
 
   @page {

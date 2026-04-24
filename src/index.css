@@ -5080,6 +5080,10 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
  * that decorations on the front frame (e.g. corner bandages) appear to wrap
  * around the card.  Sits on top of all back-face content but is click-through
  * so editable inputs remain usable. */
+.print-art-composite--frame-back {
+  z-index: 10;
+  pointer-events: none;
+}
 .print-art-layer--frame-back {
   z-index: 10;
   pointer-events: none;
@@ -5701,6 +5705,10 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   .print-only-card .print-art-layer--bg-inset {
     transform: scale(0.88);
     transform-origin: center;
+  }
+  .print-only-card .print-art-composite--frame-back {
+    z-index: 10;
+    pointer-events: none;
   }
   .print-only-card .print-art-layer--frame-back {
     z-index: 10;

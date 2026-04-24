@@ -311,12 +311,14 @@ function CardBack({
       <div className="print-back-serial">{card.identity.serialNumber}</div>
 
       {backFrameUrl && (
-        <img
-          src={backFrameUrl}
-          alt="frame"
-          className="print-art-layer print-art-layer--frame print-art-layer--frame-back"
-          style={backFrameStyle}
-        />
+        <div className="print-art-composite print-art-composite--frame-back">
+          <img
+            src={backFrameUrl}
+            alt="frame"
+            className="print-art-layer print-art-layer--frame print-art-layer--frame-back"
+            style={backFrameStyle}
+          />
+        </div>
       )}
     </>
   );

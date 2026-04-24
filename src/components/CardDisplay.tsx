@@ -191,7 +191,7 @@ function CompositeArt({
   }
 
   return (
-    <div className={`card-art-composite${fullSize ? " card-art-composite--full" : ""}`}>
+    <div className={`card-art-composite${fullSize ? " card-art-composite--full" : ""}${wraparoundFrame ? " card-art-composite--wrap-frame" : ""}`}>
       {/* Layer 1 – Background (district environment) */}
       {backgroundImageUrl ? (
         <img

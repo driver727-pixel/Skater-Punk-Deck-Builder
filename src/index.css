@@ -2457,6 +2457,18 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   width: 118.335901%;
   height: 110.107527%;
 }
+/* Wrap-around frame content insets — mirror of .print-card--wrap-frame.
+ * The bandage frame's visible hollow occupies roughly the central 72% × 83%
+ * of the card box (top ≈11%, bottom ≈7%, left/right ≈14%).  Inset the
+ * background and character layers to that hollow so they don't bleed past
+ * the visible frame border in thumbnails / inline card displays.
+ * The frame layer itself is a sibling and keeps its overscan. */
+.card-art-composite--wrap-frame .card-art-layer--background,
+.card-art-composite--wrap-frame .card-art-layer--character {
+  inset: 11% 14% 7%;
+  width: auto;
+  height: auto;
+}
 .card-art-layer--svg-frame {
   /* SVG neon border overlay for the four redesigned rarity frames (Apprentice, Master,
      Rare, Legendary).  Sits above the AI frame image layer so the deterministic neon

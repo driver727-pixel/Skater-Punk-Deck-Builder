@@ -38,7 +38,7 @@ export function CardThumbnail({ card, width = 160, height = 112 }: CardThumbnail
   }
 
   return (
-    <div className="card-art-composite" style={{ width, height }}>
+    <div className={`card-art-composite${wraparoundFrame ? " card-art-composite--wrap-frame" : ""}`} style={{ width, height }}>
       {backgroundImageUrl && (
         <img
           src={backgroundImageUrl}

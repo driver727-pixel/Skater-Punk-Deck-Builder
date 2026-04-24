@@ -11,14 +11,19 @@
  * regressions in CI.
  */
 
+import { createRequire } from 'module';
 import { BOARD_IMAGE_REQUIRED_URL_COUNT } from './fal.js';
+
+const require = createRequire(import.meta.url);
+
+// Single source of truth: src/lib/boardImageVersion.json.
+// Both this file and src/services/boardImageGen.ts import from there so
+// bumping the version only requires editing the JSON.
+const boardImageVersionJson = require('../../src/lib/boardImageVersion.json');
 
 export { BOARD_IMAGE_REQUIRED_URL_COUNT };
 
-// Must match the value in src/services/boardImageGen.ts.
-// The test catches accidental deletion; bumping the value does not require a
-// test change.
-export const BOARD_IMAGE_CACHE_VERSION = 'v5-fal-gouache-board-square';
+export const BOARD_IMAGE_CACHE_VERSION = boardImageVersionJson.BOARD_IMAGE_CACHE_VERSION;
 
 // Exported so tests can assert its presence directly without re-typing the string.
 export const CRITICAL_NOSE_CONSTRAINT =

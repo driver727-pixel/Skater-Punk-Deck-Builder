@@ -149,7 +149,12 @@ export function getStaticFrameBackUrl(rarity: Rarity): string | null {
 
 export function shouldRenderSvgFrame(rarity: Rarity, frameUrl?: string): boolean {
   if (!frameUrl) return true;
-  return FRAME_ASSETS[rarity]?.url === frameUrl;
+  const asset = FRAME_ASSETS[rarity];
+  // A rarity that registers a back-face frame (e.g. "Punch Skater") supplies a
+  // real card-sized PNG frame for both faces — render the PNG instead of the
+  // procedural SVG overlay so the artwork actually shows up on the front.
+  if (asset?.backUrl && asset.url === frameUrl) return false;
+  return asset?.url === frameUrl;
 }
 
 export function getFrameBlendMode(rarity: Rarity, frameUrl?: string): FrameBlendMode {

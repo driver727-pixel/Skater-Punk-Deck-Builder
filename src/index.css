@@ -2448,14 +2448,13 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   object-fit: fill;
 }
 .card-art-layer--frame-wrap {
-  /* Wrap-around bandage frames (e.g. Punch Skater) ship at the same poker
-     5:7 aspect ratio (750 × 1050) as the card box, with the visible artwork
-     flush to the PNG edge.  Fill the card box exactly so the bandage border
-     meets the card edge without overscan or asymmetric offsets. */
+  /* Frame-wrap layers fill the card box exactly — no scale, no overscan. */
+  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: fill;
+  pointer-events: none;
 }
 .card-art-layer--svg-frame {
   /* SVG neon border overlay for the four redesigned rarity frames (Apprentice, Master,
@@ -5086,61 +5085,25 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   transform-origin: center;
 }
 
-/* Back-face frame overlay — wraps a transparent border around the card-back so
- * that decorations on the front frame (e.g. corner bandages) appear to wrap
- * around the card.  Sits on top of all back-face content but is click-through
- * so editable inputs remain usable. */
-.print-art-composite--frame-back {
-  z-index: 10;
-  pointer-events: none;
-}
+/* Back-face frame overlay — sits on top of all back-face content but is
+ * click-through so editable inputs remain usable. */
 .print-art-layer--frame-back {
   z-index: 10;
   pointer-events: none;
   object-fit: fill;
 }
 
-/* Wrap-around bandage-style frames (currently only Punch Skater) ship PNG
- * assets at the same poker 5:7 aspect ratio (750 × 1050) as the card box,
- * with the visible artwork flush to the PNG edge.  Fill the card box exactly
- * so the bandage border meets the card edge cleanly on every side. */
-.print-art-layer--frame-wrap {
+/* Wrap-around frames (any rarity with a registered backUrl) are authored to
+ * the card's exact 5:7 box.  Fill the card box exactly — no scale, no
+ * overscan, no asymmetric offsets. */
+.print-art-layer--frame-wrap,
+.card-art-layer--frame-wrap {
+  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: fill;
-}
-
-/* ── Wrap-around frame content insets ────────────────────────────────────────
- * The Punch Skater PNG frames at 750 × 1050 have a visible bandage border
- * around a roughly rectangular hollow.  In card-box coordinates the hollow
- * spans roughly:  top ≈11%, bottom ≈6.5%, left/right ≈14.5% (front and rear
- * are mirror images of each other so the inset is symmetric).
- *
- * The background and character art are full-bleed (they sit *behind* the
- * bandage and may be partially obscured by it).  Only the readable text
- * overlays (front bio + back stats column) are inset to the hollow so they
- * stay legible inside the frame.
- */
-.print-card--wrap-frame .print-front-overlay {
-  left: 14.5%;
-  right: 14.5%;
-  bottom: 6.5%;
-}
-/* Back face: pad the flex column so every section (header, hero, info, lower,
- * trait, maintenance, serial) lands inside the hollow.  The back-frame
- * composite is absolutely positioned and uses the padding-box as its
- * containing block, so cancel the padding with negative insets so it still
- * spans the full card box.
- *   left/right cancel:  -14.5% / (1 - 14.5% - 14.5%) = -20.423%
- *   top  cancel:        -11%   / (1 - 11%   - 6.5%)  = -13.333%
- *   bottom cancel:      -6.5%  / (1 - 11%   - 6.5%)  =  -7.879%
- */
-.print-card--wrap-frame.print-card--back {
-  padding: 11% 14.5% 6.5%;
-}
-.print-card--wrap-frame .print-art-composite--frame-back {
-  inset: -13.333% -20.423% -7.879%;
+  pointer-events: none;
 }
 
 /* Front face info overlay (name + bio shown over the character art) */
@@ -5191,6 +5154,19 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 
 /* Print back face – skateboard art is a clean banner on top, structured info
    sits below in its own section so labels never overlap the board image. */
+
+/* Semi-transparent scrim shown on the back face when a district background image
+   is present (gated on the rarity having a registered backUrl frame).  Darkens
+   the photo enough to keep stats and text legible on top.
+   Tune --back-scrim-opacity to adjust the darkness without hunting for magic numbers. */
+.print-back-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, var(--back-scrim-opacity, 0.55));
+  z-index: 1;
+  pointer-events: none;
+}
+
 .print-back-hero {
   --print-back-board-scale: 1.12;
   --print-back-spinner-width: 28%;
@@ -5759,34 +5735,20 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
     transform: scale(0.88);
     transform-origin: center;
   }
-  .print-only-card .print-art-composite--frame-back {
-    z-index: 10;
-    pointer-events: none;
-  }
   .print-only-card .print-art-layer--frame-back {
     z-index: 10;
     pointer-events: none;
     object-fit: fill;
   }
-  .print-only-card .print-art-layer--frame-wrap {
+  /* Frame-wrap layers in print: same as screen — position absolute, fill the card box. */
+  .print-only-card .print-art-layer--frame-wrap,
+  .print-only-card .card-art-layer--frame-wrap {
+    position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: fill;
-  }
-  /* Wrap-around frame: inset only the readable text overlays so the front
-   * bio and back stats column stay inside the frame's visible hollow.
-   * Background and character art remain full-bleed behind the bandage. */
-  .print-only-card .print-card--wrap-frame .print-front-overlay {
-    left: 14.5%;
-    right: 14.5%;
-    bottom: 6.5%;
-  }
-  .print-only-card .print-card--wrap-frame.print-card--back {
-    padding: 11% 14.5% 6.5%;
-  }
-  .print-only-card .print-card--wrap-frame .print-art-composite--frame-back {
-    inset: -13.333% -20.423% -7.879%;
+    pointer-events: none;
   }
 
   @page {

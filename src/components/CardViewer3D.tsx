@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import type { CardPayload } from "../lib/types";
 import { SkaterCardFace } from "./SkaterCardFace";
-import { isWraparoundFrame } from "../services/staticAssets";
+import { getStaticFrameBackUrl } from "../services/staticAssets";
 import { buildCardVars } from "../lib/cardVars";
 
 interface CardViewer3DBaseProps {
@@ -152,7 +152,7 @@ export function CardViewer3D({
   // .is-tilting adds a smooth transition during hover; it's absent while
   // dragging so there's no input lag during manual rotation.
   const cardClassName = `viewer3d-card${isHovering && !dragging.current ? " is-tilting" : ""}`;
-  const wrapFrameClass = isWraparoundFrame(card.prompts.rarity) ? " print-card--wrap-frame" : "";
+  const wrapFrameClass = getStaticFrameBackUrl(card.prompts.rarity) != null ? " print-card--wrap-frame" : "";
 
   const scene = (
     <div className={`viewer3d-scene${inline ? " viewer3d-scene--inline" : ""}`} onClick={(e) => e.stopPropagation()}>
@@ -184,7 +184,7 @@ export function CardViewer3D({
             className={`viewer3d-face viewer3d-face--back print-card print-card--back${wrapFrameClass}`}
             style={{ "--accent": card.visuals.accentColor || "#00ff88" } as React.CSSProperties}
           >
-            <SkaterCardFace face="back" card={card} />
+            <SkaterCardFace face="back" card={card} backgroundImageUrl={backgroundImageUrl} />
           </div>
         </div>
       </div>

@@ -144,8 +144,11 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
         setMissions(result);
         setLoading(false);
       }
-    }).catch(() => {
-      if (!cancelled) setLoading(false);
+    }).catch((err) => {
+      if (!cancelled) {
+        console.error("[MissionsPanel] Failed to load missions:", err);
+        setLoading(false);
+      }
     });
     return () => { cancelled = true; };
   }, [uid]);

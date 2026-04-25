@@ -66,12 +66,7 @@ export async function getDailyMissions(uid: string): Promise<Mission[]> {
 
   await Promise.all(
     missions.map((m) =>
-      setDoc(doc(db!, COLLECTION, m.id), {
-        ...m,
-        // Store Firestore server timestamp alongside the ISO string so
-        // future index queries on `createdAt` (Timestamp) work correctly.
-        _createdAt: serverTimestamp(),
-      })
+      setDoc(doc(db!, COLLECTION, m.id), m)
     )
   );
 
@@ -103,36 +98,37 @@ export async function trackMissionEvent(
   const snap = await getDocs(q);
   if (snap.empty) return;
 
-  await Promise.all(
-    snap.docs.map(async (docSnap) => {
-      const mission = docSnap.data() as Mission;
-      const updated = applyMissionProgress(mission, event);
+  // Process missions sequentially to avoid Firestore transaction contention
+  // (each transaction reads and writes the same document independently, but
+  // running them in parallel can cause retries and wasted round-trips).
+  for (const docSnap of snap.docs) {
+    const mission = docSnap.data() as Mission;
+    const updated = applyMissionProgress(mission, event);
 
-      // Only write when something actually changed
-      if (updated.progress === mission.progress && updated.status === mission.status) {
+    // Only write when something actually changed
+    if (updated.progress === mission.progress && updated.status === mission.status) {
+      continue;
+    }
+
+    await runTransaction(db!, async (tx) => {
+      const ref = doc(db!, COLLECTION, mission.id);
+      const latest = await tx.get(ref);
+      if (!latest.exists()) return;
+
+      const current = latest.data() as Mission;
+      // Re-apply on the freshest snapshot to avoid racing writes
+      const final = applyMissionProgress(current, event);
+      if (final.progress === current.progress && final.status === current.status) {
         return;
       }
 
-      await runTransaction(db!, async (tx) => {
-        const ref = doc(db!, COLLECTION, mission.id);
-        const latest = await tx.get(ref);
-        if (!latest.exists()) return;
-
-        const current = latest.data() as Mission;
-        // Re-apply on the freshest snapshot to avoid racing writes
-        const final = applyMissionProgress(current, event);
-        if (final.progress === current.progress && final.status === current.status) {
-          return;
-        }
-
-        tx.update(ref, {
-          progress: final.progress,
-          status: final.status,
-          ...(final.completedAt ? { completedAt: final.completedAt } : {}),
-        });
+      tx.update(ref, {
+        progress: final.progress,
+        status: final.status,
+        ...(final.completedAt ? { completedAt: final.completedAt } : {}),
       });
-    })
-  );
+    });
+  }
 }
 
 /**

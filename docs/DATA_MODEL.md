@@ -336,5 +336,5 @@ Owner-only read. All writes are server-only.
 }
 ```
 
-**Composite index:** `uid ASC, expiresAt ASC` (defined in `firestore.indexes.json`).
+**Composite index:** `uid ASC, createdAt ASC` (defined in `firestore.indexes.json`).
 

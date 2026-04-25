@@ -94,11 +94,28 @@ const FRAME_ASSETS: Partial<Record<Rarity, FrameAssetConfig>> = {
   "Punch Skater": {
     url:     "/assets/frames/punch-skater-front.png",
     backUrl: "/assets/frames/punch-skater-rear.png",
+    // blendMode defaults to "normal" — PNG has a transparent center, no screen blend needed.
   },
-  Apprentice:     { url: "/assets/frames/apprentice.webp" },
-  Master:         { url: "/assets/frames/master-front.png",     backUrl: "/assets/frames/master-rear.png" },
-  Rare:           { url: "/assets/frames/rare-front.png",       backUrl: "/assets/frames/rare-rear.png" },
-  Legendary:      { url: "/assets/frames/legendary-front.png",  backUrl: "/assets/frames/legendary-rear.png" },
+  Apprentice: {
+    url:     "/assets/frames/apprentice-front.png",
+    backUrl: "/assets/frames/apprentice-rear.png",
+    blendMode: "screen",  // white-background PNG — screen blend makes the center transparent.
+  },
+  Master: {
+    url:     "/assets/frames/master-front.png",
+    backUrl: "/assets/frames/master-rear.png",
+    blendMode: "screen",
+  },
+  Rare: {
+    url:     "/assets/frames/rare-front.png",
+    backUrl: "/assets/frames/rare-rear.png",
+    blendMode: "screen",
+  },
+  Legendary: {
+    url:     "/assets/frames/legendary-front.png",
+    backUrl: "/assets/frames/legendary-rear.png",
+    blendMode: "screen",
+  },
 };
 
 // ── Public API ─────────────────────────────────────────────────────────────────
@@ -147,30 +164,11 @@ export function getStaticFrameBackUrl(rarity: Rarity): string | null {
   return FRAME_ASSETS[rarity]?.backUrl ?? null;
 }
 
-/**
- * True when the rarity ships a wrap-around bandage-style frame whose front and
- * back PNGs are designed to look like a single continuous decoration wrapping
- * the card edges (currently only "Punch Skater").  Today we use the presence
- * of a registered `backUrl` as the signal, since that is precisely the set of
- * rarities that ship card-sized PNG frames for both faces.
- *
- * Wrap-around frames are rendered with the `.print-art-layer--frame-wrap`
- * modifier so the layer is scaled up to compensate for the transparent
- * padding inside the PNG, making the visible artwork reach the card's outer
- * edge on every side.
- */
-export function isWraparoundFrame(rarity: Rarity): boolean {
-  return Boolean(FRAME_ASSETS[rarity]?.backUrl);
-}
-
 export function shouldRenderSvgFrame(rarity: Rarity, frameUrl?: string): boolean {
   if (!frameUrl) return true;
-  const asset = FRAME_ASSETS[rarity];
-  // A rarity that registers a back-face frame (e.g. "Punch Skater") supplies a
-  // real card-sized PNG frame for both faces — render the PNG instead of the
-  // procedural SVG overlay so the artwork actually shows up on the front.
-  if (asset?.backUrl && asset.url === frameUrl) return false;
-  return asset?.url === frameUrl;
+  // Any rarity that registers a back-face frame ships real card-sized PNG frames
+  // for both faces — render the PNG instead of the procedural SVG overlay.
+  return getStaticFrameBackUrl(rarity) == null;
 }
 
 export function getFrameBlendMode(rarity: Rarity, frameUrl?: string): FrameBlendMode {
@@ -188,7 +186,7 @@ export function shouldInsetBackgroundForFrame(rarity: Rarity, frameUrl?: string)
   if (asset && asset.url === frameUrl) {
     return asset.insetBackground ?? false;
   }
-  return rarity === "Punch Skater";
+  return false;
 }
 
 // ── Faction background registry ───────────────────────────────────────────────

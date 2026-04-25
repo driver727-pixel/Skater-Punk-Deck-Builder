@@ -3,7 +3,7 @@ import { CardArt } from "./CardArt";
 import { FrameOverlay } from "./FrameOverlay";
 import {
   getFrameBlendMode,
-  isWraparoundFrame,
+  getStaticFrameBackUrl,
   shouldInsetBackgroundForFrame,
   shouldRenderSvgFrame,
 } from "../services/staticAssets";
@@ -21,7 +21,7 @@ interface CardThumbnailProps {
 export function CardThumbnail({ card, width = 160, height = 112 }: CardThumbnailProps) {
   const { backgroundImageUrl, characterImageUrl, frameImageUrl } = card;
   const showSvgFrame = shouldRenderSvgFrame(card.prompts.rarity, frameImageUrl);
-  const wraparoundFrame = isWraparoundFrame(card.prompts.rarity);
+  const hasBackFrame = getStaticFrameBackUrl(card.prompts.rarity) != null;
   const hasLayers = backgroundImageUrl || characterImageUrl || frameImageUrl;
   const backgroundLayerClassName = shouldInsetBackgroundForFrame(card.prompts.rarity, frameImageUrl)
     ? "card-art-layer card-art-layer--background card-art-layer--background-inset"
@@ -29,7 +29,7 @@ export function CardThumbnail({ card, width = 160, height = 112 }: CardThumbnail
   const frameLayerStyle = frameImageUrl
     ? { mixBlendMode: getFrameBlendMode(card.prompts.rarity, frameImageUrl) }
     : undefined;
-  const frameLayerClassName = wraparoundFrame
+  const frameLayerClassName = hasBackFrame
     ? "card-art-layer card-art-layer--frame card-art-layer--frame-wrap"
     : "card-art-layer card-art-layer--frame";
 
@@ -38,7 +38,7 @@ export function CardThumbnail({ card, width = 160, height = 112 }: CardThumbnail
   }
 
   return (
-    <div className={`card-art-composite${wraparoundFrame ? " card-art-composite--wrap-frame" : ""}`} style={{ width, height }}>
+    <div className={`card-art-composite${hasBackFrame ? " card-art-composite--wrap-frame" : ""}`} style={{ width, height }}>
       {backgroundImageUrl && (
         <img
           src={backgroundImageUrl}

@@ -7,7 +7,7 @@
  */
 
 import { SkaterCardFace, type SkaterCardFaceProps } from "./SkaterCardFace";
-import { isWraparoundFrame } from "../services/staticAssets";
+import { getStaticFrameBackUrl } from "../services/staticAssets";
 
 // Re-export the shared prop interface so existing imports are unchanged.
 export type { SkaterCardFaceProps as PrintedCardFaceProps };
@@ -42,7 +42,7 @@ export function PrintedCardPreviewPair({
   boardImageLoading,
 }: PrintedCardPreviewPairProps) {
   const previewClassName = className ? `print-preview-area ${className}` : "print-preview-area";
-  const wrapFrameClass = isWraparoundFrame(card.prompts.rarity) ? " print-card--wrap-frame" : "";
+  const wrapFrameClass = getStaticFrameBackUrl(card.prompts.rarity) != null ? " print-card--wrap-frame" : "";
 
   return (
     <div className={previewClassName}>
@@ -73,6 +73,7 @@ export function PrintedCardPreviewPair({
             <SkaterCardFace
               face="back"
               card={card}
+              backgroundImageUrl={backgroundImageUrl}
               editable={editable}
               onStatChange={onStatChange}
               boardImageLoading={boardImageLoading}

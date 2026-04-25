@@ -13,7 +13,7 @@ import { computeCardWorth } from "../lib/battle";
 import { CARD_STAT_LABELS } from "../lib/statLabels";
 import {
   getFrameBlendMode,
-  isWraparoundFrame,
+  getStaticFrameBackUrl,
   shouldInsetBackgroundForFrame,
   shouldRenderSvgFrame,
 } from "../services/staticAssets";
@@ -177,11 +177,11 @@ function CompositeArt({
     ? "card-art-layer card-art-layer--background card-art-layer--background-inset"
     : "card-art-layer card-art-layer--background";
   const showSvgFrame = shouldRenderSvgFrame(card.prompts.rarity, frameImageUrl);
-  const wraparoundFrame = isWraparoundFrame(card.prompts.rarity);
+  const hasBackFrame = getStaticFrameBackUrl(card.prompts.rarity) != null;
   const frameLayerStyle = frameImageUrl
     ? { mixBlendMode: getFrameBlendMode(card.prompts.rarity, frameImageUrl) }
     : undefined;
-  const frameLayerClassName = wraparoundFrame
+  const frameLayerClassName = hasBackFrame
     ? "card-art-layer card-art-layer--frame card-art-layer--frame-wrap"
     : "card-art-layer card-art-layer--frame";
 
@@ -191,7 +191,7 @@ function CompositeArt({
   }
 
   return (
-    <div className={`card-art-composite${fullSize ? " card-art-composite--full" : ""}${wraparoundFrame ? " card-art-composite--wrap-frame" : ""}`}>
+    <div className={`card-art-composite${fullSize ? " card-art-composite--full" : ""}${hasBackFrame ? " card-art-composite--wrap-frame" : ""}`}>
       {/* Layer 1 – Background (district environment) */}
       {backgroundImageUrl ? (
         <img

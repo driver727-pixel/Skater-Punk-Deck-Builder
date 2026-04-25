@@ -96,9 +96,9 @@ const FRAME_ASSETS: Partial<Record<Rarity, FrameAssetConfig>> = {
     backUrl: "/assets/frames/punch-skater-rear.png",
   },
   Apprentice:     { url: "/assets/frames/apprentice.webp" },
-  Master:         { url: "/assets/frames/master.webp" },
-  Rare:           { url: "/assets/frames/rare.webp" },
-  Legendary:      { url: "/assets/frames/legendary.webp" },
+  Master:         { url: "/assets/frames/master-front.png",     backUrl: "/assets/frames/master-rear.png" },
+  Rare:           { url: "/assets/frames/rare-front.png",       backUrl: "/assets/frames/rare-rear.png" },
+  Legendary:      { url: "/assets/frames/legendary-front.png",  backUrl: "/assets/frames/legendary-rear.png" },
 };
 
 // ── Public API ─────────────────────────────────────────────────────────────────

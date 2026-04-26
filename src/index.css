@@ -5117,7 +5117,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   top: 0;
   left: 0;
   right: 0;
-  padding: 11% 14% 0;
+  padding: 32% 14% 0;
   z-index: 2;
   display: flex;
   justify-content: center;
@@ -5586,7 +5586,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
    * This two-class selector has higher specificity than the single-class
   * .print-card baseline rule, so these overrides win even though .print-card
   * also defines the same custom properties on its own element. */
-  --card-name-size:      1.35rem;
+  --card-name-size:      1.0rem;
   --card-bio-size:       0.82rem;
   --card-age-size:       0.88rem;
   --card-back-name-size: 1rem;

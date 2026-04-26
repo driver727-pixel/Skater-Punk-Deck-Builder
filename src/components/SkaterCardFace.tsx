@@ -192,11 +192,10 @@ function CardFront({
 
 function CardBack({
   card,
-  backgroundImageUrl,
   editable = false,
   onStatChange,
   boardImageLoading = false,
-}: Pick<SkaterCardFaceProps, "card" | "backgroundImageUrl" | "editable" | "onStatChange" | "boardImageLoading">) {
+}: Pick<SkaterCardFaceProps, "card" | "editable" | "onStatChange" | "boardImageLoading">) {
   const accent = card.visuals.accentColor || "#00ff88";
   const rarityColor = RARITY_COLORS[card.prompts.rarity] || "#aaaaaa";
   const backFrameUrl = getStaticFrameBackUrl(card.prompts.rarity);
@@ -208,7 +207,7 @@ function CardBack({
     ? "print-art-layer print-art-layer--frame print-art-layer--frame-back print-art-layer--frame-wrap"
     : "print-art-layer print-art-layer--frame print-art-layer--frame-back";
 
-  // Focal-crop background is no longer used on the back face (background removed for cleaner look).
+  // Focal-crop background is no longer used on the back face.
   const backInfoRows = [
     ["ROLE",     getDisplayedArchetype(card)],
     ["COVER",    card.role.coverRole],
@@ -390,7 +389,6 @@ export function SkaterCardFace({
   return (
     <CardBack
       card={card}
-      backgroundImageUrl={backgroundImageUrl}
       editable={editable}
       onStatChange={onStatChange}
       boardImageLoading={boardImageLoading}

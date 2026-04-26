@@ -196,7 +196,7 @@ export function registerMissionRoutes(app, {
         };
       });
 
-      res.status(result.rewardGranted ? 201 : 200).json(result);
+      res.status(200).json(result);
     } catch (error) {
       console.error('Mission run error:', error);
       res.status(error.statusCode ?? 500).json({ error: error.message ?? 'Failed to resolve mission.' });

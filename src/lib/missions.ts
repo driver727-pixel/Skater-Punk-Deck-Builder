@@ -231,7 +231,7 @@ export function evaluateMissionDeck(
         );
       }
       case "faction": {
-        const current = deck.cards.filter((card) => card.identity.crew === requirement.faction).length;
+        const current = deck.cards.filter((card) => card.identity?.crew === requirement.faction).length;
         return buildRequirementResult(
           requirement,
           current,

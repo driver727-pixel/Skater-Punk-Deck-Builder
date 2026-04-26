@@ -5035,7 +5035,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   --card-bio-size:       0.5625rem;   /* ≈  9 px */
   --card-age-size:       0.5rem;      /* ≈  8 px */
   --card-back-name-size: 0.625rem;    /* ≈ 10 px */
-  --card-back-body-size: 0.54rem;     /* ≈  8.64 px */
+  --card-back-body-size: 0.415rem;    /* ≈  6.64 px */
   --card-back-small-size: calc(var(--card-back-body-size) * 0.95);
   --stat-font-size:      var(--card-back-body-size); /* explicit named alias */
   width: 189px;
@@ -5521,7 +5521,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   --card-bio-size:       0.95rem;
   --card-age-size:       1.1rem;
   --card-back-name-size: 1rem;
-  --card-back-body-size: 0.84rem;
+  --card-back-body-size: 0.715rem;
   --stat-font-size:      var(--card-back-body-size);
 }
 .print-preview-area--forge .print-preview-label {

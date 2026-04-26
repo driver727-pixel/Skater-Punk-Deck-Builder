@@ -5112,34 +5112,49 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 /* Front face info overlay (name + bio shown over the character art) —
  * sits below the frame overlay (z:3) so the decorative border visually
  * contains the text, matching the back-face treatment for the board hero. */
+.print-front-name-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 11% 14% 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
 .print-front-overlay {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  /* Reserve a bit more than 1/3 of the card face so longer bios still fit cleanly. */
-  min-height: 37%;
-  /* 12% horizontal keeps text inside the frame border (~12% wide on all PNG frames).
-   * 12% bottom clears the bottom frame border (~8.3% card-height ≈ 11.6% card-width). */
-  padding: 10% 12% 12%;
+  min-height: 24%;
+  padding: 0 14% 11%;
   background: linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.54) 58%, transparent 100%);
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: 1.4%;
+  justify-content: flex-end;
+  gap: 0.35em;
 }
 .print-front-name {
   font-size: var(--card-name-size);
   font-weight: bold;
   color: #fff;
+  display: block;
+  line-height: 1.05;
   letter-spacing: 0.5px;
+  max-width: 100%;
+  text-align: center;
   text-shadow: 0 1px 3px rgba(0,0,0,0.7);
   overflow-wrap: anywhere;
 }
 .print-front-age {
   font-size: var(--card-age-size);
   color: rgba(255,255,255,0.7);
+  display: block;
   letter-spacing: 0.3px;
+  text-align: left;
 }
 .print-front-bio {
   font-size: var(--card-bio-size);
@@ -5157,6 +5172,27 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   text-transform: uppercase;
   letter-spacing: 0.06em;
   text-shadow: 0 1px 2px rgba(0,0,0,0.65);
+}
+.print-front-class-role {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45em 0.8em;
+  margin-top: 0.35em;
+  font-size: calc(var(--card-bio-size) * 0.92);
+  line-height: 1.15;
+  text-align: center;
+}
+.print-front-badge,
+.print-front-role,
+.print-front-tuned {
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.65);
+}
+.print-front-badge,
+.print-front-tuned {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 /* Print back face – skateboard art is a clean banner on top, structured info
@@ -5550,9 +5586,9 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
    * This two-class selector has higher specificity than the single-class
   * .print-card baseline rule, so these overrides win even though .print-card
   * also defines the same custom properties on its own element. */
-  --card-name-size:      1.7rem;
-  --card-bio-size:       0.95rem;
-  --card-age-size:       1.1rem;
+  --card-name-size:      1.35rem;
+  --card-bio-size:       0.82rem;
+  --card-age-size:       0.88rem;
   --card-back-name-size: 1rem;
   --card-back-body-size: 0.715rem;
   --stat-font-size:      var(--card-back-body-size);
@@ -5610,9 +5646,12 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   font-family: inherit;
   font-size: var(--card-name-size);
   font-weight: bold;
+  line-height: 1.05;
   letter-spacing: 0.5px;
   outline: none;
   padding: 0;
+  pointer-events: auto;
+  text-align: center;
   text-shadow: 0 1px 3px rgba(0,0,0,0.7);
   width: 100%;
 }
@@ -5791,11 +5830,14 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   .print-only-card .print-back-serial { padding: 2pt 8pt 6pt; font-size: 5pt; }
 
   /* Front-face overlay prints properly */
-  .print-only-card .print-front-overlay {
-    padding: 6pt 8pt;
+  .print-only-card .print-front-name-overlay {
+    padding: 12pt 12pt 0;
   }
-  .print-only-card .print-front-name { font-size: 10pt; }
-  .print-only-card .print-front-bio  { font-size: 6pt; }
+  .print-only-card .print-front-overlay {
+    padding: 0 12pt 12pt;
+  }
+  .print-only-card .print-front-name { font-size: 9pt; }
+  .print-only-card .print-front-bio  { font-size: 5.5pt; }
 
   /* Composite art layers fill the print card face */
   .print-only-card .print-art-composite,

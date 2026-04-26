@@ -104,6 +104,16 @@ function CardFront({
     : undefined;
 
   const flavorText = card.front.flavorText ?? "";
+  const nameField = editable ? (
+    <input
+      className="card-name-input"
+      value={card.identity.name}
+      onChange={(e) => onNameChange?.(e.target.value)}
+      placeholder="Name"
+    />
+  ) : (
+    <span className="print-front-name">{card.identity.name}</span>
+  );
 
   return (
     <>
@@ -140,15 +150,13 @@ function CardFront({
         <CardArt card={card} width={fallbackWidth} height={fallbackHeight} />
       )}
 
+      <div className="print-front-name-overlay">
+        {nameField}
+      </div>
+
       <div className="print-front-overlay">
         {editable ? (
           <>
-            <input
-              className="card-name-input"
-              value={card.identity.name}
-              onChange={(e) => onNameChange?.(e.target.value)}
-              placeholder="Name"
-            />
             <label className="card-age-field">
               <span className="card-age-label">AGE</span>
               <input
@@ -168,7 +176,6 @@ function CardFront({
           </>
         ) : (
           <>
-            <span className="print-front-name">{card.identity.name}</span>
             {card.identity.age && (
               <span className="print-front-age">{card.identity.age}</span>
             )}

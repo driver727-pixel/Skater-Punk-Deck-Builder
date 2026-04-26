@@ -6,22 +6,11 @@
  * directly — no Firestore read and no fal.ai API call — eliminating per-forge
  * credit usage for stable layers.
  *
- * ── Background sizes ─────────────────────────────────────────────────────────
- *  Two resolutions are tracked for each district:
+ * ── Background ───────────────────────────────────────────────────────────────
+ *  One image per district, used for every context (preview, print, download).
  *
- *  • BACKGROUND_ASSETS_SMALL  — screen / standard quality (750 × 1050 px).
- *    Place files in  public/assets/backgrounds/small/<slug>.webp
- *    Used for the live card preview and collection thumbnails (fast load).
- *
- *  • BACKGROUND_ASSETS        — print quality (1500 × 2100 px).
- *    Place files in  public/assets/backgrounds/<slug>.webp
- *    Used only when the user prints or downloads the card (high fidelity).
- *
- * ── How to add a background ──────────────────────────────────────────────────
- *  1. Place the print-quality image in  public/assets/backgrounds/<slug>.webp
- *     and register it in BACKGROUND_ASSETS below.
- *  2. Place the screen-quality image in public/assets/backgrounds/small/<slug>.webp
- *     and register it in BACKGROUND_ASSETS_SMALL below.
+ *  Place files in  public/assets/backgrounds/<slug>.webp  then uncomment the
+ *  corresponding entry in BACKGROUND_ASSETS below.
  *
  * ── How to add a frame ───────────────────────────────────────────────────────
  *  1. Place the image in   public/assets/frames/<slug>.webp       (see README there).
@@ -52,11 +41,11 @@ interface FrameAssetConfig {
   insetBackground?: boolean;
 }
 
-// ── Background registry — print / full quality ────────────────────────────────
+// ── Background registry ───────────────────────────────────────────────────────
 //
-// Files live in  public/assets/backgrounds/<slug>.webp  (1500 × 2100 px).
-// Used for print and JPEG download.  Uncomment an entry once you have placed
-// the corresponding file.
+// Files live in  public/assets/backgrounds/<slug>.webp
+// Used for every context: live preview, collection thumbnails, print, download.
+// Uncomment an entry once you have placed the corresponding file.
 
 const BACKGROUND_ASSETS: Partial<Record<District, string>> = {
   // Airaway:      "/assets/backgrounds/airaway.webp",

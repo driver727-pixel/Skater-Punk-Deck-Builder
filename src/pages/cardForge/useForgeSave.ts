@@ -91,7 +91,7 @@ export function useForgeSave({
       await downloadCardAsJpg(
         generated.identity.name,
         generated.prompts.rarity,
-        layers.backgroundPrintUrl ?? layers.backgroundUrl,
+        layers.backgroundUrl,
         layers.characterUrl,
         layers.frameUrl,
         generated.frameSeed,

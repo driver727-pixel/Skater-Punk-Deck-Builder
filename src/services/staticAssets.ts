@@ -59,12 +59,12 @@ interface FrameAssetConfig {
 // the corresponding file.
 
 const BACKGROUND_ASSETS: Partial<Record<District, string>> = {
-  Airaway:      "/assets/backgrounds/airaway.webp",
-  Nightshade:   "/assets/backgrounds/nightshade.webp",
-  Batteryville: "/assets/backgrounds/batteryville.webp",
-  "The Grid":   "/assets/backgrounds/the-grid.webp",
-  "The Forest": "/assets/backgrounds/the-forest.webp",
-  "Glass City": "/assets/backgrounds/glass-city.webp",
+  // Airaway:      "/assets/backgrounds/airaway.webp",
+  // Nightshade:   "/assets/backgrounds/nightshade.webp",
+  // Batteryville: "/assets/backgrounds/batteryville.webp",
+  // "The Grid":   "/assets/backgrounds/the-grid.webp",
+  // "The Forest": "/assets/backgrounds/the-forest.webp",
+  // "Glass City": "/assets/backgrounds/glass-city.webp",
 };
 
 // ── Background registry — screen / standard quality ───────────────────────────

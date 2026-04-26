@@ -1,4 +1,4 @@
-const BOARD_IMAGE_SIZE = { width: 1024, height: 1024 };
+const BOARD_IMAGE_SIZE = { width: 512, height: 512 };
 
 function extractBoardImageUrl(result) {
   if (process.env.FAL_DEBUG) console.log('Raw fal board result:', JSON.stringify(result));

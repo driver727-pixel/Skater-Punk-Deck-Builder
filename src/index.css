@@ -5306,7 +5306,18 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   flex-direction: column;
   font-size: 6px;
   overflow: hidden;
+  --print-back-safe-inline: 12%;
+  --print-back-inner-inline: 3%;
+  --print-back-stat-label-width: 7ch;
+  --print-back-stat-gap: 4%;
   --print-back-label-width: max-content;
+}
+
+.print-card--back.print-card--wrap-frame {
+  --print-back-safe-inline: 14.5%;
+  --print-back-inner-inline: 2%;
+  --print-back-stat-label-width: 5.8ch;
+  --print-back-stat-gap: 2.5%;
 }
 
 /* Slim placeholder shown when tuned icon needs a home but no header bar is rendered */
@@ -5315,7 +5326,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   justify-content: flex-end;
   align-items: center;
   gap: 0.5em;
-  padding: 1% 12% 0;
+  padding: 1% var(--print-back-safe-inline) 0;
   flex-shrink: 0;
   min-height: 0;
 }
@@ -5364,7 +5375,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   display: flex;
   flex-direction: column;
   gap: 0.42em;
-  padding: 2.5% 12% 1.4%;
+  padding: 2.5% var(--print-back-safe-inline) 1.4%;
   flex-shrink: 0;
 }
 .print-back-row {
@@ -5384,19 +5395,23 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   font-size: var(--card-back-body-size);
   min-width: 0;
   line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .print-back-stats {
   display: flex;
   flex-direction: column;
   gap: 0.45em;
-  padding: 1.2% 3% 1.4%;
+  min-width: 0;
+  padding: 1.2% var(--print-back-inner-inline) 1.4%;
   flex-shrink: 0;
 }
-.print-back-stats .stat-bar  { gap: 4%; }
+.print-back-stats .stat-bar  { gap: var(--print-back-stat-gap); min-width: 0; }
 .print-back-stats .stat-label {
   font-size: var(--stat-font-size);
-  width: 7ch;
+  width: var(--print-back-stat-label-width);
   color: #ffca73;
 }
 .print-back-stats .stat-value {
@@ -5416,13 +5431,14 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   flex-shrink: 0;
   border-bottom: 1px solid #1e1e3a;
   /* Inset the two-column section within the frame border */
-  padding: 0 12%;
+  padding: 0 var(--print-back-safe-inline);
 }
 .print-back-components {
   display: flex;
   flex-direction: column;
   gap: 0.4em;
-  padding: 1.2% 3% 1.4%;
+  min-width: 0;
+  padding: 1.2% var(--print-back-inner-inline) 1.4%;
   border-right: 1px solid #1e1e3a;
 }
 
@@ -5467,7 +5483,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   grid-template-columns: max-content minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.8em;
-  padding: 1.3% 12% 1.8%;
+  padding: 1.3% var(--print-back-safe-inline) 1.8%;
   border-top: 1px solid #1e1e3a;
   font-size: var(--card-back-body-size);
 }
@@ -5479,16 +5495,33 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   color: #f0f0ff;
   text-transform: capitalize;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .print-back-maint-charge {
   color: #ffca73;
   font-weight: bold;
 }
 .print-back-serial {
-  padding: 0 12% 2.2%;
+  padding: 0 var(--print-back-safe-inline) 2.2%;
   font-size: var(--card-back-small-size);
   color: #7070a0;
   letter-spacing: 0.08em;
+}
+
+.print-card--back.print-card--wrap-frame .print-back-row-label,
+.print-card--back.print-card--wrap-frame .print-back-row-value,
+.print-card--back.print-card--wrap-frame .print-back-board-row,
+.print-card--back.print-card--wrap-frame .print-back-rarity-label,
+.print-card--back.print-card--wrap-frame .print-back-maintenance,
+.print-card--back.print-card--wrap-frame .print-back-serial {
+  font-size: calc(var(--card-back-body-size) * 0.9);
+}
+
+.print-card--back.print-card--wrap-frame .print-back-stats .stat-label,
+.print-card--back.print-card--wrap-frame .print-back-stats .stat-value {
+  font-size: calc(var(--stat-font-size) * 0.9);
 }
 
 .print-modal-actions { display: flex; gap: 8px; }

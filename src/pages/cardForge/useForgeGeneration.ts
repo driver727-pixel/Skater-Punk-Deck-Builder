@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildCharacterSeed, generateCard } from "../../lib/generator";
 import {
   applyFactionBranding,
@@ -24,6 +24,7 @@ import {
   CHARACTER_SEED_VARIANTS,
 } from "./constants";
 import { applyPreviewUpdates, buildRandomizedBoardConfig, buildRandomizedPrompts } from "./helpers";
+import { loadForgeSession, saveForgeSession } from "../../services/forgeSessionCache";
 
 const ARCHETYPE_VALUES = FORGE_ARCHETYPE_OPTIONS.map((option) => option.value);
 
@@ -31,6 +32,7 @@ export function useForgeGeneration() {
   const { tier, canForge, generateCredits, consumeCredit, openUpgradeModal, freeCardUsed, markFreeCardUsed } = useTier();
   const { user } = useAuth();
   const { hasFaction, unlockFaction } = useFactionDiscovery();
+  const initialSession = useRef(loadForgeSession());
   const [prompts, setPrompts] = useState<CardPrompts>({
     archetype: "Qu111s", rarity: "Punch Skater", style: "Corporate",
     district: "Nightshade", accentColor: "#00ff88",
@@ -38,8 +40,8 @@ export function useForgeGeneration() {
     hairLength: "Short", skinTone: "Medium", faceCharacter: "Conventional",
   });
   const [boardConfig, setBoardConfig] = useState(DEFAULT_BOARD_CONFIG);
-  const [generated, setGenerated] = useState<CardPayload | null>(null);
-  const [characterBlend, setCharacterBlend] = useState(1);
+  const [generated, setGenerated] = useState<CardPayload | null>(initialSession.current?.card ?? null);
+  const [characterBlend, setCharacterBlend] = useState(initialSession.current?.characterBlend ?? 1);
   const [forging, setForging] = useState(false);
   const [boardImageLoading, setBoardImageLoading] = useState(false);
   const [revealedFaction, setRevealedFaction] = useState<{ faction: Faction; isNew: boolean } | null>(null);
@@ -52,7 +54,33 @@ export function useForgeGeneration() {
     layers,
     resetLayerSession,
     setLayerParams,
+    setLayers,
   } = useForgeLayers();
+
+  // Restore layer URLs from the session cache on first mount.
+  useEffect(() => {
+    const session = initialSession.current;
+    if (!session) return;
+    setLayers((current) => ({
+      ...current,
+      ...(session.backgroundUrl != null ? { backgroundUrl: session.backgroundUrl } : {}),
+      ...(session.characterUrl != null ? { characterUrl: session.characterUrl } : {}),
+      ...(session.frameUrl != null ? { frameUrl: session.frameUrl } : {}),
+    }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist the current forge state to sessionStorage whenever it changes.
+  useEffect(() => {
+    if (!generated) return;
+    saveForgeSession({
+      card: generated,
+      backgroundUrl: layers.backgroundUrl,
+      characterUrl: layers.characterUrl,
+      frameUrl: layers.frameUrl,
+      characterBlend,
+    });
+  }, [generated, layers.backgroundUrl, layers.characterUrl, layers.frameUrl, characterBlend]);
 
   const setPrompt = useCallback(<K extends keyof CardPrompts>(key: K, value: CardPrompts[K]) => {
     setPrompts((current) => ({ ...current, [key]: value }));

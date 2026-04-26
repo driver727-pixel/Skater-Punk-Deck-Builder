@@ -17,7 +17,7 @@ import type { CardPayload } from "../lib/types";
 import { CardArt } from "./CardArt";
 import { FrameOverlay } from "./FrameOverlay";
 import { StatBar } from "./StatBar";
-import { getDisplayedArchetype, getDisplayedCrew } from "../lib/cardIdentity";
+import { getDisplayedCrew } from "../lib/cardIdentity";
 import { CARD_STAT_LABELS } from "../lib/statLabels";
 import stamp360Gif from "../../stamp360.gif";
 import {
@@ -209,8 +209,6 @@ function CardBack({
 
   // Focal-crop background is no longer used on the back face.
   const backInfoRows = [
-    ["ROLE",     getDisplayedArchetype(card)],
-    ["COVER",    card.role.coverRole],
     ["DISTRICT", card.prompts.district],
     ["CREW",     getDisplayedCrew(card)],
     ["SERIAL",   card.identity.serialNumber],
@@ -316,13 +314,6 @@ function CardBack({
           </>
         )}
       </div>
-      </div>
-
-      <div className="print-back-trait">
-        <span className="print-back-trait-label">
-          PASSIVE · {card.role.passiveName}
-        </span>
-        <p className="print-back-trait-desc">{card.role.passiveDescription}</p>
       </div>
 
       <div className="print-back-maintenance">

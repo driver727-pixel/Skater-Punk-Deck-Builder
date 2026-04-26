@@ -1,4 +1,4 @@
-import { Agent } from 'undici';
+import { Agent } from 'node:undici';
 
 const BOARD_IMAGE_SIZE = { width: 512, height: 512 };
 const FAL_PROXY_TIMEOUT_MS = 300_000; // 5 minutes — AI generation can be slow

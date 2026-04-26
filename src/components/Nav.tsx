@@ -15,6 +15,7 @@ import { useFactionDiscovery } from "../hooks/useFactionDiscovery";
 import { sfxNavigate } from "../lib/sfx";
 import { GeoAtlas } from "./GeoAtlas";
 import { useAmbience } from "../hooks/useAmbience";
+import { isEnabled } from "../lib/featureFlags";
 
 export function Nav() {
   const { tier, logout: tierLogout, showUpgradeModal, openUpgradeModal, closeUpgradeModal } = useTier();
@@ -92,6 +93,11 @@ export function Nav() {
       {user && (
         <NavLink to="/arena" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={handleNav}>
           Arena
+        </NavLink>
+      )}
+      {isEnabled("MISSIONS", user) && (
+        <NavLink to="/missions" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={handleNav}>
+          Missions
         </NavLink>
       )}
       <NavLink to="/lore" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"} onClick={handleNav}>

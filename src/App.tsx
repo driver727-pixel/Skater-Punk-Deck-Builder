@@ -4,13 +4,10 @@ import { AuthProvider } from "./context/AuthContext";
 import { TierProvider } from "./context/TierContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { useTier } from "./context/TierContext";
-import { useAuth } from "./context/AuthContext";
 import { Nav } from "./components/Nav";
 import { Footer } from "./components/Footer";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminRoute } from "./components/AdminRoute";
-import { MissionsPanel } from "./components/MissionsPanel";
-import { isEnabled } from "./lib/featureFlags";
 import { firebaseUnavailableMessage, isFirebaseConfigured } from "./lib/firebase";
 
 /** Applies data-theme and data-time attributes to <html> for CSS theming. */
@@ -50,6 +47,7 @@ const Admin           = lazy(() => import("./pages/Admin").then(m => ({ default:
 const AssetGenerator  = lazy(() => import("./pages/AssetGenerator").then(m => ({ default: m.AssetGenerator })));
 const BattleArena     = lazy(() => import("./pages/BattleArena").then(m => ({ default: m.BattleArena })));
 const FramePreview    = lazy(() => import("./pages/FramePreview").then(m => ({ default: m.FramePreview })));
+const Missions        = lazy(() => import("./pages/Missions").then(m => ({ default: m.Missions })));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
@@ -71,12 +69,6 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   }
 }
 
-/** Renders the MissionsPanel for the authenticated user when the flag is on. */
-function MissionsSidebar() {
-  const { user } = useAuth();
-  if (!user || !isEnabled("MISSIONS", user)) return null;
-  return <MissionsPanel uid={user.uid} />;
-}
 
 function App() {
   return (
@@ -118,6 +110,9 @@ function App() {
                       <Route path="/arena" element={
                         <ProtectedRoute><BattleArena /></ProtectedRoute>
                       } />
+                      <Route path="/missions" element={
+                        <ProtectedRoute><Missions /></ProtectedRoute>
+                      } />
                       <Route path="/admin" element={
                         <AdminRoute><Admin /></AdminRoute>
                       } />
@@ -127,7 +122,6 @@ function App() {
                       <Route path="/dev/frame-preview" element={<FramePreview />} />
                     </Routes>
                   </Suspense>
-                  <MissionsSidebar />
                 </main>
                 <Footer />
               </div>

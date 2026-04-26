@@ -2426,7 +2426,8 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   mix-blend-mode: normal;
 }
 .card-art-layer--background-inset {
-  transform: scale(0.88);
+  /* Frame is 750×1050; background is 700×980 → 700/750 ≈ 0.9333 */
+  transform: scale(0.9333);
   transform-origin: center;
 }
 .card-art-layer--character {
@@ -5081,7 +5082,8 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   pointer-events: none;
 }
 .print-art-layer--bg-inset {
-  transform: scale(0.88);
+  /* Frame is 750×1050; background is 700×980 → 700/750 ≈ 0.9333 */
+  transform: scale(0.9333);
   transform-origin: center;
 }
 
@@ -5752,7 +5754,8 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
     pointer-events: none;
   }
   .print-only-card .print-art-layer--bg-inset {
-    transform: scale(0.88);
+    /* Frame is 750×1050; background is 700×980 → 700/750 ≈ 0.9333 */
+    transform: scale(0.9333);
     transform-origin: center;
   }
   .print-only-card .print-art-layer--frame-back {

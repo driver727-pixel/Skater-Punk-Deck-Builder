@@ -1,9 +1,13 @@
 import { normalizeBoardConfig } from "./boardBuilderCompatibility";
 import type { BatteryType, BoardConfig, BoardType, Drivetrain, WheelType } from "./boardBuilderTypes";
 
+export const CRITICAL_SINGLE_ASSEMBLY_CONSTRAINT =
+  "CRITICAL: Render one coherent, fully assembled skateboard product only — not a collage of separate parts or reference cutouts. It has exactly TWO trucks only: one front truck mounted under the NOSE and one rear truck mounted under the TAIL. Each truck has exactly ONE axle carrying exactly TWO wheels, for exactly four wheels total. Never duplicate, split, stack, offset, or graft extra trucks, axles, wheel pods, motors, or drivetrain assemblies anywhere on the board.";
+
 const BOARD_IMAGE_BASE_CONCEPT =
   "An electric skateboard, high-detail product display in Gouache style painting on a neutral dark gray background. " +
   "CRITICAL: The image must contain exactly ONE skateboard. Never show two or more skateboards in the same image under any circumstances. " +
+  `${CRITICAL_SINGLE_ASSEMBLY_CONSTRAINT} ` +
   "It has exactly four wheels mounted on front and rear trucks with fixed axles, the wheels aligned in matching pairs and pointing in the same direction as the deck. " +
   "Never show caster-style pivoting wheels, sideways wheels, or wheels perpendicular to the board. " +
   "The NOSE is the front tip of the board; the TAIL is the rear. " +

@@ -238,7 +238,7 @@ export function evaluateMissionDeck(deck, mission, weatherPayload = null) {
       }
       default:
         throw new Error(
-          `Unknown mission requirement type: ${requirement.type}. Expected one of min_cards, district_access, wheel_type, archetype, faction, stat_total, district_card.`,
+          `Unknown mission requirement type: ${requirement.type}. Expected one of min_cards, district_access, wheel_type, archetype, faction, stat_total, or district_card.`,
         );
     }
   });

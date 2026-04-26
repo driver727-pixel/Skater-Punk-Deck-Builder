@@ -69,26 +69,32 @@ const FRAME_ASSETS: Partial<Record<Rarity, FrameAssetConfig>> = {
     url:     "/assets/frames/punch-skater-front.png",
     backUrl: "/assets/frames/punch-skater-rear.png",
     // blendMode defaults to "normal" — PNG has a transparent center, no screen blend needed.
+    // Frame is 750×1050; background is 700×980 — inset background to show cutaway border.
+    insetBackground: true,
   },
   Apprentice: {
     url:     "/assets/frames/apprentice-front.png",
     backUrl: "/assets/frames/apprentice-rear.png",
     blendMode: "screen",  // white-background PNG — screen blend makes the center transparent.
+    insetBackground: true,
   },
   Master: {
     url:     "/assets/frames/master-front.png",
     backUrl: "/assets/frames/master-rear.png",
     blendMode: "screen",
+    insetBackground: true,
   },
   Rare: {
     url:     "/assets/frames/rare-front.png",
     backUrl: "/assets/frames/rare-rear.png",
     blendMode: "screen",
+    insetBackground: true,
   },
   Legendary: {
     url:     "/assets/frames/legendary-front.png",
     backUrl: "/assets/frames/legendary-rear.png",
     blendMode: "screen",
+    insetBackground: true,
   },
 };
 

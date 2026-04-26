@@ -14,6 +14,7 @@ import {
   BOARD_IMAGE_REQUIRED_URL_COUNT,
   BOARD_IMAGE_CACHE_VERSION,
   CRITICAL_NOSE_CONSTRAINT,
+  CRITICAL_SINGLE_ASSEMBLY_CONSTRAINT,
   DRIVETRAIN_IMAGE_DESCRIPTIONS,
   buildBoardImagePrompt,
   resolveReferenceUrlCategories,
@@ -32,6 +33,25 @@ const BASE_CONFIG = {
   wheels: 'Urethane',
   battery: 'SlimStealth',
 };
+
+const ALL_DRIVETRAINS = ['Belt', 'Hub', 'Gear', '4WD'];
+
+for (const drivetrain of ALL_DRIVETRAINS) {
+  test(`buildBoardImagePrompt [${drivetrain}] — contains single-assembly anti-mutation constraint`, () => {
+    const prompt = buildBoardImagePrompt({
+      ...BASE_CONFIG,
+      drivetrain,
+      ...(drivetrain === '4WD'
+        ? { boardType: 'Mountain', motor: 'Outrunner', wheels: 'Pneumatic', battery: 'TopPeli' }
+        : {}),
+    });
+
+    assert.ok(
+      prompt.includes(CRITICAL_SINGLE_ASSEMBLY_CONSTRAINT),
+      `Prompt for [${drivetrain}] must contain the single-assembly anti-mutation constraint`,
+    );
+  });
+}
 
 // Non-4WD drivetrains must all satisfy the same three invariants.
 const NON_4WD_DRIVETRAINS = ['Belt', 'Hub', 'Gear'];

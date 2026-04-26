@@ -301,40 +301,44 @@ as implementation progresses.
 
 ---
 
-## Missions Collection (Sprint 1)
+## Missions Collection (Sprint 2)
 
 ### `missions/{missionId}` — Mission
 
-Doc ID format: `{uid}_{date}_{templateId}` (e.g. `abc123_2026-04-25_forge_any_1`).
+Doc ID format: `{uid}_{definitionId}` (e.g. `abc123_grid-trace`).
 
 Owner-only read. All writes are server-only.
 
 ```
 {
-  id: string,               // same as doc ID
-  uid: string,              // owner uid
+  id: string,                  // same as doc ID
+  uid: string,                 // owner uid
+  system: "mission_board",
+  schemaVersion: 2,
+  definitionId: string,        // stable mission template key
+  sortOrder: number,
   title: string,
+  tagline: string,
   description: string,
-  type: string,             // @deprecated — use missionType
-  missionType: MissionType, // "forge_card" | "forge_archetype" | "win_battle"
-                            // | "complete_district_run" | "achieve_stat_threshold"
-                            // | "daily_login" | "trade_card" | "build_deck"
-  target: number,           // completion threshold
-  progress: number,         // current progress counter
-  status: "active" | "completed" | "expired",
+  district: District,          // contract destination / district gate
   rewardXp: number,
-  rewardOzzies?: number,    // Ozzies (in-world currency) awarded on completion
-  createdAt: string,        // ISO 8601
-  expiresAt?: string,       // ISO 8601 — midnight UTC on the issue date
-  completedAt?: string,     // ISO 8601 — set when progress >= target
-  rewardClaimedAt?: Timestamp, // set by claimMissionReward()
-  // Lore context (optional, present when relevant to the mission type)
-  district?: District,      // "Airaway" | "Batteryville" | "The Grid" | ...
-  archetype?: Archetype,    // "The Knights Technarchy" | "Ne0n Legion" | ...
-  faction?: Faction,        // canonical faction string
-  stat?: MissionStat,       // "speed" | "range" | "stealth" | "grit"
+  rewardOzzies: number,
+  requirements: MissionRequirement[],
+  status: "active" | "completed" | "expired",
+  progress: number,            // 0 until cleared, 1 after success
+  target: number,              // currently 1 for route contracts
+  createdAt: string,           // ISO 8601
+  updatedAt: string,           // ISO 8601
+  completedAt?: string,        // ISO 8601
+  selectedDeckId?: string,     // last deck used for this mission
+  selectedDeckName?: string,
+  lastRunAt?: string,          // ISO 8601
+  lastRunSucceeded?: boolean,
+  lastRunSummary?: string,
+  lastRunFailureReasons?: string[],
 }
 ```
 
-**Composite index:** `uid ASC, createdAt ASC` (defined in `firestore.indexes.json`).
-
+The server seeds one board per user, validates chosen decks against mission requirements,
+and writes completion / failure state back into these documents. Mission rewards are persisted
+onto `userProfiles/{uid}.missionXp` and `userProfiles/{uid}.missionOzzies`.

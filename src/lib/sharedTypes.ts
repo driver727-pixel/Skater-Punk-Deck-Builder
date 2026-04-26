@@ -8,7 +8,7 @@
  *  4. Every addition must include a JSDoc comment with the sprint and owner.
  */
 
-import type { Archetype, CardPayload, District, Faction, ForgedCardStats } from "./types";
+import type { Archetype, CardPayload, District, Faction, ForgedCardStats, WheelType } from "./types";
 
 // ── Daily Streaks (Gamma) ────────────────────────────────────────────────────
 
@@ -91,6 +91,120 @@ export type MissionEvent =
   | { type: "daily_login" }
   | { type: "trade_card" }
   | { type: "build_deck" };
+
+/**
+ * Requirement kinds used by the restored mission board.
+ * @sprint 2 @owner gamma
+ */
+export type MissionRequirementType =
+  | "min_cards"
+  | "district_access"
+  | "wheel_type"
+  | "archetype"
+  | "faction"
+  | "stat_total"
+  | "district_card";
+
+/**
+ * Deck-building requirement for a mission board contract.
+ * @sprint 2 @owner gamma
+ */
+export interface MissionRequirement {
+  type: MissionRequirementType;
+  label: string;
+  count?: number;
+  district?: District;
+  wheelTypes?: WheelType[];
+  archetype?: Archetype;
+  faction?: Faction;
+  stat?: MissionStat;
+}
+
+/**
+ * Per-requirement deck evaluation result for a mission board contract.
+ * @sprint 2 @owner gamma
+ */
+export interface MissionRequirementResult {
+  requirement: MissionRequirement;
+  met: boolean;
+  current: number;
+  needed: number;
+  detail: string;
+}
+
+/**
+ * Restored server-authored mission board entry.
+ * @sprint 2 @owner gamma
+ */
+export interface MissionBoardEntry {
+  id: string;
+  uid: string;
+  system: "mission_board";
+  schemaVersion: 2;
+  definitionId: string;
+  sortOrder: number;
+  title: string;
+  tagline: string;
+  description: string;
+  district: District;
+  rewardXp: number;
+  rewardOzzies: number;
+  requirements: MissionRequirement[];
+  status: MissionStatus;
+  progress: number;
+  target: number;
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
+  selectedDeckId?: string;
+  selectedDeckName?: string;
+  lastRunAt?: string;
+  lastRunSucceeded?: boolean;
+  lastRunSummary?: string;
+  lastRunFailureReasons?: string[];
+}
+
+/**
+ * Persistent mission-board progression totals stored on the user profile.
+ * @sprint 2 @owner gamma
+ */
+export interface MissionBoardProgression {
+  missionXp: number;
+  missionOzzies: number;
+}
+
+/**
+ * API payload returned when loading the mission board.
+ * @sprint 2 @owner gamma
+ */
+export interface MissionBoardPayload {
+  missions: MissionBoardEntry[];
+  progression: MissionBoardProgression;
+}
+
+/**
+ * Evaluation of a chosen deck against one mission board contract.
+ * @sprint 2 @owner gamma
+ */
+export interface MissionDeckEvaluation {
+  deckId: string;
+  deckName: string;
+  eligible: boolean;
+  eligibleCardCount: number;
+  summary: string;
+  results: MissionRequirementResult[];
+}
+
+/**
+ * API payload returned after attempting a mission run.
+ * @sprint 2 @owner gamma
+ */
+export interface MissionRunResponse {
+  mission: MissionBoardEntry;
+  evaluation: MissionDeckEvaluation;
+  progression: MissionBoardProgression;
+  rewardGranted: boolean;
+}
 
 // ── Battle Pass (Gamma) ──────────────────────────────────────────────────────
 

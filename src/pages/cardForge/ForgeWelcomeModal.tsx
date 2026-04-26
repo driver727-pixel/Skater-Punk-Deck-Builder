@@ -31,7 +31,7 @@ export function ForgeWelcomeModal({ open, onClose }: ForgeWelcomeModalProps) {
         <div className="forge-welcome__grid">
           <div className="forge-welcome__item">
             <h3>What</h3>
-            <p>Create Punch Skater cards, upgrade your squad with a Master card, and assemble a six-card deck built for missions, battles, and trades.</p>
+            <p>Create Punch Skater cards, upgrade your squad with a Master card, and assemble a six-card deck built for district missions, battles, and trades.</p>
           </div>
           <div className="forge-welcome__item">
             <h3>How</h3>
@@ -39,7 +39,7 @@ export function ForgeWelcomeModal({ open, onClose }: ForgeWelcomeModalProps) {
           </div>
           <div className="forge-welcome__item">
             <h3>Why</h3>
-            <p>Earn points and power-ups on Missions, bring your best deck into the Battle Arena, and trade for the cards that complete your next big strategy.</p>
+            <p>Build the right deck for each district mission, bring your best lineup into the Battle Arena, and trade for the cards that complete your next big strategy.</p>
           </div>
         </div>
         <div className="forge-welcome__actions">

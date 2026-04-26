@@ -237,7 +237,7 @@ export function evaluateMissionDeck(deck, mission, weatherPayload = null) {
         );
       }
       default:
-        return buildRequirementResult(requirement, 0, 'Unknown requirement.');
+        throw new Error(`Unknown mission requirement type: ${requirement.type}`);
     }
   });
 

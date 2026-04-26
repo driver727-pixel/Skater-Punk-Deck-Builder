@@ -10,7 +10,11 @@ import {
   getMissionWeatherSummary,
 } from "../lib/missions";
 import { getMissionBoard, runMission } from "../services/missions";
-import type { MissionBoardEntry, MissionBoardProgression } from "../lib/sharedTypes";
+import type {
+  MissionBoardEntry,
+  MissionBoardProgression,
+  MissionRequirementResult,
+} from "../lib/sharedTypes";
 
 interface MissionsPanelProps {
   uid: string;
@@ -21,6 +25,16 @@ function formatTimestamp(value?: string): string | null {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return null;
   return parsed.toLocaleString();
+}
+
+function getDefaultRequirementResults(mission: MissionBoardEntry): MissionRequirementResult[] {
+  return mission.requirements.map((requirement) => ({
+    requirement,
+    met: false,
+    current: 0,
+    needed: requirement.count ?? 0,
+    detail: requirement.label,
+  }));
 }
 
 export function MissionsPanel({ uid }: MissionsPanelProps) {
@@ -265,11 +279,7 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
               </div>
 
               <div className="mission-checks">
-                {(selectedEvaluation?.results ?? selectedMission.requirements.map((requirement) => ({
-                  requirement,
-                  met: false,
-                  detail: requirement.label,
-                }))).map((result) => (
+                {(selectedEvaluation?.results ?? getDefaultRequirementResults(selectedMission)).map((result) => (
                   <span
                     key={`${selectedMission.id}-${result.requirement.label}`}
                     className="mission-selector-card__badge"

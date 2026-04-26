@@ -28,7 +28,10 @@ export function registerMissionRoutes(app, {
   authenticateFirebaseUser,
   districtWeatherService,
 }) {
-  app.get('/api/missions/board', missionRateLimit, async (req, res) => {
+  app.use('/api/missions/board', missionRateLimit);
+  app.use('/api/missions/run', missionRateLimit);
+
+  app.get('/api/missions/board', async (req, res) => {
     if (!adminDb) {
       res.status(503).json({ error: 'Mission board is not configured on this server.' });
       return;
@@ -72,7 +75,7 @@ export function registerMissionRoutes(app, {
     }
   });
 
-  app.post('/api/missions/run', missionRateLimit, async (req, res) => {
+  app.post('/api/missions/run', async (req, res) => {
     if (!adminDb) {
       res.status(503).json({ error: 'Mission board is not configured on this server.' });
       return;

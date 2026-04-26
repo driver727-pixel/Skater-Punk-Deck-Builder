@@ -527,6 +527,9 @@ export function Collection() {
               <CardContainer cardVars={buildCardVars(selected, "collection")}>
                 <PrintedCardPreviewPair
                   card={selected}
+                  backgroundImageUrl={selected.backgroundImageUrl}
+                  characterImageUrl={selected.characterImageUrl}
+                  frameImageUrl={selected.frameImageUrl}
                   className="print-preview-area--collection"
                 />
               </CardContainer>

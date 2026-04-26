@@ -72,10 +72,11 @@ const FRAME_ASSETS: Partial<Record<Rarity, FrameAssetConfig>> = {
     // Frame is 750×1050; background is 700×980 — inset background to show cutaway border.
     insetBackground: true,
   },
+  // All RGBA PNGs below have transparent centers; normal blend renders the
+  // frame borders as-is without washing them out.
   Apprentice: {
     url:     "/assets/frames/apprentice-front.png",
     backUrl: "/assets/frames/apprentice-rear.png",
-    // PNG has a transparent center — normal blend renders the frame as-is.
     insetBackground: true,
   },
   Master: {

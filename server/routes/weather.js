@@ -166,7 +166,7 @@ async function buildDistrictWeatherPayload() {
   };
 }
 
-export function registerWeatherRoutes(app, { weatherRateLimit }) {
+export function createDistrictWeatherService() {
   let districtWeatherCache = {
     payload: null,
     fetchedAt: 0,
@@ -206,6 +206,14 @@ export function registerWeatherRoutes(app, { weatherRateLimit }) {
       return fallback;
     }
   }
+
+  return {
+    getDistrictWeatherPayload,
+  };
+}
+
+export function registerWeatherRoutes(app, { weatherRateLimit, districtWeatherService = createDistrictWeatherService() }) {
+  const { getDistrictWeatherPayload } = districtWeatherService;
 
   app.get('/api/district-weather', weatherRateLimit, async (_req, res) => {
     const payload = await getDistrictWeatherPayload();

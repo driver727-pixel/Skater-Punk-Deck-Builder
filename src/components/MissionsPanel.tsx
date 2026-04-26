@@ -1,209 +1,319 @@
-/**
- * MissionsPanel — Displays today's three daily missions with progress bars
- * and claim buttons.
- *
- * Gated behind the MISSIONS feature flag. Returns null when the flag is off.
- *
- * @sprint 1 @owner gamma
- */
-
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { isEnabled } from "../lib/featureFlags";
 import { useAuth } from "../context/AuthContext";
-import { getDailyMissions, claimMissionReward } from "../services/missions";
-import type { Mission } from "../lib/sharedTypes";
+import { useDecks } from "../hooks/useDecks";
+import { useDistrictWeather } from "../hooks/useDistrictWeather";
+import {
+  evaluateMissionDeck,
+  getMissionRequirementBadge,
+  getMissionStateLabel,
+  getMissionWeatherSummary,
+} from "../lib/missions";
+import { getMissionBoard, runMission } from "../services/missions";
+import type { MissionBoardEntry, MissionBoardProgression } from "../lib/sharedTypes";
 
 interface MissionsPanelProps {
   uid: string;
 }
 
-function useMidnightCountdown(): string {
-  const [label, setLabel] = useState("");
-
-  useEffect(() => {
-    function compute() {
-      const now = new Date();
-      const midnight = new Date(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1)
-      );
-      const diffMs = midnight.getTime() - now.getTime();
-      if (diffMs <= 0) {
-        setLabel("Refreshing…");
-        return;
-      }
-      const h = Math.floor(diffMs / 3_600_000);
-      const m = Math.floor((diffMs % 3_600_000) / 60_000);
-      const s = Math.floor((diffMs % 60_000) / 1_000);
-      setLabel(
-        `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
-      );
-    }
-    compute();
-    const id = setInterval(compute, 1_000);
-    return () => clearInterval(id);
-  }, []);
-
-  return label;
-}
-
-function MissionCard({
-  mission,
-  onClaim,
-}: {
-  mission: Mission;
-  onClaim: (id: string) => void;
-}) {
-  const pct = Math.min(100, Math.round((mission.progress / mission.target) * 100));
-  const isComplete = mission.status === "completed";
-  const isClaimed = Boolean((mission as Mission & { rewardClaimedAt?: string }).rewardClaimedAt);
-
-  const badges: string[] = [];
-  if (mission.district) badges.push(`📍 ${mission.district}`);
-  if (mission.archetype) badges.push(`🎭 ${mission.archetype}`);
-  if (mission.faction) badges.push(`🏴 ${mission.faction}`);
-  if (mission.stat) badges.push(`📊 ${mission.stat}`);
-
-  return (
-    <div
-      className={`mission-card${isComplete ? " mission-card--complete" : ""}${isClaimed ? " mission-card--claimed" : ""}`}
-    >
-      <div className="mission-card__header">
-        <span className="mission-card__title">{mission.title}</span>
-        <span className="mission-card__status">
-          {isClaimed ? "✅ Claimed" : isComplete ? "🏆 Complete!" : "⏳ Active"}
-        </span>
-      </div>
-
-      <p className="mission-card__desc">{mission.description}</p>
-
-      {badges.length > 0 && (
-        <div className="mission-card__badges">
-          {badges.map((b) => (
-            <span key={b} className="mission-card__badge">
-              {b}
-            </span>
-          ))}
-        </div>
-      )}
-
-      <div className="mission-card__progress-row">
-        <div
-          className="mission-card__progress-bar"
-          role="progressbar"
-          aria-valuenow={mission.progress}
-          aria-valuemin={0}
-          aria-valuemax={mission.target}
-          aria-label={`${mission.title} progress`}
-        >
-          <div
-            className="mission-card__progress-fill"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-        <span className="mission-card__progress-label">
-          {mission.progress} / {mission.target}
-        </span>
-      </div>
-
-      <div className="mission-card__rewards">
-        <span className="mission-card__reward-badge mission-card__reward-badge--xp">
-          +{mission.rewardXp} XP
-        </span>
-        {(mission.rewardOzzies ?? 0) > 0 && (
-          <span className="mission-card__reward-badge mission-card__reward-badge--oz">
-            +{mission.rewardOzzies} Oz
-          </span>
-        )}
-      </div>
-
-      {isComplete && !isClaimed && (
-        <button
-          className="btn-primary mission-card__claim-btn"
-          onClick={() => onClaim(mission.id)}
-          aria-label={`Claim reward for ${mission.title}`}
-        >
-          Claim Reward
-        </button>
-      )}
-    </div>
-  );
+function formatTimestamp(value?: string): string | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toLocaleString();
 }
 
 export function MissionsPanel({ uid }: MissionsPanelProps) {
   const { user } = useAuth();
-  const countdown = useMidnightCountdown();
-  const [missions, setMissions] = useState<Mission[]>([]);
+  const { decks } = useDecks();
+  const { weatherByDistrict } = useDistrictWeather();
+  const [missions, setMissions] = useState<MissionBoardEntry[]>([]);
+  const [progression, setProgression] = useState<MissionBoardProgression>({
+    missionXp: 0,
+    missionOzzies: 0,
+  });
   const [loading, setLoading] = useState(true);
-  const [claimError, setClaimError] = useState<string | null>(null);
-  const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [runningMissionId, setRunningMissionId] = useState<string | null>(null);
+  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
+  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isEnabled("MISSIONS", user)) return;
     let cancelled = false;
     setLoading(true);
-    getDailyMissions(uid, user?.email).then((result) => {
-      if (!cancelled) {
-        setMissions(result);
-        setLoading(false);
-      }
-    }).catch((err) => {
-      if (!cancelled) {
-        console.error("[MissionsPanel] Failed to load missions:", err);
-        setLoading(false);
-      }
-    });
-    return () => { cancelled = true; };
+    setError(null);
+    getMissionBoard(uid, user?.email)
+      .then((payload) => {
+        if (cancelled) return;
+        setMissions(payload.missions);
+        setProgression(payload.progression);
+        setSelectedMissionId((current) => current ?? payload.missions[0]?.id ?? null);
+      })
+      .catch((nextError) => {
+        if (cancelled) return;
+        setError(nextError instanceof Error ? nextError.message : "Failed to load mission board.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [uid, user]);
 
-  const handleClaim = useCallback(async (missionId: string) => {
-    setClaimingId(missionId);
-    setClaimError(null);
-    try {
-      const { xp, ozzies } = await claimMissionReward(uid, missionId, user?.email);
-      setMissions((prev) =>
-        prev.map((m) =>
-          m.id === missionId
-            ? { ...m, rewardClaimedAt: new Date().toISOString() } as Mission & { rewardClaimedAt: string }
-            : m
-        )
-      );
-      // Brief success annotation — a toast or SFX hook could replace this
-      console.info(`[Missions] Claimed: +${xp} XP, +${ozzies} Oz`);
-    } catch (err) {
-      setClaimError(err instanceof Error ? err.message : "Failed to claim reward.");
-    } finally {
-      setClaimingId(null);
+  useEffect(() => {
+    if (!selectedMissionId && missions.length > 0) {
+      setSelectedMissionId(missions[0].id);
     }
-  }, [uid, user]);
+  }, [missions, selectedMissionId]);
+
+  useEffect(() => {
+    if (selectedDeckId && decks.some((deck) => deck.id === selectedDeckId)) return;
+    setSelectedDeckId(decks[0]?.id ?? null);
+  }, [decks, selectedDeckId]);
+
+  const selectedMission = useMemo(
+    () => missions.find((mission) => mission.id === selectedMissionId) ?? missions[0] ?? null,
+    [missions, selectedMissionId],
+  );
+  const selectedDeck = useMemo(
+    () => decks.find((deck) => deck.id === selectedDeckId) ?? decks[0] ?? null,
+    [decks, selectedDeckId],
+  );
+  const deckEvaluations = useMemo(
+    () => selectedMission
+      ? decks.map((deck) => evaluateMissionDeck(deck, selectedMission, weatherByDistrict))
+      : [],
+    [decks, selectedMission, weatherByDistrict],
+  );
+  const selectedEvaluation = useMemo(
+    () => selectedMission && selectedDeck
+      ? evaluateMissionDeck(selectedDeck, selectedMission, weatherByDistrict)
+      : null,
+    [selectedDeck, selectedMission, weatherByDistrict],
+  );
+
+  const handleRunMission = useCallback(async () => {
+    if (!selectedMission || !selectedDeck) return;
+    setRunningMissionId(selectedMission.id);
+    setError(null);
+    try {
+      const result = await runMission(uid, selectedMission.id, selectedDeck.id, user?.email);
+      setMissions((current) => current.map((mission) => (
+        mission.id === result.mission.id ? result.mission : mission
+      )));
+      setProgression(result.progression);
+      setSelectedDeckId(result.mission.selectedDeckId ?? selectedDeck.id);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Failed to resolve mission.");
+    } finally {
+      setRunningMissionId(null);
+    }
+  }, [selectedMission, selectedDeck, uid, user]);
 
   if (!isEnabled("MISSIONS", user)) return null;
 
   return (
-    <div className="missions-panel">
-      <div className="missions-panel__header">
-        <h2 className="missions-panel__title">🎯 Daily Missions</h2>
-        <span className="missions-panel__expiry" aria-label="Time until missions reset">
-          Resets in {countdown}
-        </span>
+    <section className="mission-panel mission-selector-panel" aria-label="Mission board">
+      <div className="mission-selector-panel__header">
+        <div>
+          <div className="mission-selector-panel__title">District mission grid</div>
+          <p className="mission-selector-panel__summary">
+            Pick a contract, choose a deck, and clear the route with the right cards and wheels.
+          </p>
+        </div>
+        <div className="mission-selector-card__badges">
+          <span className="mission-selector-card__badge">⚡ {progression.missionXp} Mission XP</span>
+          <span className="mission-selector-card__badge tag--ozzies">💰 {progression.missionOzzies} Ozzies</span>
+        </div>
       </div>
 
       {loading && (
-        <p className="missions-panel__loading">Loading missions…</p>
+        <div className="mission-selector-empty">Loading mission board…</div>
       )}
 
-      {!loading && missions.length === 0 && (
-        <p className="missions-panel__empty">No missions available. Check back tomorrow.</p>
+      {!loading && error && (
+        <div className="mission-selector-empty" role="alert">{error}</div>
       )}
 
-      {claimError && (
-        <p className="missions-panel__error" role="alert">{claimError}</p>
+      {!loading && !error && missions.length === 0 && (
+        <div className="mission-selector-empty">
+          No contracts are active yet. Check your connection and try again.
+        </div>
       )}
 
-      <div className={`missions-panel__list${claimingId ? " missions-panel__list--claiming" : ""}`}>
-        {missions.map((m) => (
-          <MissionCard key={m.id} mission={m} onClaim={handleClaim} />
-        ))}
-      </div>
-    </div>
+      {!loading && !error && missions.length > 0 && (
+        <div className="mission-grid">
+          <div className="mission-selector-grid">
+            {missions.map((mission) => (
+              <button
+                key={mission.id}
+                type="button"
+                className={[
+                  "mission-selector-card",
+                  selectedMission?.id === mission.id ? "mission-selector-card--active" : "",
+                  mission.status === "completed" ? "mission-selector-card--completed" : "",
+                ].filter(Boolean).join(" ")}
+                onClick={() => setSelectedMissionId(mission.id)}
+              >
+                {mission.status === "completed" && (
+                  <span className="mission-selector-card__check" aria-hidden="true">✓</span>
+                )}
+                <div className="mission-selector-card__topline">
+                  <span className="mission-selector-card__district">{mission.district}</span>
+                  <span
+                    className={`mission-selector-card__state${mission.status === "completed" ? "" : " mission-selector-card__state--available"}`}
+                  >
+                    {getMissionStateLabel(mission)}
+                  </span>
+                </div>
+                <strong className="mission-selector-card__name">{mission.title}</strong>
+                <p className="mission-selector-card__tagline">{mission.tagline}</p>
+                <div className="mission-selector-card__badges">
+                  <span className="mission-selector-card__badge tag--ozzies">+{mission.rewardOzzies} Oz</span>
+                  <span className="mission-selector-card__badge">+{mission.rewardXp} XP</span>
+                  {mission.requirements.slice(0, 2).map((requirement) => (
+                    <span key={`${mission.id}-${requirement.label}`} className="mission-selector-card__badge">
+                      {getMissionRequirementBadge(requirement)}
+                    </span>
+                  ))}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {selectedMission && (
+            <div className="mission-panel mission-panel--detail">
+              <div className="mission-panel__header">
+                <div>
+                  <div className="mission-selector-card__district">{selectedMission.district}</div>
+                  <h3 className="mission-selector-card__name">{selectedMission.title}</h3>
+                  <p className="mission-selector-card__tagline">{selectedMission.description}</p>
+                </div>
+                <div className="mission-panel__actions">
+                  <button
+                    className="btn-primary"
+                    onClick={handleRunMission}
+                    disabled={
+                      runningMissionId === selectedMission.id ||
+                      selectedMission.status === "completed" ||
+                      !selectedDeck ||
+                      !selectedEvaluation?.eligible
+                    }
+                  >
+                    {selectedMission.status === "completed"
+                      ? "Mission Cleared"
+                      : runningMissionId === selectedMission.id
+                        ? "Running…"
+                        : "Launch Run"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="mission-result">
+                <div className="mission-result__hero">
+                  <div className="mission-result__headline">{selectedMission.tagline}</div>
+                  <span
+                    className={`mission-result__badge ${selectedMission.status === "completed" ? "mission-result__badge--success" : "mission-result__badge--fail"}`}
+                  >
+                    {selectedMission.status === "completed" ? "Route Cleared" : "Awaiting Deck"}
+                  </span>
+                </div>
+                <div className="mission-result__rewards">
+                  <div className="mission-result__reward-card">
+                    <span className="mission-result__reward-label">Mission XP</span>
+                    <strong className="mission-result__reward-value">+{selectedMission.rewardXp}</strong>
+                  </div>
+                  <div className="mission-result__reward-card mission-result__reward-card--ozzies">
+                    <span className="mission-result__reward-label">Ozzies</span>
+                    <strong className="mission-result__reward-value">+{selectedMission.rewardOzzies}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`mission-weather${selectedEvaluation && !selectedEvaluation.eligible ? " mission-weather--blocked" : ""}`}>
+                <div className="mission-weather__copy">
+                  <span className="mission-weather__eyebrow">District access</span>
+                  <strong className="mission-weather__title">{selectedMission.district}</strong>
+                  <p className="mission-weather__body">
+                    Access now: {getMissionWeatherSummary(selectedMission, weatherByDistrict)}.
+                  </p>
+                </div>
+                <span
+                  className={`mission-weather__status${selectedEvaluation && !selectedEvaluation.eligible ? " mission-weather__status--restricted" : ""}`}
+                >
+                  {selectedEvaluation?.eligible ? "Deck ready" : "Needs work"}
+                </span>
+              </div>
+
+              <div className="mission-stats">
+                <div className="mission-stat-row">
+                  <span className="mission-stat-label">Selected deck</span>
+                  <span className="mission-stat-value">{selectedDeck?.name ?? "No deck selected"}</span>
+                </div>
+                <div className="mission-stat-row">
+                  <span className="mission-stat-label">Last run</span>
+                  <span className="mission-stat-value">{formatTimestamp(selectedMission.lastRunAt) ?? "Never launched"}</span>
+                </div>
+                {selectedMission.status === "completed" && (
+                  <div className="mission-stat-row">
+                    <span className="mission-stat-label">Cleared with</span>
+                    <span className="mission-stat-value">{selectedMission.selectedDeckName ?? "Unknown deck"}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="mission-checks">
+                {(selectedEvaluation?.results ?? selectedMission.requirements.map((requirement) => ({
+                  requirement,
+                  met: false,
+                  detail: requirement.label,
+                }))).map((result) => (
+                  <span
+                    key={`${selectedMission.id}-${result.requirement.label}`}
+                    className="mission-selector-card__badge"
+                    title={result.detail}
+                  >
+                    {result.met ? "✅" : "⛔"} {result.requirement.label}
+                  </span>
+                ))}
+              </div>
+
+              {selectedEvaluation && !selectedEvaluation.eligible && (
+                <p className="mission-warning">{selectedEvaluation.summary}</p>
+              )}
+              {selectedMission.lastRunSummary && (
+                <p className="mission-warning">{selectedMission.lastRunSummary}</p>
+              )}
+
+              <div className="mission-runner-grid">
+                {deckEvaluations.map((evaluation) => {
+                  const deck = decks.find((entry) => entry.id === evaluation.deckId);
+                  return (
+                    <button
+                      key={evaluation.deckId}
+                      type="button"
+                      className={`mission-runner-card${selectedDeck?.id === evaluation.deckId ? " mission-runner-card--active" : ""}`}
+                      onClick={() => setSelectedDeckId(evaluation.deckId)}
+                    >
+                      <strong>{evaluation.deckName}</strong>
+                      <span className="mission-selector-card__tagline">
+                        {deck?.cards.length ?? 0} cards · {evaluation.eligibleCardCount} route-ready
+                      </span>
+                      <span
+                        className={`mission-result__badge ${evaluation.eligible ? "mission-result__badge--success" : "mission-result__badge--fail"}`}
+                      >
+                        {evaluation.eligible ? "Can run" : "Blocked"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
   );
 }

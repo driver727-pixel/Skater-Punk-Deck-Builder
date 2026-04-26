@@ -41,8 +41,9 @@ import { registerAdminRoutes } from './routes/admin.js';
 import { registerBattleRoutes } from './routes/battle.js';
 import { registerImageRoutes } from './routes/images.js';
 import { registerImportRoutes } from './routes/import.js';
+import { registerMissionRoutes } from './routes/missions.js';
 import { registerPaymentRoutes } from './routes/payments.js';
-import { registerWeatherRoutes } from './routes/weather.js';
+import { createDistrictWeatherService, registerWeatherRoutes } from './routes/weather.js';
 
 // Load the shared pricing config — the single source of truth for Stripe
 // price IDs, buy URLs, and display prices.  Update src/lib/tierPricing.json
@@ -189,6 +190,13 @@ const weatherRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 30,
   message: { error: 'Too many weather requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
+});
+
+const missionRateLimit = buildRateLimiter({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { error: 'Too many mission requests — please wait a moment and try again.' },
   store: sharedRateLimitStore,
 });
 
@@ -702,8 +710,18 @@ registerAdminRoutes(app, {
   deleteQueryDocs,
 });
 
+const districtWeatherService = createDistrictWeatherService();
+
 registerWeatherRoutes(app, {
   weatherRateLimit,
+  districtWeatherService,
+});
+
+registerMissionRoutes(app, {
+  adminDb,
+  missionRateLimit,
+  authenticateFirebaseUser,
+  districtWeatherService,
 });
 
 registerBattleRoutes(app, {

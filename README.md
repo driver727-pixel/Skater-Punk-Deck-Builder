@@ -6,9 +6,9 @@ A dense cyberpunk courier card game built with React, TypeScript, Vite, Firebase
 
 The Card Forge is your jump-off point: build your first deck, discover hidden factions, and explore more than 4 million possible character combinations.
 
-- **What** — Forge Punch Skater cards, add a Master card, and assemble a six-card deck for missions, battles, and trades.
+- **What** — Forge Punch Skater cards, add a Master card, and assemble six-card decks for district missions, battles, and trades.
 - **How** — Start with 5 Punch Skater class cards and 1 Master class card, then customize each skater's district, style, and board loadout.
-- **Why** — Earn points and power-ups on Missions, take your best deck into the Battle Arena, and trade for the cards that sharpen your strategy.
+- **Why** — Build the right deck for each route, clear district missions with the right wheels and stats, take your best deck into the Battle Arena, and trade for the cards that sharpen your strategy.
 
 ## Current Stack
 
@@ -25,7 +25,7 @@ The Card Forge is your jump-off point: build your first deck, discover hidden fa
 - **Card Forge** — deterministic card generation, layered art, factions, referrals, and monetized forge access
 - **Collection** — saved cards in Firestore for signed-in users, local storage for guests
 - **Deck Builder** — up to 6 cards per deck with persistent deck sync
-- **Missions** — district map, mission branches, and live weather restrictions
+- **Missions** — server-authored district contracts, deck checks, and route access restrictions
 - **Trades + Leaderboard** — direct offers, market listings, and public deck rankings
 - **Battle Arena** — public scouting summaries, real opponent deck snapshots, persistent results, and stat resolution syncing for both players
 

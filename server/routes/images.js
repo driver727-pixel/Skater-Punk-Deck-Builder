@@ -1,8 +1,5 @@
-import { Agent } from 'node:undici';
-
 const BOARD_IMAGE_SIZE = { width: 512, height: 512 };
 const FAL_PROXY_TIMEOUT_MS = 300_000; // 5 minutes — AI generation can be slow
-const falProxyAgent = new Agent({ headersTimeout: FAL_PROXY_TIMEOUT_MS, bodyTimeout: FAL_PROXY_TIMEOUT_MS });
 
 function extractBoardImageUrl(result) {
   if (process.env.FAL_DEBUG) console.log('Raw fal board result:', JSON.stringify(result));
@@ -55,7 +52,7 @@ export function registerImageRoutes(app, {
           Authorization: `Key ${FAL_KEY}`,
         },
         body: JSON.stringify(await buildFalImageRequest(sanitizedBody)),
-        dispatcher: falProxyAgent,
+        signal: AbortSignal.timeout(FAL_PROXY_TIMEOUT_MS),
       });
 
       if (!upstream.ok) {
@@ -177,7 +174,7 @@ export function registerImageRoutes(app, {
           Authorization: `Key ${FAL_KEY}`,
         },
         body: JSON.stringify(sanitizedBody),
-        dispatcher: falProxyAgent,
+        signal: AbortSignal.timeout(FAL_PROXY_TIMEOUT_MS),
       });
 
       if (!upstream.ok) {

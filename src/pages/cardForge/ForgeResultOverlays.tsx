@@ -51,7 +51,6 @@ export function ForgeResultOverlays({
         <PrintModal
           card={card}
           backgroundImageUrl={layers.backgroundUrl}
-          backgroundPrintUrl={layers.backgroundPrintUrl}
           characterImageUrl={layers.characterUrl}
           frameImageUrl={layers.frameUrl}
           characterBlend={characterBlend}

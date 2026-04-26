@@ -6,22 +6,11 @@
  * directly — no Firestore read and no fal.ai API call — eliminating per-forge
  * credit usage for stable layers.
  *
- * ── Background sizes ─────────────────────────────────────────────────────────
- *  Two resolutions are tracked for each district:
+ * ── Background ───────────────────────────────────────────────────────────────
+ *  One image per district, used for every context (preview, print, download).
  *
- *  • BACKGROUND_ASSETS_SMALL  — screen / standard quality (750 × 1050 px).
- *    Place files in  public/assets/backgrounds/small/<slug>.webp
- *    Used for the live card preview and collection thumbnails (fast load).
- *
- *  • BACKGROUND_ASSETS        — print quality (1500 × 2100 px).
- *    Place files in  public/assets/backgrounds/<slug>.webp
- *    Used only when the user prints or downloads the card (high fidelity).
- *
- * ── How to add a background ──────────────────────────────────────────────────
- *  1. Place the print-quality image in  public/assets/backgrounds/<slug>.webp
- *     and register it in BACKGROUND_ASSETS below.
- *  2. Place the screen-quality image in public/assets/backgrounds/small/<slug>.webp
- *     and register it in BACKGROUND_ASSETS_SMALL below.
+ *  Place files in  public/assets/backgrounds/<slug>.webp  then uncomment the
+ *  corresponding entry in BACKGROUND_ASSETS below.
  *
  * ── How to add a frame ───────────────────────────────────────────────────────
  *  1. Place the image in   public/assets/frames/<slug>.webp       (see README there).
@@ -52,34 +41,19 @@ interface FrameAssetConfig {
   insetBackground?: boolean;
 }
 
-// ── Background registry — print / full quality ────────────────────────────────
+// ── Background registry ───────────────────────────────────────────────────────
 //
-// Files live in  public/assets/backgrounds/<slug>.webp  (1500 × 2100 px).
-// Used for print and JPEG download.  Uncomment an entry once you have placed
-// the corresponding file.
-
-const BACKGROUND_ASSETS: Partial<Record<District, string>> = {
-  Airaway:      "/assets/backgrounds/airaway.webp",
-  Nightshade:   "/assets/backgrounds/nightshade.webp",
-  Batteryville: "/assets/backgrounds/batteryville.webp",
-  "The Grid":   "/assets/backgrounds/the-grid.webp",
-  "The Forest": "/assets/backgrounds/the-forest.webp",
-  "Glass City": "/assets/backgrounds/glass-city.webp",
-};
-
-// ── Background registry — screen / standard quality ───────────────────────────
-//
-// Files live in  public/assets/backgrounds/small/<slug>.webp  (750 × 1050 px).
-// Used for the live card preview and collection thumbnails (faster load).
+// Files live in  public/assets/backgrounds/<slug>.jpg
+// Used for every context: live preview, collection thumbnails, print, download.
 // Uncomment an entry once you have placed the corresponding file.
 
-const BACKGROUND_ASSETS_SMALL: Partial<Record<District, string>> = {
-  Airaway:      "/assets/backgrounds/small/airaway.webp",
-  Nightshade:   "/assets/backgrounds/small/nightshade.webp",
-  Batteryville: "/assets/backgrounds/small/batteryville.webp",
-  "The Grid":   "/assets/backgrounds/small/the-grid.webp",
-  "The Forest": "/assets/backgrounds/small/the-forest.webp",
-  "Glass City": "/assets/backgrounds/small/glass-city.webp",
+const BACKGROUND_ASSETS: Partial<Record<District, string>> = {
+  // Airaway:      "/assets/backgrounds/airaway.jpg",
+  // Nightshade:   "/assets/backgrounds/nightshade.jpg",
+  // Batteryville: "/assets/backgrounds/batteryville.jpg",
+  // "The Grid":   "/assets/backgrounds/the-grid.jpg",
+  // "The Forest": "/assets/backgrounds/the-forest.jpg",
+  // "Glass City": "/assets/backgrounds/glass-city.jpg",
 };
 
 // ── Frame registry ─────────────────────────────────────────────────────────────
@@ -121,25 +95,13 @@ const FRAME_ASSETS: Partial<Record<Rarity, FrameAssetConfig>> = {
 // ── Public API ─────────────────────────────────────────────────────────────────
 
 /**
- * Returns the public URL of the **print-quality** static background image for
- * the given district (1500 × 2100 px), or null if not registered.
+ * Returns the public URL of the static background image for the given district,
+ * or null if not registered.
  *
- * Use this URL when printing or downloading — not for the on-screen preview.
  * When non-null the caller should use this URL instead of calling fal.ai.
  */
 export function getStaticBackgroundUrl(district: District): string | null {
   return BACKGROUND_ASSETS[district] ?? null;
-}
-
-/**
- * Returns the public URL of the **screen-quality** static background image for
- * the given district (750 × 1050 px), or null if not registered.
- *
- * Use this URL for the live card preview and collection thumbnails.  Falls back
- * to null so the caller can fall back to getStaticBackgroundUrl if needed.
- */
-export function getStaticBackgroundSmallUrl(district: District): string | null {
-  return BACKGROUND_ASSETS_SMALL[district] ?? null;
 }
 
 /**

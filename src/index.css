@@ -5290,16 +5290,16 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   pointer-events: none;
 }
 
-/* Front face info overlay (name + bio shown over the character art) —
- * sits below the frame overlay (z:3) so the decorative border visually
- * contains the text, matching the back-face treatment for the board hero. */
+/* Front face name overlay — keep the skater name clear of the Punch Skater
+ * frame treatment by lifting it above the frame and nudging it into the top
+ * header space. */
 .print-front-name-overlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  padding: 11% 14% 0;
-  z-index: 2;
+  padding: 7% 14% 0;
+  z-index: 6;
   display: flex;
   justify-content: center;
   pointer-events: none;

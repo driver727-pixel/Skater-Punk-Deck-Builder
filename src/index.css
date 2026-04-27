@@ -8867,6 +8867,11 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   border-color: rgba(255,200,50,0.5);
   background: rgba(255,200,50,0.12);
 }
+.mission-fork__option--active {
+  border-color: rgba(255,200,50,0.72);
+  background: rgba(255,200,50,0.18);
+  box-shadow: 0 0 0 1px rgba(255,200,50,0.18);
+}
 .mission-fork__option-label {
   font-size: 13px;
   letter-spacing: 0.04em;

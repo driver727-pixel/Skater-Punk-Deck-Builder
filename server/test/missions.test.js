@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createMissionBoardEntries, evaluateMissionDeck } from '../lib/missions.js';
+import { createMissionBoardEntries, evaluateMissionDeck, getMissionEffectiveRewards } from '../lib/missions.js';
 
 function buildCard(overrides = {}) {
   return {
@@ -67,4 +67,34 @@ test('evaluateMissionDeck fails when the deck lacks district-ready wheels', () =
   const result = evaluateMissionDeck(deck, mission);
   assert.equal(result.eligible, false);
   assert.match(result.summary, /Pneumatic \/ Rubber|couriers can currently enter|mission requirements/i);
+});
+
+test('mission board entries seed fork choices on restored missions', () => {
+  const mission = createMissionBoardEntries('user-123').find((entry) => entry.definitionId === 'batteryville-breaker-yard');
+  assert.equal(mission.fork.badge, 'Fork in the road');
+  assert.equal(mission.fork.options.length, 2);
+  assert.equal(mission.fork.options[0].id, 'crusher-lane');
+});
+
+test('evaluateMissionDeck applies selected fork requirements', () => {
+  const mission = createMissionBoardEntries('user-123').find((entry) => entry.definitionId === 'batteryville-breaker-yard');
+  const deck = {
+    id: 'deck-3',
+    name: 'Relay Stack',
+    cards: Array.from({ length: 6 }, (_, index) => buildCard({
+      prompts: { district: index < 2 ? 'Batteryville' : 'The Grid' },
+      board: { config: { boardType: 'Street', wheels: 'Rubber' } },
+      stats: { speed: 4, range: 4, stealth: 4, grit: 5 },
+    })),
+  };
+
+  const result = evaluateMissionDeck(deck, mission, null, 'crusher-lane');
+  assert.equal(result.eligible, false);
+  assert.match(result.summary, /32 total Grit/i);
+});
+
+test('getMissionEffectiveRewards includes selected fork bonuses', () => {
+  const mission = createMissionBoardEntries('user-123').find((entry) => entry.definitionId === 'grid-trace');
+  const rewards = getMissionEffectiveRewards(mission, 'data-snatch');
+  assert.deepEqual(rewards, { rewardXp: 220, rewardOzzies: 165 });
 });

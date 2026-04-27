@@ -2,6 +2,7 @@ import { getDistrictAccessSummary, isDistrictAccessibleWithBoardType, type Distr
 import type {
   MissionBoardEntry,
   MissionDeckEvaluation,
+  MissionForkOption,
   MissionRequirement,
   MissionRequirementResult,
 } from "./sharedTypes";
@@ -37,6 +38,26 @@ export const MISSION_BOARD_DEFINITIONS: MissionTemplate[] = [
       { type: "district_card", label: "Include 1 Batteryville local in the deck.", count: 1, district: "Batteryville" },
       { type: "stat_total", label: "Reach 28 total Grit across the deck.", count: 28, stat: "grit" },
     ],
+    fork: {
+      badge: "Fork in the road",
+      prompt: "Do you punch through the crusher lane for more cash, or ride the service rails for a cleaner relay?",
+      options: [
+        {
+          id: "crusher-lane",
+          label: "Crusher lane",
+          description: "Take the loud scrapyard route for a fatter Ozzy bag.",
+          rewardOzziesDelta: 35,
+          requirements: [{ type: "stat_total", label: "Reach 32 total Grit across the deck.", count: 32, stat: "grit" }],
+        },
+        {
+          id: "service-rails",
+          label: "Service rails",
+          description: "Stay low and ride the worker lines with more Batteryville locals.",
+          rewardXpDelta: 25,
+          requirements: [{ type: "district_card", label: "Include 2 Batteryville locals in the deck.", count: 2, district: "Batteryville" }],
+        },
+      ],
+    },
   },
   {
     definitionId: "nightshade-tunnel-run",
@@ -53,6 +74,26 @@ export const MISSION_BOARD_DEFINITIONS: MissionTemplate[] = [
       { type: "district_access", label: "At least 2 couriers can enter Nightshade.", count: 2, district: "Nightshade" },
       { type: "stat_total", label: "Reach 28 total Stealth across the deck.", count: 28, stat: "stealth" },
     ],
+    fork: {
+      badge: "Fork in the road",
+      prompt: "Run the tunnel drift for extra heat, or ghost the courier chain for a softer landing?",
+      options: [
+        {
+          id: "tunnel-drift",
+          label: "Tunnel drift",
+          description: "Push deeper into the shadows and get paid for every silent inch.",
+          rewardOzziesDelta: 30,
+          requirements: [{ type: "stat_total", label: "Reach 32 total Stealth across the deck.", count: 32, stat: "stealth" }],
+        },
+        {
+          id: "ghost-chain",
+          label: "Ghost chain",
+          description: "Work with the locals and keep the route invisible end to end.",
+          rewardXpDelta: 20,
+          requirements: [{ type: "district_card", label: "Include 1 Nightshade local in the deck.", count: 1, district: "Nightshade" }],
+        },
+      ],
+    },
   },
   {
     definitionId: "airaway-sky-lane",
@@ -70,6 +111,26 @@ export const MISSION_BOARD_DEFINITIONS: MissionTemplate[] = [
       { type: "district_access", label: "At least 1 courier can enter Airaway.", count: 1, district: "Airaway" },
       { type: "stat_total", label: "Reach 24 total Speed across the deck.", count: 24, stat: "speed" },
     ],
+    fork: {
+      badge: "Fork in the road",
+      prompt: "Spoof the checkpoint scanners for better intel, or sprint the rooftops before the sky-lane closes?",
+      options: [
+        {
+          id: "scanner-spoof",
+          label: "Scanner spoof",
+          description: "Bring more clean street wheels and leave with extra mission XP.",
+          rewardXpDelta: 25,
+          requirements: [{ type: "wheel_type", label: "Run at least 3 street-wheel couriers.", count: 3, wheelTypes: ["Urethane"] }],
+        },
+        {
+          id: "rooftop-sprint",
+          label: "Rooftop sprint",
+          description: "Hammer the fast line and cash out before corporate closes the route.",
+          rewardOzziesDelta: 30,
+          requirements: [{ type: "stat_total", label: "Reach 28 total Speed across the deck.", count: 28, stat: "speed" }],
+        },
+      ],
+    },
   },
   {
     definitionId: "grid-trace",
@@ -87,6 +148,26 @@ export const MISSION_BOARD_DEFINITIONS: MissionTemplate[] = [
       { type: "archetype", label: "Include 1 Knights Technarchy courier.", count: 1, archetype: "The Knights Technarchy" },
       { type: "stat_total", label: "Reach 30 total Speed across the deck.", count: 30, stat: "speed" },
     ],
+    fork: {
+      badge: "Fork in the road",
+      prompt: "Do you pull a data snatch for extra Ozzies, or cut the blackout line for more rep and XP?",
+      options: [
+        {
+          id: "data-snatch",
+          label: "Data snatch",
+          description: "Bring another Technarchy rider and sell the trace logs on the side.",
+          rewardOzziesDelta: 40,
+          requirements: [{ type: "archetype", label: "Include 2 Knights Technarchy couriers.", count: 2, archetype: "The Knights Technarchy" }],
+        },
+        {
+          id: "blackout-line",
+          label: "Blackout line",
+          description: "Outrun the cameras entirely and bank more mission XP.",
+          rewardXpDelta: 25,
+          requirements: [{ type: "stat_total", label: "Reach 34 total Speed across the deck.", count: 34, stat: "speed" }],
+        },
+      ],
+    },
   },
   {
     definitionId: "forest-rootline",
@@ -104,6 +185,26 @@ export const MISSION_BOARD_DEFINITIONS: MissionTemplate[] = [
       { type: "district_access", label: "At least 2 couriers can enter The Forest.", count: 2, district: "The Forest" },
       { type: "district_card", label: "Include 1 Forest local in the deck.", count: 1, district: "The Forest" },
     ],
+    fork: {
+      badge: "Fork in the road",
+      prompt: "Cross the root bridge for better pay, or take the rain trench and build rep with a tougher crew?",
+      options: [
+        {
+          id: "root-bridge",
+          label: "Root bridge",
+          description: "Leverage local guides and squeeze more Ozzies out of the extraction.",
+          rewardOzziesDelta: 35,
+          requirements: [{ type: "district_card", label: "Include 2 Forest locals in the deck.", count: 2, district: "The Forest" }],
+        },
+        {
+          id: "rain-trench",
+          label: "Rain trench",
+          description: "Muscle through the mud line and come back with extra XP.",
+          rewardXpDelta: 20,
+          requirements: [{ type: "stat_total", label: "Reach 30 total Grit across the deck.", count: 30, stat: "grit" }],
+        },
+      ],
+    },
   },
   {
     definitionId: "glass-city-exchange",
@@ -121,6 +222,26 @@ export const MISSION_BOARD_DEFINITIONS: MissionTemplate[] = [
       { type: "district_card", label: "Include 1 Glass City local in the deck.", count: 1, district: "Glass City" },
       { type: "stat_total", label: "Reach 28 total Range across the deck.", count: 28, stat: "range" },
     ],
+    fork: {
+      badge: "Fork in the road",
+      prompt: "Make the broker handshake for safer XP, or run the hard cutout for a riskier payout?",
+      options: [
+        {
+          id: "broker-handshake",
+          label: "Broker handshake",
+          description: "Stack more local knowledge and leave with extra mission XP.",
+          rewardXpDelta: 25,
+          requirements: [{ type: "district_card", label: "Include 2 Glass City locals in the deck.", count: 2, district: "Glass City" }],
+        },
+        {
+          id: "hard-cutout",
+          label: "Hard cutout",
+          description: "Stretch the range and take the bigger cash route through open territory.",
+          rewardOzziesDelta: 35,
+          requirements: [{ type: "stat_total", label: "Reach 32 total Range across the deck.", count: 32, stat: "range" }],
+        },
+      ],
+    },
   },
 ];
 
@@ -189,12 +310,43 @@ export function getMissionWeatherSummary(
   return getDistrictAccessSummary(mission.district, weatherByDistrict[mission.district] ?? null);
 }
 
+export function getMissionForkOption(
+  mission: MissionBoardEntry,
+  selectedForkOptionId?: string | null,
+): MissionForkOption | null {
+  const options = mission.fork?.options ?? [];
+  if (options.length === 0) return null;
+  const resolvedId = selectedForkOptionId ?? mission.selectedForkOptionId ?? options[0]?.id;
+  return options.find((option) => option.id === resolvedId) ?? options[0] ?? null;
+}
+
+export function getMissionEffectiveRewards(
+  mission: MissionBoardEntry,
+  selectedForkOptionId?: string | null,
+): { rewardXp: number; rewardOzzies: number } {
+  const selectedOption = getMissionForkOption(mission, selectedForkOptionId);
+  return {
+    rewardXp: mission.rewardXp + (selectedOption?.rewardXpDelta ?? 0),
+    rewardOzzies: mission.rewardOzzies + (selectedOption?.rewardOzziesDelta ?? 0),
+  };
+}
+
+export function getMissionEffectiveRequirements(
+  mission: MissionBoardEntry,
+  selectedForkOptionId?: string | null,
+): MissionRequirement[] {
+  const selectedOption = getMissionForkOption(mission, selectedForkOptionId);
+  return [...mission.requirements, ...(selectedOption?.requirements ?? [])];
+}
+
 export function evaluateMissionDeck(
   deck: DeckPayload,
   mission: MissionBoardEntry,
   weatherByDistrict: Partial<Record<District, DistrictWeatherSnapshot | null>> = {},
+  selectedForkOptionId?: string | null,
 ): MissionDeckEvaluation {
-  const results = mission.requirements.map((requirement) => {
+  const selectedOption = getMissionForkOption(mission, selectedForkOptionId);
+  const results = getMissionEffectiveRequirements(mission, selectedForkOptionId).map((requirement) => {
     switch (requirement.type) {
       case "min_cards": {
         const current = deck.cards.length;
@@ -269,7 +421,7 @@ export function evaluateMissionDeck(
     eligible,
     eligibleCardCount,
     summary: eligible
-      ? `${deck.name} can clear the ${mission.title} route.`
+      ? `${deck.name} can clear the ${mission.title}${selectedOption ? ` via ${selectedOption.label}` : ""}.`
       : firstUnmet?.detail ?? `${deck.name} is missing mission requirements.`,
     results,
   };

@@ -43,6 +43,7 @@ import { registerImageRoutes } from './routes/images.js';
 import { registerImportRoutes } from './routes/import.js';
 import { registerMissionRoutes } from './routes/missions.js';
 import { registerPaymentRoutes } from './routes/payments.js';
+import { registerRewardRoutes } from './routes/rewards.js';
 import { createDistrictWeatherService, registerWeatherRoutes } from './routes/weather.js';
 
 // Load the shared pricing config — the single source of truth for Stripe
@@ -204,6 +205,13 @@ const battleRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 30,
   message: { error: 'Too many battle requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
+});
+
+const rewardRateLimit = buildRateLimiter({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { error: 'Too many reward requests — please wait a moment and try again.' },
   store: sharedRateLimitStore,
 });
 
@@ -722,6 +730,12 @@ registerMissionRoutes(app, {
   missionRateLimit,
   authenticateFirebaseUser,
   districtWeatherService,
+});
+
+registerRewardRoutes(app, {
+  adminDb,
+  rewardRateLimit,
+  authenticateFirebaseUser,
 });
 
 registerBattleRoutes(app, {

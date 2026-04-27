@@ -8,13 +8,13 @@ import type {
   FaceCharacter,
   Gender,
   HairLength,
-  Rarity,
   SkinTone,
 } from "../../lib/types";
 import { BoardBuilder } from "../../components/BoardBuilder";
 import { GeoAtlas } from "../../components/GeoAtlas";
 import { ReferralPanel } from "../../components/ReferralPanel";
 import type { BoardConfig } from "../../lib/boardBuilder";
+import { LEGENDARY_FORGE_NOTICE, type ForgeClassOption } from "../../lib/cardClassProgression";
 import { FORGE_ARCHETYPE_OPTIONS } from "../../lib/factionDiscovery";
 import { sfxClick } from "../../lib/sfx";
 
@@ -59,6 +59,7 @@ interface ForgeControlsPanelProps {
   canForge: boolean;
   canSaveToCollection: boolean;
   characterBlend: number;
+  classOptions: ForgeClassOption[];
   districts: District[];
   downloading: boolean;
   faceCharacters: FaceCharacter[];
@@ -81,7 +82,6 @@ interface ForgeControlsPanelProps {
   onPromptChange: <K extends keyof CardPrompts>(key: K, value: CardPrompts[K]) => void;
   onSaveToCollection: () => void;
   prompts: CardPrompts;
-  rarities: Rarity[];
   saveError: string | null;
   saving: boolean;
   skinTones: SkinTone[];
@@ -96,6 +96,7 @@ export function ForgeControlsPanel({
   canForge,
   canSaveToCollection,
   characterBlend,
+  classOptions,
   districts,
   downloading,
   faceCharacters,
@@ -118,7 +119,6 @@ export function ForgeControlsPanel({
   onPromptChange,
   onSaveToCollection,
   prompts,
-  rarities,
   saveError,
   saving,
   skinTones,
@@ -126,6 +126,8 @@ export function ForgeControlsPanel({
   ageGroups,
 }: ForgeControlsPanelProps) {
   const isFreeTier = tier === "free";
+  const selectedClassHint = classOptions.find((option) => option.rarity === prompts.rarity)?.unlockHint
+    || `Start with Punch Skaters, then unlock higher classes with XP or Ozzies. ${LEGENDARY_FORGE_NOTICE}`;
 
   return (
     <div className="forge-form">
@@ -150,24 +152,20 @@ export function ForgeControlsPanel({
         <p className="form-hint">Pick the public-facing role your courier presents to the city.</p>
       </div>
 
-      <div className={`form-group${isFreeTier ? " form-group--locked" : ""}`}>
-        <label>
-          Class
-          {isFreeTier && (
-            <ForgeLockBadge onClick={onOpenUpgradeModal} label="Upgrade to unlock Class" />
-          )}
-        </label>
+      <div className="form-group">
+        <label>Class</label>
         <div className="pill-group">
-          {rarities.map((option) => (
+          {classOptions.map((option) => (
             <PillButton
-              key={option}
-              active={prompts.rarity === option}
-              label={option}
-              disabled={isFreeTier}
-              onClick={() => onPromptChange("rarity", option)}
+              key={option.rarity}
+              active={prompts.rarity === option.rarity}
+              label={option.unlocked ? option.rarity : `${option.rarity} 🔒`}
+              disabled={!option.unlocked}
+              onClick={() => onPromptChange("rarity", option.rarity)}
             />
           ))}
         </div>
+        <p className="form-hint">{selectedClassHint}</p>
       </div>
 
       <div className="form-group">

@@ -16,6 +16,11 @@ import { useTier } from "../../context/TierContext";
 import { useAuth } from "../../context/AuthContext";
 import { useFactionDiscovery } from "../../hooks/useFactionDiscovery";
 import type { Archetype, CardPayload, CardPrompts, Faction } from "../../lib/types";
+import {
+  getForgeClassOptions,
+  normalizeForgeRarity,
+  type ForgeClassOption,
+} from "../../lib/cardClassProgression";
 import { createCharacterLayerValidator, useForgeLayers } from "./useForgeLayers";
 import {
   CHARACTER_CACHE_VERSION,
@@ -30,7 +35,7 @@ const ARCHETYPE_VALUES = FORGE_ARCHETYPE_OPTIONS.map((option) => option.value);
 
 export function useForgeGeneration() {
   const { tier, canForge, generateCredits, consumeCredit, openUpgradeModal, freeCardUsed, markFreeCardUsed } = useTier();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { hasFaction, unlockFaction } = useFactionDiscovery();
   const initialSession = useRef(loadForgeSession());
   const [prompts, setPrompts] = useState<CardPrompts>({
@@ -56,6 +61,32 @@ export function useForgeGeneration() {
     setLayerParams,
     setLayers,
   } = useForgeLayers();
+  const forgeClassOptions = useMemo<ForgeClassOption[]>(
+    () => getForgeClassOptions({
+      missionXp: userProfile?.missionXp ?? 0,
+      missionOzzies: userProfile?.missionOzzies ?? 0,
+    }),
+    [userProfile?.missionOzzies, userProfile?.missionXp],
+  );
+  const availableForgeRarities = useMemo(
+    () => forgeClassOptions.map((option) => option.rarity),
+    [forgeClassOptions],
+  );
+  const selectedForgeRarity = useMemo(
+    () => normalizeForgeRarity(prompts.rarity, {
+      missionXp: userProfile?.missionXp ?? 0,
+      missionOzzies: userProfile?.missionOzzies ?? 0,
+    }),
+    [prompts.rarity, userProfile?.missionOzzies, userProfile?.missionXp],
+  );
+
+  useEffect(() => {
+    if (prompts.rarity !== selectedForgeRarity) {
+      setPrompts((current) => current.rarity === selectedForgeRarity
+        ? current
+        : { ...current, rarity: selectedForgeRarity });
+    }
+  }, [prompts.rarity, selectedForgeRarity]);
 
   // Restore layer URLs from the session cache on first mount.
   useEffect(() => {
@@ -106,7 +137,11 @@ export function useForgeGeneration() {
     abortRef.current = controller;
     const { signal } = controller;
 
-    const forgePrompts = { ...prompts, style: resolveArchetypeStyle(prompts.archetype, prompts.style) };
+    const forgePrompts = {
+      ...prompts,
+      rarity: selectedForgeRarity,
+      style: resolveArchetypeStyle(prompts.archetype, prompts.style),
+    };
     const displayArchetype = getForgeArchetypeLabel(forgePrompts.archetype);
     const secretFaction = tier === "free" ? null : resolveSecretFaction(forgePrompts);
     const generationPrompts =
@@ -163,7 +198,7 @@ export function useForgeGeneration() {
 
     const backgroundPrompt = buildBackgroundPrompt(forgePrompts.district);
     const characterPrompt = buildCharacterPrompt(forgePrompts);
-    const framePrompt = buildFramePrompt(prompts.rarity);
+    const framePrompt = buildFramePrompt(forgePrompts.rarity);
     const backgroundKey = `bg::${card.backgroundSeed}`;
     const charImageSeed = buildCharacterSeed(forgePrompts);
     const characterKey = `char::${CHARACTER_CACHE_VERSION}::${charImageSeed}`;
@@ -226,13 +261,14 @@ export function useForgeGeneration() {
     tier,
     unlockFaction,
     user?.uid,
+    selectedForgeRarity,
   ]);
 
   const handleRandomSkater = useCallback(() => {
     sfxClick();
-    setPrompts((current) => buildRandomizedPrompts(current, ARCHETYPE_VALUES));
+    setPrompts((current) => buildRandomizedPrompts(current, ARCHETYPE_VALUES, availableForgeRarities));
     setBoardConfig((current) => buildRandomizedBoardConfig(current));
-  }, []);
+  }, [availableForgeRarities]);
 
   const handlePreviewUpdate = useCallback((updates: { name?: string; age?: string; flavorText?: string }) => {
     setGenerated((current) => applyPreviewUpdates(current, updates));
@@ -284,6 +320,7 @@ export function useForgeGeneration() {
     patchIdentity,
     patchStats,
     prompts,
+    forgeClassOptions,
     revealedFaction,
     setArchetype,
     setBoardConfig,
@@ -312,6 +349,7 @@ export function useForgeGeneration() {
     patchIdentity,
     patchStats,
     prompts,
+    forgeClassOptions,
     revealedFaction,
     setArchetype,
     setBoardConfig,

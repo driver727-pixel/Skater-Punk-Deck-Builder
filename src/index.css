@@ -324,6 +324,16 @@ body::after {
   color: #ffd6de;
   text-align: center;
 }
+.player-reward-banner {
+  margin: 12px auto 0;
+  max-width: 980px;
+  padding: 12px 16px;
+  border: 1px solid rgba(0, 255, 136, 0.45);
+  border-radius: 12px;
+  background: rgba(0, 255, 136, 0.12);
+  color: #d9ffef;
+  text-align: center;
+}
 .main {
   flex: 1;
   overflow-y: auto;

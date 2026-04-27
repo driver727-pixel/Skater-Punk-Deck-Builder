@@ -1,6 +1,6 @@
 import { Component, ReactNode, lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { TierProvider } from "./context/TierContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { useTier } from "./context/TierContext";
@@ -29,6 +29,21 @@ function ThemeApplier() {
   }, [tier]);
 
   return null;
+}
+
+function PlayerRewardBanner() {
+  const { playerRewards } = useAuth();
+  if (!playerRewards) return null;
+
+  const message = [
+    playerRewards.signupBonusGranted ? "🎁 Rare signup bonus added to your Collection." : "",
+    playerRewards.dailyReward.claimed
+      ? `🔥 ${playerRewards.dailyReward.currentStreak}-day streak claimed for +${playerRewards.dailyReward.rewardXp} XP and +${playerRewards.dailyReward.rewardOzzies} Ozzies.`
+      : "",
+  ].filter(Boolean).join(" ");
+
+  if (!message) return null;
+  return <div className="player-reward-banner">{message}</div>;
 }
 
 const CardForge  = lazy(() => import("./pages/CardForge").then(m => ({ default: m.CardForge })));
@@ -83,6 +98,7 @@ function App() {
                 {!isFirebaseConfigured && (
                   <div className="firebase-banner">{firebaseUnavailableMessage}</div>
                 )}
+                <PlayerRewardBanner />
                 <main className="main">
                   <Suspense fallback={<div className="page-loading">Loading…</div>}>
                     <Routes>

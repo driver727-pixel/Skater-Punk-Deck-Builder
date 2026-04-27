@@ -29,6 +29,7 @@ export function useCardForgeController() {
     closeWelcome: navigation.closeWelcome,
     downloading: save.downloading,
     forging: forge.forging,
+    forgeClassOptions: forge.forgeClassOptions,
     freeCardUsed: forge.freeCardUsed,
     generated: forge.generated,
     generateCredits: forge.generateCredits,

@@ -62,6 +62,10 @@ export function useForgeGeneration() {
     setLayerParams,
     setLayers,
   } = useForgeLayers();
+  const abortCurrentGeneration = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+  }, []);
   const forgeClassOptions = useMemo<ForgeClassOption[]>(
     () => getForgeClassOptions({
       missionXp: userProfile?.missionXp ?? 0,
@@ -89,8 +93,7 @@ export function useForgeGeneration() {
 
   // Restore the per-user forge session whenever the active auth identity changes.
   useEffect(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
+    abortCurrentGeneration();
     const session = loadForgeSession(sessionOwnerKey);
     setGenerated(session?.card ?? null);
     setCharacterBlend(session?.characterBlend ?? DEFAULT_CHARACTER_BLEND);
@@ -104,7 +107,7 @@ export function useForgeGeneration() {
       ...(session?.characterUrl != null ? { characterUrl: session.characterUrl } : {}),
       ...(session?.frameUrl != null ? { frameUrl: session.frameUrl } : {}),
     });
-  }, [sessionOwnerKey, setLayers]);
+  }, [abortCurrentGeneration, sessionOwnerKey, setLayers]);
 
   // Persist the current forge state to sessionStorage whenever it changes.
   useEffect(() => {
@@ -137,7 +140,7 @@ export function useForgeGeneration() {
     }
     sfxSuccessPing();
 
-    abortRef.current?.abort();
+    abortCurrentGeneration();
     const controller = new AbortController();
     abortRef.current = controller;
     const { signal } = controller;
@@ -257,7 +260,7 @@ export function useForgeGeneration() {
 
     setForging(false);
   }, [
-    abortRef,
+     abortCurrentGeneration,
     boardConfig,
     canForge,
     consumeCredit,

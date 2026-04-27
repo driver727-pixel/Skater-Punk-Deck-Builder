@@ -119,6 +119,8 @@ const RARITY_COLORS: Record<string, string> = {
   Legendary:      "#ffaa00",
 };
 
+const BUILT_IN_DESIGNATOR_RARITIES = new Set(["Apprentice", "Master", "Rare"]);
+
 // ── Layer status badge helper ──────────────────────────────────────────────────
 
 function LayerStatusBadges({ loading }: { loading: LayerLoading }) {
@@ -333,6 +335,7 @@ function CardDisplayComponent({
   // ─────────────────────────────────────────────────────────────────────────
 
   const rarityColor = RARITY_COLORS[card.class.rarity] || "#aaaaaa";
+  const hasBuiltInDesignator = BUILT_IN_DESIGNATOR_RARITIES.has(card.class.rarity);
   const accent = card.visuals.accentColor || "#00ff88";
   const displayedArchetype = getDisplayedArchetype(card);
 
@@ -367,7 +370,9 @@ function CardDisplayComponent({
         )}
         <div className="card-compact-info">
           <span className="card-name">{card.identity.name}</span>
-          <span className="card-rarity" style={{ color: rarityColor }}>{card.class.badgeLabel}</span>
+          {!hasBuiltInDesignator && (
+            <span className="card-rarity" style={{ color: rarityColor }}>{card.class.badgeLabel}</span>
+          )}
           <span className="card-archetype">{displayedArchetype}</span>
           {card.board.tuned && <span className="card-compact-badge">⚡ Tuned</span>}
           {card.maintenance.state !== "active" && (
@@ -390,7 +395,9 @@ function CardDisplayComponent({
         <div className="card-full card-full--front" style={{ "--accent": accent } as React.CSSProperties}>
           <div className="card-header">
             <span className="card-serial">{card.identity.serialNumber}</span>
-            <span className="card-rarity" style={{ color: rarityColor }}>{card.class.badgeLabel.toUpperCase()}</span>
+            {!hasBuiltInDesignator && (
+              <span className="card-rarity" style={{ color: rarityColor }}>{card.class.badgeLabel.toUpperCase()}</span>
+            )}
           </div>
 
           {(layerLoading?.background || layerLoading?.character || layerLoading?.frame) && (
@@ -504,8 +511,6 @@ function CardDisplayComponent({
             )}
 
             <div className="card-subline">
-              <span>{card.class.badgeLabel}</span>
-              <span className="sep">·</span>
               <span>{displayedArchetype}</span>
               {card.board.tuned && (
                 <>
@@ -533,7 +538,9 @@ function CardDisplayComponent({
         <div className="card-full card-full--back" style={{ "--accent": accent } as React.CSSProperties}>
           <div className="card-header">
             <span className="card-serial">BACKSIDE</span>
-            <span className="card-rarity" style={{ color: rarityColor }}>{card.class.badgeLabel.toUpperCase()}</span>
+            {!hasBuiltInDesignator && (
+              <span className="card-rarity" style={{ color: rarityColor }}>{card.class.badgeLabel.toUpperCase()}</span>
+            )}
           </div>
 
           <div className="card-board">

@@ -40,6 +40,8 @@ const RARITY_COLORS: Record<string, string> = {
   Legendary: "#ffaa00",
 };
 
+const BUILT_IN_DESIGNATOR_RARITIES = new Set(["Apprentice", "Master", "Rare"]);
+
 export interface SkaterCardFaceProps {
   /** The fully generated card to render. */
   card: CardPayload;
@@ -177,6 +179,7 @@ function CardBack({
 }: Pick<SkaterCardFaceProps, "card" | "editable" | "onNameChange" | "onBioChange" | "onAgeChange" | "onStatChange" | "boardImageLoading">) {
   const accent = card.visuals.accentColor || "#00ff88";
   const rarityColor = RARITY_COLORS[card.prompts.rarity] || "#aaaaaa";
+  const hasBuiltInDesignator = BUILT_IN_DESIGNATOR_RARITIES.has(card.prompts.rarity);
   const backFrameUrl = getStaticFrameBackUrl(card.prompts.rarity);
   const hasBackFrame = backFrameUrl != null;
   const backFrameStyle = backFrameUrl
@@ -221,7 +224,7 @@ function CardBack({
           <span className="print-back-identity-name">{card.identity.name}</span>
         )}
         <div className="print-back-identity-meta">
-          <span className="print-back-identity-badge">{card.class.badgeLabel}</span>
+          {!hasBuiltInDesignator && <span className="print-back-identity-badge">{card.class.badgeLabel}</span>}
           <span className="print-back-identity-role">{card.role.label}</span>
           {card.board.tuned && <span className="print-back-identity-tuned">⚡ TUNED</span>}
           {card.identity.age && (
@@ -301,11 +304,13 @@ function CardBack({
         </div>
 
       <div className="print-back-stats">
-        <div className="print-back-rarity-row">
-          <span className="print-back-rarity-label" style={{ color: rarityColor }}>
-            {card.prompts.rarity.toUpperCase()}
-          </span>
-        </div>
+        {!hasBuiltInDesignator && (
+          <div className="print-back-rarity-row">
+            <span className="print-back-rarity-label" style={{ color: rarityColor }}>
+              {card.prompts.rarity.toUpperCase()}
+            </span>
+          </div>
+        )}
         {editable ? (
           (["speed", "range", "stealth", "grit"] as const).map((key) => (
             <div key={key} className="stat-bar card-stat-editor-row">

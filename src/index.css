@@ -5242,7 +5242,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   top: 0;
   left: 0;
   right: 0;
-  padding: 26% 14% 0;
+  padding: 11% 14% 0;
   z-index: 2;
   display: flex;
   justify-content: center;
@@ -6066,7 +6066,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 
   /* Front-face overlay prints properly */
   .print-only-card .print-front-name-overlay {
-    padding: 12pt 12pt 0;
+    padding: 8pt 12pt 0;
   }
   .print-only-card .print-front-overlay {
     padding: 0 12pt 12pt;

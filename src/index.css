@@ -2442,11 +2442,67 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   transform: scale(0.9333);
   transform-origin: center;
 }
+.inset-neon-tube {
+  --tube-inset: 3.35%;
+  --tube-thickness: 4px;
+  --tube-top-gap: 44%;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+.inset-neon-tube__segment {
+  position: absolute;
+  display: block;
+  border-radius: 999px;
+  opacity: 0.95;
+  box-shadow:
+    0 0 6px var(--tube-rarity),
+    0 0 12px var(--tube-accent),
+    0 0 20px color-mix(in srgb, var(--tube-rarity) 55%, var(--tube-accent) 45%);
+}
+.inset-neon-tube__segment--top-left,
+.inset-neon-tube__segment--top-right {
+  top: var(--tube-inset);
+  height: var(--tube-thickness);
+}
+.inset-neon-tube__segment--top-left {
+  left: var(--tube-inset);
+  width: calc((100% - (var(--tube-inset) * 2) - var(--tube-top-gap)) / 2);
+  background: linear-gradient(90deg, var(--tube-rarity), var(--tube-accent));
+}
+.inset-neon-tube__segment--top-right {
+  right: var(--tube-inset);
+  width: calc((100% - (var(--tube-inset) * 2) - var(--tube-top-gap)) / 2);
+  background: linear-gradient(90deg, var(--tube-accent), var(--tube-rarity));
+}
+.inset-neon-tube__segment--left,
+.inset-neon-tube__segment--right {
+  top: calc(var(--tube-inset) + var(--tube-thickness));
+  bottom: var(--tube-inset);
+  width: var(--tube-thickness);
+}
+.inset-neon-tube__segment--left {
+  left: var(--tube-inset);
+  background: linear-gradient(180deg, var(--tube-rarity), var(--tube-accent));
+}
+.inset-neon-tube__segment--right {
+  right: var(--tube-inset);
+  background: linear-gradient(180deg, var(--tube-accent), var(--tube-rarity));
+}
+.inset-neon-tube__segment--bottom {
+  left: var(--tube-inset);
+  right: var(--tube-inset);
+  bottom: var(--tube-inset);
+  height: var(--tube-thickness);
+  background: linear-gradient(90deg, var(--tube-accent), var(--tube-rarity), var(--tube-accent));
+}
 .card-art-layer--character {
   /* Normal blend: character has a transparent background from background removal,
      so it composites cleanly over the background layer without any masking.
      Scaled down slightly from the bottom so the head clears the top border and the board has room. */
-  z-index: 2;
+  z-index: 3;
   mix-blend-mode: normal;
   object-fit: contain;
   object-position: center bottom;
@@ -2454,7 +2510,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   transform-origin: bottom center;
 }
 .card-art-layer--board-exact {
-  z-index: 3;
+  z-index: 4;
   inset: auto;
   object-fit: contain;
   pointer-events: none;
@@ -5134,7 +5190,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   mix-blend-mode: normal;
 }
 .print-art-layer--char  {
-  z-index: 2;
+  z-index: 3;
   mix-blend-mode: normal;
   object-fit: contain;
   object-position: center bottom;
@@ -5142,7 +5198,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   transform-origin: bottom center;
 }
 .print-art-layer--board-exact {
-  z-index: 3;
+  z-index: 4;
   inset: auto;
   object-fit: contain;
   pointer-events: none;
@@ -6088,7 +6144,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
     mix-blend-mode: normal;
   }
   .print-only-card .print-art-layer--char  {
-    z-index: 2;
+    z-index: 3;
     mix-blend-mode: normal;
     object-fit: contain;
     object-position: center bottom;
@@ -6096,7 +6152,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
     transform-origin: bottom center;
   }
   .print-only-card .print-art-layer--board-exact {
-    z-index: 3;
+    z-index: 4;
     inset: auto;
     object-fit: contain;
     pointer-events: none;

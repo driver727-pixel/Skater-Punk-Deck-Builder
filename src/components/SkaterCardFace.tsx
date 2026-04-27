@@ -20,6 +20,8 @@ import { StatBar } from "./StatBar";
 import { getDisplayedCrew } from "../lib/cardIdentity";
 import { CARD_STAT_LABELS } from "../lib/statLabels";
 import stamp360Gif from "../../stamp360.gif";
+import { InsetNeonTube } from "./InsetNeonTube";
+import { hasBuiltInFrameDesignator, RARITY_COLORS } from "../lib/cardRarityVisuals";
 import {
   getFrameBlendMode,
   getStaticFrameBackUrl,
@@ -31,16 +33,6 @@ import { resolveBoardPoseScene } from "../lib/boardPoseScenes";
 import { BOARD_TYPE_OPTIONS, DRIVETRAIN_OPTIONS, MOTOR_OPTIONS, WHEEL_OPTIONS, BATTERY_OPTIONS } from "../lib/boardBuilder";
 
 // ── Rarity colour map used on the card-back header ───────────────────────────
-
-const RARITY_COLORS: Record<string, string> = {
-  "Punch Skater": "#aa9988",
-  Apprentice: "#44ddaa",
-  Master: "#cc44ff",
-  Rare: "#4488ff",
-  Legendary: "#ffaa00",
-};
-
-const BUILT_IN_DESIGNATOR_RARITIES = new Set(["Apprentice", "Master", "Rare"]);
 
 export interface SkaterCardFaceProps {
   /** The fully generated card to render. */
@@ -124,6 +116,7 @@ function CardFront({
           {backgroundImageUrl && (
             <img src={backgroundImageUrl} alt="background" className={bgClass} style={bgStyle} />
           )}
+          <InsetNeonTube rarity={card.prompts.rarity} accentColor={card.visuals.accentColor} />
           {showExactBoardLayer && card.board.imageUrl && (
             <img
               src={card.board.imageUrl}
@@ -179,7 +172,7 @@ function CardBack({
 }: Pick<SkaterCardFaceProps, "card" | "editable" | "onNameChange" | "onBioChange" | "onAgeChange" | "onStatChange" | "boardImageLoading">) {
   const accent = card.visuals.accentColor || "#00ff88";
   const rarityColor = RARITY_COLORS[card.prompts.rarity] || "#aaaaaa";
-  const hasBuiltInDesignator = BUILT_IN_DESIGNATOR_RARITIES.has(card.prompts.rarity);
+  const hasBuiltInDesignator = hasBuiltInFrameDesignator(card.prompts.rarity);
   const backFrameUrl = getStaticFrameBackUrl(card.prompts.rarity);
   const hasBackFrame = backFrameUrl != null;
   const backFrameStyle = backFrameUrl

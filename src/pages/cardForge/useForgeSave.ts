@@ -81,6 +81,7 @@ export function useForgeSave({
         layers.characterUrl,
         layers.frameUrl,
         generated.frameSeed,
+        generated.visuals.accentColor,
         characterBlend,
       );
     } catch (error) {

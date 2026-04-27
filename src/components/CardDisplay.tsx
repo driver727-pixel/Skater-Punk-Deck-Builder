@@ -11,6 +11,8 @@ import { BOARD_TYPE_OPTIONS, DRIVETRAIN_OPTIONS, MOTOR_OPTIONS, WHEEL_OPTIONS, B
 import { SkateboardStatsPanel } from "./SkateboardStatsPanel";
 import { computeCardWorth } from "../lib/battle";
 import { CARD_STAT_LABELS } from "../lib/statLabels";
+import { InsetNeonTube } from "./InsetNeonTube";
+import { hasBuiltInFrameDesignator, RARITY_COLORS } from "../lib/cardRarityVisuals";
 import {
   getFrameBlendMode,
   getStaticFrameBackUrl,
@@ -111,16 +113,6 @@ function areLayerLoadingEqual(previous?: LayerLoading, next?: LayerLoading): boo
   );
 }
 
-const RARITY_COLORS: Record<string, string> = {
-  "Punch Skater": "#aa9988",
-  Apprentice:     "#44ddaa",
-  Master:         "#cc44ff",
-  Rare:           "#4488ff",
-  Legendary:      "#ffaa00",
-};
-
-const BUILT_IN_DESIGNATOR_RARITIES = new Set(["Apprentice", "Master", "Rare"]);
-
 // ── Layer status badge helper ──────────────────────────────────────────────────
 
 function LayerStatusBadges({ loading }: { loading: LayerLoading }) {
@@ -210,6 +202,7 @@ function CompositeArt({
           <img src="/assets/loading_2.gif" alt="Loading…" className="card-art-loading-gif" />
         </div>
       ) : null}
+      <InsetNeonTube rarity={card.prompts.rarity} accentColor={card.visuals.accentColor} />
 
       {/* Layer 2 – Exact generated board asset (never redrawn by the character model) */}
       {showExactBoardLayer && card.board.imageUrl ? (
@@ -335,7 +328,7 @@ function CardDisplayComponent({
   // ─────────────────────────────────────────────────────────────────────────
 
   const rarityColor = RARITY_COLORS[card.class.rarity] || "#aaaaaa";
-  const hasBuiltInDesignator = BUILT_IN_DESIGNATOR_RARITIES.has(card.class.rarity);
+  const hasBuiltInDesignator = hasBuiltInFrameDesignator(card.class.rarity);
   const accent = card.visuals.accentColor || "#00ff88";
   const displayedArchetype = getDisplayedArchetype(card);
 

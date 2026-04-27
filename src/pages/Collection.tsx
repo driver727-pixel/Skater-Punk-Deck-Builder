@@ -234,6 +234,7 @@ export function Collection() {
         selected.characterImageUrl,
         selected.frameImageUrl,
         selected.frameSeed,
+        selected.visuals.accentColor,
       );
     } finally {
       setDownloading(false);

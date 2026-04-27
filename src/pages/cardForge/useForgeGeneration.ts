@@ -52,22 +52,17 @@ export function useForgeGeneration() {
   const [boardImageLoading, setBoardImageLoading] = useState(false);
   const [revealedFaction, setRevealedFaction] = useState<{ faction: Faction; isNew: boolean } | null>(null);
   const {
-    abortRef,
+    abortGeneration,
     generateLayer,
     handleLayerError,
     hasAnyLayerUrl,
     isAnyLayerLoading,
     layers,
+    replaceAbortController,
     resetLayerSession,
     setLayerParams,
     setLayers,
   } = useForgeLayers();
-  // abortRef is a stable ref object from useForgeLayers.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const abortCurrentGeneration = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
-  }, []);
   const forgeClassOptions = useMemo<ForgeClassOption[]>(
     () => getForgeClassOptions({
       missionXp: userProfile?.missionXp ?? 0,
@@ -95,7 +90,7 @@ export function useForgeGeneration() {
 
   // Restore the per-user forge session whenever the active auth identity changes.
   useEffect(() => {
-    abortCurrentGeneration();
+    abortGeneration();
     const session = loadForgeSession(sessionOwnerKey);
     setGenerated(session?.card ?? null);
     setCharacterBlend(session?.characterBlend ?? DEFAULT_CHARACTER_BLEND);
@@ -109,7 +104,7 @@ export function useForgeGeneration() {
       ...(session?.characterUrl != null ? { characterUrl: session.characterUrl } : {}),
       ...(session?.frameUrl != null ? { frameUrl: session.frameUrl } : {}),
     });
-  }, [abortCurrentGeneration, sessionOwnerKey, setLayers]);
+  }, [abortGeneration, sessionOwnerKey, setLayers]);
 
   // Persist the current forge state to sessionStorage whenever it changes.
   useEffect(() => {
@@ -135,8 +130,6 @@ export function useForgeGeneration() {
     }));
   }, []);
 
-  // abortRef is a stable ref object from useForgeLayers.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleForge = useCallback(() => {
     if (!canForge) {
       openUpgradeModal();
@@ -144,9 +137,7 @@ export function useForgeGeneration() {
     }
     sfxSuccessPing();
 
-    abortCurrentGeneration();
-    const controller = new AbortController();
-    abortRef.current = controller;
+    const controller = replaceAbortController();
     const { signal } = controller;
 
     const forgePrompts = {
@@ -264,9 +255,9 @@ export function useForgeGeneration() {
 
     setForging(false);
   }, [
-     abortCurrentGeneration,
-    boardConfig,
-    canForge,
+     replaceAbortController,
+     boardConfig,
+     canForge,
     consumeCredit,
     freeCardUsed,
     generateCredits,
@@ -276,12 +267,12 @@ export function useForgeGeneration() {
     openUpgradeModal,
     prompts,
     resetLayerSession,
-    setLayerParams,
-    tier,
-    unlockFaction,
-    user?.uid,
-    selectedForgeRarity,
-  ]);
+     setLayerParams,
+     tier,
+     unlockFaction,
+     user?.uid,
+     selectedForgeRarity,
+   ]);
 
   const handleRandomSkater = useCallback(() => {
     sfxClick();

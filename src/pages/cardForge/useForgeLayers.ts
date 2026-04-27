@@ -62,6 +62,18 @@ export function useForgeLayers() {
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  const abortGeneration = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+  }, []);
+
+  const replaceAbortController = useCallback(() => {
+    abortGeneration();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    return controller;
+  }, [abortGeneration]);
+
   const generateLayer = useCallback(
     async (
       layer: ForgeLayer,
@@ -224,12 +236,13 @@ export function useForgeLayers() {
   );
 
   return {
-    abortRef,
+    abortGeneration,
     generateLayer,
     handleLayerError,
     hasAnyLayerUrl,
     isAnyLayerLoading,
     layers,
+    replaceAbortController,
     resetLayerSession,
     setLayerParams,
     setLayers,

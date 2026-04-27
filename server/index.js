@@ -39,6 +39,7 @@ import {
 import { buildRateLimiter, createRateLimitStore } from './lib/rateLimit.js';
 import { registerAdminRoutes } from './routes/admin.js';
 import { registerBattleRoutes } from './routes/battle.js';
+import { registerRaceRoutes } from './routes/race.js';
 import { registerImageRoutes } from './routes/images.js';
 import { registerImportRoutes } from './routes/import.js';
 import { registerMissionRoutes } from './routes/missions.js';
@@ -205,6 +206,13 @@ const battleRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 30,
   message: { error: 'Too many battle requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
+});
+
+const raceRateLimit = buildRateLimiter({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: { error: 'Too many race requests — please wait a moment and try again.' },
   store: sharedRateLimitStore,
 });
 
@@ -744,6 +752,14 @@ registerBattleRoutes(app, {
   authenticateFirebaseUser,
   createBattleCardSnapshot,
   resolveBattleWithEffects,
+  randomUUID,
+  FieldValue,
+});
+
+registerRaceRoutes(app, {
+  adminDb,
+  raceRateLimit,
+  authenticateFirebaseUser,
   randomUUID,
   FieldValue,
 });

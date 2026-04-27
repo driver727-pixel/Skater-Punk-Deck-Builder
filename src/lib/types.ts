@@ -229,6 +229,19 @@ export interface DeckPayload {
   sortOrder?: number;
   /** Whether this deck is readied for battle in the multiplayer arena. */
   battleReady?: boolean;
+  /**
+   * Whether this is the player's primary public deck.
+   * Cards in the primary deck are challengeable in the Race Arena, and the
+   * card flagged as `challengerCardId` represents the player on the starting grid.
+   * At most one deck per user should be primary.
+   */
+  isPrimary?: boolean;
+  /**
+   * ID of the single card in this deck that acts as the player's "Challenger".
+   * Used by the Race Arena to display this deck on the starting grid and to
+   * pre-select the racing card when this player issues a challenge.
+   */
+  challengerCardId?: string;
 }
 
 // ── Battle payload ──────────────────────────────────────────────────────────
@@ -288,6 +301,143 @@ export interface BattleResult {
   winningDeckCardIds: string[];
   challengerCardResolutions: BattleCardResolution[];
   defenderCardResolutions: BattleCardResolution[];
+  createdAt: string;
+}
+
+// ── Race Arena ──────────────────────────────────────────────────────────────
+
+/** Lifecycle states of a courier race challenge. */
+export type RaceChallengeStatus = "pending" | "accepted" | "declined" | "cancelled" | "resolved";
+
+/**
+ * Minimal public snapshot of a card racing in the arena.
+ * Keeps just enough information to drive the race resolver and animation.
+ */
+export interface RaceCardSnapshot {
+  id: string;
+  name: string;
+  archetype: Archetype;
+  rarity: Rarity;
+  stats: ForgedCardStats;
+  /** Optional preview image URL used by the race animation. */
+  imageUrl?: string;
+}
+
+/**
+ * A pending/accepted/declined courier race challenge between two players.
+ * Stored in `challenges/{id}`. Server-only writes.
+ */
+export interface RaceChallenge {
+  id: string;
+  status: RaceChallengeStatus;
+  challengerUid: string;
+  challengerDisplayName: string;
+  challengerCardId: string;
+  challengerCardName: string;
+  defenderUid: string;
+  defenderDisplayName: string;
+  defenderCardId: string;
+  defenderCardName: string;
+  defenderDeckId: string;
+  /** Ozzies escrowed by the challenger when the challenge was issued. */
+  ozzyWager: number;
+  createdAt: string;
+  updatedAt: string;
+  /** Set when status transitions to resolved. */
+  raceId?: string;
+  /** Optional message to the defender. */
+  message?: string;
+}
+
+/** A single tick in the precomputed race timeline. */
+export interface RaceTimelineTick {
+  /** Tick index (monotonically increasing). */
+  t: number;
+  /** Challenger track progress in [0, 1]. */
+  challengerProgress: number;
+  /** Defender track progress in [0, 1]. */
+  defenderProgress: number;
+  /** Challenger instantaneous speed (units/tick), useful for HUD. */
+  challengerSpeed: number;
+  /** Defender instantaneous speed (units/tick), useful for HUD. */
+  defenderSpeed: number;
+  /** Optional human-readable event at this tick (e.g. "Shortcut!"). */
+  challengerEvent?: string;
+  defenderEvent?: string;
+}
+
+export interface RaceCardDelta {
+  ozzies: number;
+  xp: number;
+}
+
+/** Settled outcome of a courier race. */
+export interface RaceResult {
+  winnerUid: string | null;
+  /** Tick on which each card crossed the finish line; null if DNF. */
+  challengerFinishTick: number | null;
+  defenderFinishTick: number | null;
+  /** Net Ozzy transfer applied at the moment the race resolved. */
+  ozzyTransfer: {
+    challenger: number;
+    defender: number;
+  };
+  /** Per-card deltas applied to the racing cards (XP + Ozzies). */
+  cardDeltas: {
+    challenger: RaceCardDelta;
+    defender: RaceCardDelta;
+  };
+  /** Optional small stat tweak applied to the winning card. */
+  winnerStatBoost?: { stat: StatKey; amount: number };
+  raceSeed: string;
+}
+
+/**
+ * A precomputed race that both players replay. Stored in `races/{id}`.
+ * Server-only writes; both participants may read.
+ */
+export interface Race {
+  id: string;
+  challengeId: string;
+  challengerUid: string;
+  defenderUid: string;
+  challenger: RaceCardSnapshot;
+  defender: RaceCardSnapshot;
+  ozzyWager: number;
+  /**
+   * Number of laps in this race (>=1). Total race progress is `1.0` regardless
+   * of laps; laps are a presentational concept the animation may use.
+   */
+  laps: number;
+  /** Tick interval in milliseconds (typically 50ms over ~30s ⇒ 600 ticks). */
+  tickMs: number;
+  timeline: RaceTimelineTick[];
+  result: RaceResult;
+  createdAt: string;
+}
+
+// ── Notifications ────────────────────────────────────────────────────────────
+
+export type NotificationType =
+  | "race_challenge"
+  | "race_accepted"
+  | "race_declined"
+  | "race_cancelled"
+  | "race_finished";
+
+export interface NotificationItem {
+  id: string;
+  uid: string;
+  type: NotificationType;
+  /** Short headline shown in toasts/inbox. */
+  title: string;
+  /** Optional longer description. */
+  body?: string;
+  /** Deep-link route when the user clicks the notification. */
+  link?: string;
+  /** Domain payload (challenge/race ids, etc). */
+  data?: Record<string, string | number | boolean | null>;
+  read: boolean;
   createdAt: string;
 }
 

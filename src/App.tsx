@@ -61,6 +61,7 @@ const AccountSettings = lazy(() => import("./pages/AccountSettings").then(m => (
 const Admin           = lazy(() => import("./pages/Admin").then(m => ({ default: m.Admin })));
 const AssetGenerator  = lazy(() => import("./pages/AssetGenerator").then(m => ({ default: m.AssetGenerator })));
 const BattleArena     = lazy(() => import("./pages/BattleArena").then(m => ({ default: m.BattleArena })));
+const RaceTrack       = lazy(() => import("./pages/RaceTrack").then(m => ({ default: m.RaceTrack })));
 const FramePreview    = lazy(() => import("./pages/FramePreview").then(m => ({ default: m.FramePreview })));
 const Missions        = lazy(() => import("./pages/Missions").then(m => ({ default: m.Missions })));
 
@@ -125,6 +126,9 @@ function App() {
                       } />
                       <Route path="/arena" element={
                         <ProtectedRoute><BattleArena /></ProtectedRoute>
+                      } />
+                      <Route path="/race/:raceId" element={
+                        <ProtectedRoute><RaceTrack /></ProtectedRoute>
                       } />
                       <Route path="/missions" element={
                         <ProtectedRoute><Missions /></ProtectedRoute>

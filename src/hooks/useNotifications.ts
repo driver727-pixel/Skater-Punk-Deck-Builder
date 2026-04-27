@@ -25,6 +25,7 @@ export function useNotifications() {
       setItems([]);
       return;
     }
+    setItems([]);
     const ref = collection(db, "notifications", uid, "items");
     return onSnapshot(ref, (snap) => {
       const next = snap.docs

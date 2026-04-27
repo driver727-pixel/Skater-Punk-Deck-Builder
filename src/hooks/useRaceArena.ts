@@ -38,6 +38,7 @@ export function useRaceArena() {
       setOutgoing([]); setIncoming([]);
       return;
     }
+    setOutgoing([]); setIncoming([]);
     const colRef = collection(db, "challenges");
     const unsubOut = onSnapshot(
       query(colRef, where("challengerUid", "==", uid)),

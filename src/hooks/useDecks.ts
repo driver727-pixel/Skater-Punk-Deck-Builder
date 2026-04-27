@@ -48,18 +48,37 @@ function normalizeDeckOrder(decks: DeckPayload[]): DeckPayload[] {
   ));
 }
 
+function shallowEqualDeckArrays(previous: DeckPayload[], next: DeckPayload[]): boolean {
+  if (previous === next) return true;
+  if (previous.length !== next.length) return false;
+  return previous.every((deck, index) => deck === next[index]);
+}
+
 export function useDecks() {
   const { user } = useAuth();
   const uid = user?.uid ?? null;
 
   const [decks, setDecks] = useState<DeckPayload[]>([]);
+  const lastSavedDecksRef = useRef<DeckPayload[]>([]);
+  const initialGuestDecksRef = useRef<DeckPayload[] | null>(null);
+  const guestHydratingRef = useRef(!uid);
 
   // ── Subscribe to Firestore or localStorage ────────────────────────────────
   useEffect(() => {
     if (!uid) {
-      setDecks(normalizeDeckOrder(loadDecks()));
+      const localDecks = normalizeDeckOrder(loadDecks());
+      guestHydratingRef.current = true;
+      initialGuestDecksRef.current = localDecks;
+      lastSavedDecksRef.current = localDecks;
+      setDecks(localDecks);
       return;
     }
+
+    guestHydratingRef.current = false;
+    initialGuestDecksRef.current = null;
+    lastSavedDecksRef.current = [];
+    setDecks([]);
+
     const colRef = collection(db, "users", uid, "decks");
     const unsub = onSnapshot(colRef, (snap) => {
       const incoming = snap.docs.map((d) => d.data() as DeckPayload);
@@ -81,7 +100,17 @@ export function useDecks() {
 
   // ── Persist to localStorage for guests ────────────────────────────────────
   useEffect(() => {
-    if (!uid) saveDecks(decks);
+    if (uid) return;
+
+    if (guestHydratingRef.current) {
+      if (!initialGuestDecksRef.current || !shallowEqualDeckArrays(initialGuestDecksRef.current, decks)) return;
+      guestHydratingRef.current = false;
+    }
+
+    if (shallowEqualDeckArrays(lastSavedDecksRef.current, decks)) return;
+
+    saveDecks(decks);
+    lastSavedDecksRef.current = decks;
   }, [decks, uid]);
 
   // Keep a ref for synchronous access in callbacks

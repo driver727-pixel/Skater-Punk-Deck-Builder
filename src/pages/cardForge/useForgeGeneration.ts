@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildCharacterSeed, generateCard } from "../../lib/generator";
 import {
   applyFactionBranding,
@@ -39,6 +39,7 @@ export function useForgeGeneration() {
   const { user, userProfile } = useAuth();
   const { hasFaction, unlockFaction } = useFactionDiscovery();
   const sessionOwnerKey = user?.uid ?? "guest";
+  const skipNextSessionPersistRef = useRef(false);
   const [prompts, setPrompts] = useState<CardPrompts>({
     archetype: "Qu111s", rarity: "Punch Skater", style: "Corporate",
     district: "Nightshade", accentColor: "#00ff88",
@@ -91,6 +92,7 @@ export function useForgeGeneration() {
   // Restore the per-user forge session whenever the active auth identity changes.
   useEffect(() => {
     abortGeneration();
+    skipNextSessionPersistRef.current = true;
     const session = loadForgeSession(sessionOwnerKey);
     setGenerated(session?.card ?? null);
     setCharacterBlend(session?.characterBlend ?? DEFAULT_CHARACTER_BLEND);
@@ -108,6 +110,10 @@ export function useForgeGeneration() {
 
   // Persist the current forge state to sessionStorage whenever it changes.
   useEffect(() => {
+    if (skipNextSessionPersistRef.current) {
+      skipNextSessionPersistRef.current = false;
+      return;
+    }
     if (!generated) return;
     saveForgeSession({
       card: generated,

@@ -22,6 +22,7 @@ export function CardForge() {
     boardImageLoading,
     canForge,
     characterBlend,
+    clearSavedCard,
     closeWelcome,
     downloading,
     forging,
@@ -154,6 +155,7 @@ export function CardForge() {
         onClosePrint={handleClosePrint}
         onCloseViewer3D={handleClose3D}
         onGoToCollection={handleCollectionNavigation}
+        onKeepForging={clearSavedCard}
         onOpenFactions={handleOpenFactions}
         printing={printing}
         revealedFaction={revealedFaction}

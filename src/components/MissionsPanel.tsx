@@ -5,6 +5,9 @@ import { useDecks } from "../hooks/useDecks";
 import { useDistrictWeather } from "../hooks/useDistrictWeather";
 import {
   evaluateMissionDeck,
+  getMissionEffectiveRequirements,
+  getMissionEffectiveRewards,
+  getMissionForkOption,
   getMissionRequirementBadge,
   getMissionStateLabel,
   getMissionWeatherSummary,
@@ -27,14 +30,19 @@ function formatTimestamp(value?: string): string | null {
   return parsed.toLocaleString();
 }
 
-function getDefaultRequirementResults(mission: MissionBoardEntry): MissionRequirementResult[] {
-  return mission.requirements.map((requirement) => ({
+function getDefaultRequirementResults(mission: MissionBoardEntry, selectedForkOptionId?: string | null): MissionRequirementResult[] {
+  return getMissionEffectiveRequirements(mission, selectedForkOptionId).map((requirement) => ({
     requirement,
     met: false,
     current: 0,
     needed: requirement.count ?? 0,
     detail: requirement.label,
   }));
+}
+
+function formatForkRewardDelta(delta?: number): string | null {
+  if (!delta) return null;
+  return delta > 0 ? `+${delta}` : `${delta}`;
 }
 
 export function MissionsPanel({ uid }: MissionsPanelProps) {
@@ -51,6 +59,7 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
   const [runningMissionId, setRunningMissionId] = useState<string | null>(null);
   const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
+  const [selectedForkOptionId, setSelectedForkOptionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isEnabled("MISSIONS", user)) return;
@@ -87,6 +96,11 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
     setSelectedDeckId(decks[0]?.id ?? null);
   }, [decks, selectedDeckId]);
 
+  useEffect(() => {
+    const mission = missions.find((entry) => entry.id === selectedMissionId) ?? missions[0] ?? null;
+    setSelectedForkOptionId(mission?.selectedForkOptionId ?? mission?.fork?.options[0]?.id ?? null);
+  }, [missions, selectedMissionId]);
+
   const selectedMission = useMemo(
     () => missions.find((mission) => mission.id === selectedMissionId) ?? missions[0] ?? null,
     [missions, selectedMissionId],
@@ -97,15 +111,23 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
   );
   const deckEvaluations = useMemo(
     () => selectedMission
-      ? decks.map((deck) => evaluateMissionDeck(deck, selectedMission, weatherByDistrict))
+      ? decks.map((deck) => evaluateMissionDeck(deck, selectedMission, weatherByDistrict, selectedForkOptionId))
       : [],
-    [decks, selectedMission, weatherByDistrict],
+    [decks, selectedForkOptionId, selectedMission, weatherByDistrict],
   );
   const selectedEvaluation = useMemo(
     () => selectedMission && selectedDeck
-      ? evaluateMissionDeck(selectedDeck, selectedMission, weatherByDistrict)
+      ? evaluateMissionDeck(selectedDeck, selectedMission, weatherByDistrict, selectedForkOptionId)
       : null,
-    [selectedDeck, selectedMission, weatherByDistrict],
+    [selectedDeck, selectedForkOptionId, selectedMission, weatherByDistrict],
+  );
+  const selectedForkOption = useMemo(
+    () => (selectedMission ? getMissionForkOption(selectedMission, selectedForkOptionId) : null),
+    [selectedForkOptionId, selectedMission],
+  );
+  const selectedRewards = useMemo(
+    () => (selectedMission ? getMissionEffectiveRewards(selectedMission, selectedForkOptionId) : { rewardXp: 0, rewardOzzies: 0 }),
+    [selectedForkOptionId, selectedMission],
   );
 
   const handleRunMission = useCallback(async () => {
@@ -113,18 +135,19 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
     setRunningMissionId(selectedMission.id);
     setError(null);
     try {
-      const result = await runMission(uid, selectedMission.id, selectedDeck.id, user?.email);
+      const result = await runMission(uid, selectedMission.id, selectedDeck.id, selectedForkOptionId, user?.email);
       setMissions((current) => current.map((mission) => (
         mission.id === result.mission.id ? result.mission : mission
       )));
       setProgression(result.progression);
       setSelectedDeckId(result.mission.selectedDeckId ?? selectedDeck.id);
+      setSelectedForkOptionId(result.mission.selectedForkOptionId ?? selectedForkOptionId);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Failed to resolve mission.");
     } finally {
       setRunningMissionId(null);
     }
-  }, [selectedMission, selectedDeck, uid, user]);
+  }, [selectedDeck, selectedForkOptionId, selectedMission, uid, user]);
 
   if (!isEnabled("MISSIONS", user)) return null;
 
@@ -237,14 +260,44 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
                 <div className="mission-result__rewards">
                   <div className="mission-result__reward-card">
                     <span className="mission-result__reward-label">Mission XP</span>
-                    <strong className="mission-result__reward-value">+{selectedMission.rewardXp}</strong>
+                    <strong className="mission-result__reward-value">+{selectedRewards.rewardXp}</strong>
                   </div>
                   <div className="mission-result__reward-card mission-result__reward-card--ozzies">
                     <span className="mission-result__reward-label">Ozzies</span>
-                    <strong className="mission-result__reward-value">+{selectedMission.rewardOzzies}</strong>
+                    <strong className="mission-result__reward-value">+{selectedRewards.rewardOzzies}</strong>
                   </div>
                 </div>
               </div>
+
+              {selectedMission.fork && (
+                <div className="mission-panel mission-fork">
+                  <div className="mission-fork__header">
+                    <span className="mission-fork__badge">{selectedMission.fork.badge}</span>
+                    <p className="mission-fork__prompt">{selectedMission.fork.prompt}</p>
+                  </div>
+                  <div className="mission-fork__options">
+                    {selectedMission.fork.options.map((option) => (
+                      <button
+                        key={`${selectedMission.id}-${option.id}`}
+                        type="button"
+                        className={`mission-fork__option${selectedForkOption?.id === option.id ? " mission-fork__option--active" : ""}`}
+                        onClick={() => setSelectedForkOptionId(option.id)}
+                        aria-pressed={selectedForkOption?.id === option.id}
+                      >
+                        <span className="mission-fork__option-label">{option.label}</span>
+                        <span className="mission-fork__option-desc">{option.description}</span>
+                        {(option.rewardXpDelta || option.rewardOzziesDelta) && (
+                          <span className="mission-fork__option-desc">
+                            {option.rewardXpDelta ? `${formatForkRewardDelta(option.rewardXpDelta)} XP` : null}
+                            {option.rewardXpDelta && option.rewardOzziesDelta ? " · " : null}
+                            {option.rewardOzziesDelta ? `${formatForkRewardDelta(option.rewardOzziesDelta)} Oz` : null}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className={`mission-weather${selectedEvaluation && !selectedEvaluation.eligible ? " mission-weather--blocked" : ""}`}>
                 <div className="mission-weather__copy">
@@ -266,6 +319,12 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
                   <span className="mission-stat-label">Selected deck</span>
                   <span className="mission-stat-value">{selectedDeck?.name ?? "No deck selected"}</span>
                 </div>
+                {selectedForkOption && (
+                  <div className="mission-stat-row">
+                    <span className="mission-stat-label">Chosen route</span>
+                    <span className="mission-stat-value">{selectedForkOption.label}</span>
+                  </div>
+                )}
                 <div className="mission-stat-row">
                   <span className="mission-stat-label">Last run</span>
                   <span className="mission-stat-value">{formatTimestamp(selectedMission.lastRunAt) ?? "Never launched"}</span>
@@ -278,8 +337,8 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
                 )}
               </div>
 
-              <div className="mission-checks">
-                {(selectedEvaluation?.results ?? getDefaultRequirementResults(selectedMission)).map((result) => (
+                <div className="mission-checks">
+                {(selectedEvaluation?.results ?? getDefaultRequirementResults(selectedMission, selectedForkOptionId)).map((result) => (
                   <span
                     key={`${selectedMission.id}-${result.requirement.label}`}
                     className="mission-selector-card__badge"

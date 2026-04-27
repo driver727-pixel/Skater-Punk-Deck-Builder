@@ -133,6 +133,29 @@ export interface MissionRequirementResult {
 }
 
 /**
+ * Restored fork-path option on a mission board contract.
+ * @sprint 3 @owner gamma
+ */
+export interface MissionForkOption {
+  id: string;
+  label: string;
+  description: string;
+  requirements?: MissionRequirement[];
+  rewardXpDelta?: number;
+  rewardOzziesDelta?: number;
+}
+
+/**
+ * Fork-path prompt shown before launching a mission run.
+ * @sprint 3 @owner gamma
+ */
+export interface MissionFork {
+  badge: string;
+  prompt: string;
+  options: MissionForkOption[];
+}
+
+/**
  * Restored server-authored mission board entry.
  * @sprint 2 @owner gamma
  */
@@ -156,8 +179,12 @@ export interface MissionBoardEntry {
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
+  /** @sprint 3 @owner gamma — Optional fork prompt that changes requirements and rewards. */
+  fork?: MissionFork;
   selectedDeckId?: string;
   selectedDeckName?: string;
+  /** @sprint 3 @owner gamma — Selected fork option used for evaluation and rewards. */
+  selectedForkOptionId?: string;
   lastRunAt?: string;
   lastRunSucceeded?: boolean;
   lastRunSummary?: string;

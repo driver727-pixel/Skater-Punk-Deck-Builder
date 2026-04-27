@@ -1,5 +1,10 @@
 import { FieldValue } from 'firebase-admin/firestore';
-import { createMissionBoardEntries, evaluateMissionDeck, MISSION_BOARD_DEFINITIONS } from '../lib/missions.js';
+import {
+  createMissionBoardEntries,
+  evaluateMissionDeck,
+  getMissionEffectiveRewards,
+  MISSION_BOARD_DEFINITIONS,
+} from '../lib/missions.js';
 
 const COLLECTION = 'missions';
 const PROFILE_COLLECTION = 'userProfiles';
@@ -19,6 +24,22 @@ function getProgression(profile) {
   return {
     missionXp: Number(profile?.missionXp) || 0,
     missionOzzies: Number(profile?.missionOzzies) || 0,
+  };
+}
+
+function getMissionDefinitionFields(entry) {
+  return {
+    schemaVersion: entry.schemaVersion,
+    definitionId: entry.definitionId,
+    sortOrder: entry.sortOrder,
+    title: entry.title,
+    tagline: entry.tagline,
+    description: entry.description,
+    district: entry.district,
+    rewardXp: entry.rewardXp,
+    rewardOzzies: entry.rewardOzzies,
+    requirements: entry.requirements,
+    fork: entry.fork,
   };
 }
 
@@ -51,22 +72,35 @@ export function registerMissionRoutes(app, {
         .map((doc) => doc.data())
         .filter((entry) => entry?.system === SYSTEM && entry?.schemaVersion === SCHEMA_VERSION);
 
-      const existingIds = new Set(existingBoardEntries.map((entry) => entry.id));
       const now = new Date().toISOString();
-      const missingEntries = createMissionBoardEntries(caller.uid, now)
-        .filter((entry) => !existingIds.has(entry.id));
+      const desiredEntries = createMissionBoardEntries(caller.uid, now);
+      const existingById = new Map(existingBoardEntries.map((entry) => [entry.id, entry]));
+      const missingEntries = desiredEntries.filter((entry) => !existingById.has(entry.id));
+      const definitionUpdates = desiredEntries
+        .filter((entry) => {
+          const existing = existingById.get(entry.id);
+          if (!existing) return false;
+          return JSON.stringify(getMissionDefinitionFields(existing)) !== JSON.stringify(getMissionDefinitionFields(entry));
+        })
+        .map((entry) => ({ id: entry.id, data: getMissionDefinitionFields(entry) }));
 
-      if (missingEntries.length > 0) {
+      if (missingEntries.length > 0 || definitionUpdates.length > 0) {
         const batch = adminDb.batch();
         for (const entry of missingEntries) {
           batch.set(adminDb.collection(COLLECTION).doc(entry.id), entry, { merge: true });
+        }
+        for (const entry of definitionUpdates) {
+          batch.set(adminDb.collection(COLLECTION).doc(entry.id), entry.data, { merge: true });
         }
         await batch.commit();
       }
 
       const profileSnap = await adminDb.collection(PROFILE_COLLECTION).doc(caller.uid).get();
       res.json({
-        missions: sortMissionBoardEntries([...existingBoardEntries, ...missingEntries]),
+        missions: sortMissionBoardEntries(desiredEntries.map((entry) => ({
+          ...(existingById.get(entry.id) ?? {}),
+          ...entry,
+        }))),
         progression: getProgression(profileSnap.data()),
       });
     } catch (error) {
@@ -91,6 +125,7 @@ export function registerMissionRoutes(app, {
 
     const missionId = typeof req.body?.missionId === 'string' ? req.body.missionId.trim() : '';
     const deckId = typeof req.body?.deckId === 'string' ? req.body.deckId.trim() : '';
+    const requestedForkOptionId = typeof req.body?.forkOptionId === 'string' ? req.body.forkOptionId.trim() : '';
     if (!missionId || !deckId) {
       res.status(400).json({ error: 'missionId and deckId are required.' });
       return;
@@ -127,9 +162,14 @@ export function registerMissionRoutes(app, {
         if (mission.uid !== caller.uid || mission.system !== SYSTEM || mission.schemaVersion !== SCHEMA_VERSION) {
           throw Object.assign(new Error('Mission not found.'), { statusCode: 404 });
         }
+        if (requestedForkOptionId && !(mission.fork?.options ?? []).some((option) => option.id === requestedForkOptionId)) {
+          throw Object.assign(new Error('Selected mission path is invalid.'), { statusCode: 400 });
+        }
 
         const deck = deckSnap.data();
-        const evaluation = evaluateMissionDeck(deck, mission, weatherPayload);
+        const selectedForkOptionId = requestedForkOptionId || mission.selectedForkOptionId || mission.fork?.options?.[0]?.id || null;
+        const evaluation = evaluateMissionDeck(deck, mission, weatherPayload, selectedForkOptionId);
+        const rewards = getMissionEffectiveRewards(mission, selectedForkOptionId);
         const profile = profileSnap.exists ? profileSnap.data() : {};
         const progression = getProgression(profile);
         const now = new Date().toISOString();
@@ -148,6 +188,7 @@ export function registerMissionRoutes(app, {
             ...mission,
             selectedDeckId: deckId,
             selectedDeckName: evaluation.deckName,
+            selectedForkOptionId,
             lastRunAt: now,
             lastRunSucceeded: false,
             lastRunSummary: evaluation.summary,
@@ -164,8 +205,8 @@ export function registerMissionRoutes(app, {
         }
 
         const nextProgression = {
-          missionXp: progression.missionXp + (Number(mission.rewardXp) || 0),
-          missionOzzies: progression.missionOzzies + (Number(mission.rewardOzzies) || 0),
+          missionXp: progression.missionXp + rewards.rewardXp,
+          missionOzzies: progression.missionOzzies + rewards.rewardOzzies,
         };
         const updatedMission = {
           ...mission,
@@ -173,6 +214,7 @@ export function registerMissionRoutes(app, {
           progress: 1,
           selectedDeckId: deckId,
           selectedDeckName: evaluation.deckName,
+          selectedForkOptionId,
           completedAt: now,
           lastRunAt: now,
           lastRunSucceeded: true,

@@ -46,6 +46,7 @@ export function useCollection() {
     guestHydratingRef.current = false;
     initialGuestCardsRef.current = null;
     lastSavedCardsRef.current = [];
+    setCards([]);
 
     // Check if there are local cards to migrate (and we haven't already done so)
     const migrationDone = localStorage.getItem(MIGRATION_KEY_PREFIX + uid) === "1";

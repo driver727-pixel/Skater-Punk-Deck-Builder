@@ -2396,8 +2396,8 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 /*
  * Five composited art layers are stacked inside .card-art-composite:
  *   1. background  – district environment scene (normal blend)
- *   2. exact board – generated board asset composited without model redraw
- *   3. character   – courier portrait (transparent PNG from background removal; normal blend)
+ *   2. character   – courier portrait (transparent PNG from background removal; normal blend)
+ *   3. exact board – generated board asset composited above the character so it stays readable
  *   4. frame       – ornate rarity border on black background (screen blend removes black BG)
  *   5. svg-frame   – deterministic frame overlay when static frame assets are used
  *
@@ -2442,71 +2442,128 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   transform: scale(0.9333);
   transform-origin: center;
 }
+.inset-neon-tube {
+  --tube-inset: 3.35%;
+  --tube-thickness: 4px;
+  --tube-top-gap: 44%;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+.inset-neon-tube__segment {
+  position: absolute;
+  display: block;
+  border-radius: 999px;
+  opacity: 0.95;
+  box-shadow:
+    0 0 6px var(--tube-rarity),
+    0 0 12px var(--tube-accent),
+    0 0 20px color-mix(in srgb, var(--tube-rarity) 55%, var(--tube-accent) 45%);
+}
+.inset-neon-tube__segment--top-left,
+.inset-neon-tube__segment--top-right {
+  top: var(--tube-inset);
+  height: var(--tube-thickness);
+}
+.inset-neon-tube__segment--top-left {
+  left: var(--tube-inset);
+  width: calc((100% - (var(--tube-inset) * 2) - var(--tube-top-gap)) / 2);
+  background: linear-gradient(90deg, var(--tube-rarity), var(--tube-accent));
+}
+.inset-neon-tube__segment--top-right {
+  right: var(--tube-inset);
+  width: calc((100% - (var(--tube-inset) * 2) - var(--tube-top-gap)) / 2);
+  background: linear-gradient(90deg, var(--tube-accent), var(--tube-rarity));
+}
+.inset-neon-tube__segment--left,
+.inset-neon-tube__segment--right {
+  top: calc(var(--tube-inset) + var(--tube-thickness));
+  bottom: var(--tube-inset);
+  width: var(--tube-thickness);
+}
+.inset-neon-tube__segment--left {
+  left: var(--tube-inset);
+  background: linear-gradient(180deg, var(--tube-rarity), var(--tube-accent));
+}
+.inset-neon-tube__segment--right {
+  right: var(--tube-inset);
+  background: linear-gradient(180deg, var(--tube-accent), var(--tube-rarity));
+}
+.inset-neon-tube__segment--bottom {
+  left: var(--tube-inset);
+  right: var(--tube-inset);
+  bottom: var(--tube-inset);
+  height: var(--tube-thickness);
+  background: linear-gradient(90deg, var(--tube-accent), var(--tube-rarity), var(--tube-accent));
+}
 .card-art-layer--character {
   /* Normal blend: character has a transparent background from background removal,
      so it composites cleanly over the background layer without any masking.
-     Scaled down 15% from the bottom so the head clears the top border. */
+     Scaled down slightly from the bottom so the head clears the top border and the board has room. */
   z-index: 3;
   mix-blend-mode: normal;
   object-fit: contain;
-  transform: scale(0.85);
+  object-position: center bottom;
+  transform: scale(0.8);
   transform-origin: bottom center;
 }
 .card-art-layer--board-exact {
-  z-index: 2;
+  z-index: 4;
   inset: auto;
   object-fit: contain;
   pointer-events: none;
   filter: drop-shadow(0 6px 7px rgba(0, 0, 0, 0.55));
 }
 .card-art-layer--board-workshop {
-  left: 8%;
-  bottom: 17%;
-  width: 58%;
-  height: 24%;
-  transform: rotate(-7deg);
+  left: 4%;
+  bottom: 10%;
+  width: 68%;
+  height: 25%;
+  transform: rotate(-9deg);
 }
 .card-art-layer--board-loadout {
-  right: 5%;
-  top: 28%;
-  width: 43%;
-  height: 26%;
-  transform: rotate(9deg);
+  right: 1%;
+  top: 31%;
+  width: 48%;
+  height: 30%;
+  transform: rotate(8deg);
 }
 .card-art-layer--board-airborne {
-  left: 21%;
-  bottom: 9%;
-  width: 60%;
-  height: 23%;
+  left: 18%;
+  bottom: 7%;
+  width: 64%;
+  height: 24%;
   transform: rotate(-10deg);
 }
 .card-art-layer--board-showcase {
-  right: 6%;
-  bottom: 16%;
-  width: 50%;
-  height: 24%;
-  transform: rotate(4deg);
+  right: 2%;
+  bottom: 12%;
+  width: 57%;
+  height: 25%;
+  transform: rotate(3deg);
 }
 .card-art-layer--board-painting {
-  left: 6%;
-  bottom: 15%;
-  width: 60%;
+  left: 4%;
+  bottom: 12%;
+  width: 67%;
   height: 25%;
   transform: rotate(-8deg);
 }
 .card-art-layer--board-wheels {
-  left: 16%;
-  bottom: 7%;
-  width: 65%;
-  height: 26%;
+  left: 12%;
+  bottom: 6%;
+  width: 70%;
+  height: 27%;
   transform: rotate(-5deg);
 }
 .card-art-layer--board-cleaning {
-  right: 5%;
-  bottom: 14%;
-  width: 54%;
+  right: 3%;
+  bottom: 11%;
+  width: 60%;
   height: 24%;
-  transform: rotate(6deg);
+  transform: rotate(5deg);
 }
 .card-art-layer--frame {
   /* Screen blend: black interior becomes transparent, coloured foil border stays visible.
@@ -5137,43 +5194,64 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   mix-blend-mode: normal;
   object-fit: contain;
   object-position: center bottom;
-  transform: scale(0.85);
+  transform: scale(0.8);
   transform-origin: bottom center;
 }
 .print-art-layer--board-exact {
-  z-index: 2;
+  z-index: 4;
   inset: auto;
   object-fit: contain;
   pointer-events: none;
   filter: drop-shadow(0 6px 7px rgba(0, 0, 0, 0.55));
 }
 .print-art-layer--board-workshop {
-  left: 8%;
-  bottom: 17%;
-  width: 58%;
-  height: 24%;
-  transform: rotate(-7deg);
+  left: 4%;
+  bottom: 10%;
+  width: 68%;
+  height: 25%;
+  transform: rotate(-9deg);
 }
 .print-art-layer--board-loadout {
-  right: 5%;
-  top: 28%;
-  width: 43%;
-  height: 26%;
-  transform: rotate(9deg);
+  right: 1%;
+  top: 31%;
+  width: 48%;
+  height: 30%;
+  transform: rotate(8deg);
 }
 .print-art-layer--board-airborne {
-  left: 21%;
-  bottom: 9%;
-  width: 60%;
-  height: 23%;
+  left: 18%;
+  bottom: 7%;
+  width: 64%;
+  height: 24%;
   transform: rotate(-10deg);
 }
 .print-art-layer--board-showcase {
-  right: 6%;
-  bottom: 16%;
-  width: 50%;
+  right: 2%;
+  bottom: 12%;
+  width: 57%;
+  height: 25%;
+  transform: rotate(3deg);
+}
+.print-art-layer--board-painting {
+  left: 4%;
+  bottom: 12%;
+  width: 67%;
+  height: 25%;
+  transform: rotate(-8deg);
+}
+.print-art-layer--board-wheels {
+  left: 12%;
+  bottom: 6%;
+  width: 70%;
+  height: 27%;
+  transform: rotate(-5deg);
+}
+.print-art-layer--board-cleaning {
+  right: 3%;
+  bottom: 11%;
+  width: 60%;
   height: 24%;
-  transform: rotate(4deg);
+  transform: rotate(5deg);
 }
 .print-art-layer--frame {
   z-index: 4;
@@ -5220,7 +5298,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   top: 0;
   left: 0;
   right: 0;
-  padding: 26% 14% 0;
+  padding: 11% 14% 0;
   z-index: 2;
   display: flex;
   justify-content: center;
@@ -6044,7 +6122,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 
   /* Front-face overlay prints properly */
   .print-only-card .print-front-name-overlay {
-    padding: 12pt 12pt 0;
+    padding: 8pt 12pt 0;
   }
   .print-only-card .print-front-overlay {
     padding: 0 12pt 12pt;
@@ -6070,43 +6148,64 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
     mix-blend-mode: normal;
     object-fit: contain;
     object-position: center bottom;
-    transform: scale(0.85);
+    transform: scale(0.8);
     transform-origin: bottom center;
   }
   .print-only-card .print-art-layer--board-exact {
-    z-index: 2;
+    z-index: 4;
     inset: auto;
     object-fit: contain;
     pointer-events: none;
     filter: drop-shadow(0 6px 7px rgba(0, 0, 0, 0.55));
   }
   .print-only-card .print-art-layer--board-workshop {
-    left: 8%;
-    bottom: 17%;
-    width: 58%;
-    height: 24%;
-    transform: rotate(-7deg);
+    left: 4%;
+    bottom: 10%;
+    width: 68%;
+    height: 25%;
+    transform: rotate(-9deg);
   }
   .print-only-card .print-art-layer--board-loadout {
-    right: 5%;
-    top: 28%;
-    width: 43%;
-    height: 26%;
-    transform: rotate(9deg);
+    right: 1%;
+    top: 31%;
+    width: 48%;
+    height: 30%;
+    transform: rotate(8deg);
   }
   .print-only-card .print-art-layer--board-airborne {
-    left: 21%;
-    bottom: 9%;
-    width: 60%;
-    height: 23%;
+    left: 18%;
+    bottom: 7%;
+    width: 64%;
+    height: 24%;
     transform: rotate(-10deg);
   }
   .print-only-card .print-art-layer--board-showcase {
-    right: 6%;
-    bottom: 16%;
-    width: 50%;
+    right: 2%;
+    bottom: 12%;
+    width: 57%;
+    height: 25%;
+    transform: rotate(3deg);
+  }
+  .print-only-card .print-art-layer--board-painting {
+    left: 4%;
+    bottom: 12%;
+    width: 67%;
+    height: 25%;
+    transform: rotate(-8deg);
+  }
+  .print-only-card .print-art-layer--board-wheels {
+    left: 12%;
+    bottom: 6%;
+    width: 70%;
+    height: 27%;
+    transform: rotate(-5deg);
+  }
+  .print-only-card .print-art-layer--board-cleaning {
+    right: 3%;
+    bottom: 11%;
+    width: 60%;
     height: 24%;
-    transform: rotate(4deg);
+    transform: rotate(5deg);
   }
   .print-only-card .print-art-layer--frame {
     z-index: 4;

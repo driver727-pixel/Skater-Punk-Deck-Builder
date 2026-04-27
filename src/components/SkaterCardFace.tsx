@@ -20,6 +20,8 @@ import { StatBar } from "./StatBar";
 import { getDisplayedCrew } from "../lib/cardIdentity";
 import { CARD_STAT_LABELS } from "../lib/statLabels";
 import stamp360Gif from "../../stamp360.gif";
+import { InsetNeonTube } from "./InsetNeonTube";
+import { hasBuiltInFrameDesignator, RARITY_COLORS } from "../lib/cardRarityVisuals";
 import {
   getFrameBlendMode,
   getStaticFrameBackUrl,
@@ -31,14 +33,6 @@ import { resolveBoardPoseScene } from "../lib/boardPoseScenes";
 import { BOARD_TYPE_OPTIONS, DRIVETRAIN_OPTIONS, MOTOR_OPTIONS, WHEEL_OPTIONS, BATTERY_OPTIONS } from "../lib/boardBuilder";
 
 // ── Rarity colour map used on the card-back header ───────────────────────────
-
-const RARITY_COLORS: Record<string, string> = {
-  "Punch Skater": "#aa9988",
-  Apprentice: "#44ddaa",
-  Master: "#cc44ff",
-  Rare: "#4488ff",
-  Legendary: "#ffaa00",
-};
 
 export interface SkaterCardFaceProps {
   /** The fully generated card to render. */
@@ -122,6 +116,7 @@ function CardFront({
           {backgroundImageUrl && (
             <img src={backgroundImageUrl} alt="background" className={bgClass} style={bgStyle} />
           )}
+          <InsetNeonTube rarity={card.prompts.rarity} accentColor={card.visuals.accentColor} />
           {showExactBoardLayer && card.board.imageUrl && (
             <img
               src={card.board.imageUrl}
@@ -177,6 +172,7 @@ function CardBack({
 }: Pick<SkaterCardFaceProps, "card" | "editable" | "onNameChange" | "onBioChange" | "onAgeChange" | "onStatChange" | "boardImageLoading">) {
   const accent = card.visuals.accentColor || "#00ff88";
   const rarityColor = RARITY_COLORS[card.prompts.rarity] || "#aaaaaa";
+  const hasBuiltInDesignator = hasBuiltInFrameDesignator(card.prompts.rarity);
   const backFrameUrl = getStaticFrameBackUrl(card.prompts.rarity);
   const hasBackFrame = backFrameUrl != null;
   const backFrameStyle = backFrameUrl
@@ -221,7 +217,7 @@ function CardBack({
           <span className="print-back-identity-name">{card.identity.name}</span>
         )}
         <div className="print-back-identity-meta">
-          <span className="print-back-identity-badge">{card.class.badgeLabel}</span>
+          {!hasBuiltInDesignator && <span className="print-back-identity-badge">{card.class.badgeLabel}</span>}
           <span className="print-back-identity-role">{card.role.label}</span>
           {card.board.tuned && <span className="print-back-identity-tuned">⚡ TUNED</span>}
           {card.identity.age && (
@@ -301,11 +297,13 @@ function CardBack({
         </div>
 
       <div className="print-back-stats">
-        <div className="print-back-rarity-row">
-          <span className="print-back-rarity-label" style={{ color: rarityColor }}>
-            {card.prompts.rarity.toUpperCase()}
-          </span>
-        </div>
+        {!hasBuiltInDesignator && (
+          <div className="print-back-rarity-row">
+            <span className="print-back-rarity-label" style={{ color: rarityColor }}>
+              {card.prompts.rarity.toUpperCase()}
+            </span>
+          </div>
+        )}
         {editable ? (
           (["speed", "range", "stealth", "grit"] as const).map((key) => (
             <div key={key} className="stat-bar card-stat-editor-row">

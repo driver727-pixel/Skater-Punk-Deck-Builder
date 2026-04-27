@@ -11,6 +11,8 @@ import { BOARD_TYPE_OPTIONS, DRIVETRAIN_OPTIONS, MOTOR_OPTIONS, WHEEL_OPTIONS, B
 import { SkateboardStatsPanel } from "./SkateboardStatsPanel";
 import { computeCardWorth } from "../lib/battle";
 import { CARD_STAT_LABELS } from "../lib/statLabels";
+import { InsetNeonTube } from "./InsetNeonTube";
+import { hasBuiltInFrameDesignator, RARITY_COLORS } from "../lib/cardRarityVisuals";
 import {
   getFrameBlendMode,
   getStaticFrameBackUrl,
@@ -111,14 +113,6 @@ function areLayerLoadingEqual(previous?: LayerLoading, next?: LayerLoading): boo
   );
 }
 
-const RARITY_COLORS: Record<string, string> = {
-  "Punch Skater": "#aa9988",
-  Apprentice:     "#44ddaa",
-  Master:         "#cc44ff",
-  Rare:           "#4488ff",
-  Legendary:      "#ffaa00",
-};
-
 // ── Layer status badge helper ──────────────────────────────────────────────────
 
 function LayerStatusBadges({ loading }: { loading: LayerLoading }) {
@@ -208,6 +202,7 @@ function CompositeArt({
           <img src="/assets/loading_2.gif" alt="Loading…" className="card-art-loading-gif" />
         </div>
       ) : null}
+      <InsetNeonTube rarity={card.prompts.rarity} accentColor={card.visuals.accentColor} />
 
       {/* Layer 2 – Exact generated board asset (never redrawn by the character model) */}
       {showExactBoardLayer && card.board.imageUrl ? (
@@ -333,6 +328,7 @@ function CardDisplayComponent({
   // ─────────────────────────────────────────────────────────────────────────
 
   const rarityColor = RARITY_COLORS[card.class.rarity] || "#aaaaaa";
+  const hasBuiltInDesignator = hasBuiltInFrameDesignator(card.class.rarity);
   const accent = card.visuals.accentColor || "#00ff88";
   const displayedArchetype = getDisplayedArchetype(card);
 
@@ -367,7 +363,9 @@ function CardDisplayComponent({
         )}
         <div className="card-compact-info">
           <span className="card-name">{card.identity.name}</span>
-          <span className="card-rarity" style={{ color: rarityColor }}>{card.class.badgeLabel}</span>
+          {!hasBuiltInDesignator && (
+            <span className="card-rarity" style={{ color: rarityColor }}>{card.class.badgeLabel}</span>
+          )}
           <span className="card-archetype">{displayedArchetype}</span>
           {card.board.tuned && <span className="card-compact-badge">⚡ Tuned</span>}
           {card.maintenance.state !== "active" && (
@@ -390,7 +388,9 @@ function CardDisplayComponent({
         <div className="card-full card-full--front" style={{ "--accent": accent } as React.CSSProperties}>
           <div className="card-header">
             <span className="card-serial">{card.identity.serialNumber}</span>
-            <span className="card-rarity" style={{ color: rarityColor }}>{card.class.badgeLabel.toUpperCase()}</span>
+            {!hasBuiltInDesignator && (
+              <span className="card-rarity" style={{ color: rarityColor }}>{card.class.badgeLabel.toUpperCase()}</span>
+            )}
           </div>
 
           {(layerLoading?.background || layerLoading?.character || layerLoading?.frame) && (
@@ -504,8 +504,6 @@ function CardDisplayComponent({
             )}
 
             <div className="card-subline">
-              <span>{card.class.badgeLabel}</span>
-              <span className="sep">·</span>
               <span>{displayedArchetype}</span>
               {card.board.tuned && (
                 <>
@@ -533,7 +531,9 @@ function CardDisplayComponent({
         <div className="card-full card-full--back" style={{ "--accent": accent } as React.CSSProperties}>
           <div className="card-header">
             <span className="card-serial">BACKSIDE</span>
-            <span className="card-rarity" style={{ color: rarityColor }}>{card.class.badgeLabel.toUpperCase()}</span>
+            {!hasBuiltInDesignator && (
+              <span className="card-rarity" style={{ color: rarityColor }}>{card.class.badgeLabel.toUpperCase()}</span>
+            )}
           </div>
 
           <div className="card-board">

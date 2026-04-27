@@ -32,12 +32,13 @@ import { applyPreviewUpdates, buildRandomizedBoardConfig, buildRandomizedPrompts
 import { loadForgeSession, saveForgeSession } from "../../services/forgeSessionCache";
 
 const ARCHETYPE_VALUES = FORGE_ARCHETYPE_OPTIONS.map((option) => option.value);
+const DEFAULT_CHARACTER_BLEND = 1;
 
 export function useForgeGeneration() {
   const { tier, canForge, generateCredits, consumeCredit, openUpgradeModal, freeCardUsed, markFreeCardUsed } = useTier();
   const { user, userProfile } = useAuth();
   const { hasFaction, unlockFaction } = useFactionDiscovery();
-  const initialSession = useRef(loadForgeSession());
+  const sessionOwnerKey = user?.uid ?? "guest";
   const [prompts, setPrompts] = useState<CardPrompts>({
     archetype: "Qu111s", rarity: "Punch Skater", style: "Corporate",
     district: "Nightshade", accentColor: "#00ff88",
@@ -45,8 +46,8 @@ export function useForgeGeneration() {
     hairLength: "Short", skinTone: "Medium", faceCharacter: "Conventional",
   });
   const [boardConfig, setBoardConfig] = useState(DEFAULT_BOARD_CONFIG);
-  const [generated, setGenerated] = useState<CardPayload | null>(initialSession.current?.card ?? null);
-  const [characterBlend, setCharacterBlend] = useState(initialSession.current?.characterBlend ?? 1);
+  const [generated, setGenerated] = useState<CardPayload | null>(() => loadForgeSession(sessionOwnerKey)?.card ?? null);
+  const [characterBlend, setCharacterBlend] = useState(() => loadForgeSession(sessionOwnerKey)?.characterBlend ?? DEFAULT_CHARACTER_BLEND);
   const [forging, setForging] = useState(false);
   const [boardImageLoading, setBoardImageLoading] = useState(false);
   const [revealedFaction, setRevealedFaction] = useState<{ faction: Faction; isNew: boolean } | null>(null);
@@ -86,18 +87,23 @@ export function useForgeGeneration() {
     }
   }, [prompts.rarity, selectedForgeRarity]);
 
-  // Restore layer URLs from the session cache on first mount.
+  // Restore the per-user forge session whenever the active auth identity changes.
   useEffect(() => {
-    const session = initialSession.current;
-    if (!session) return;
-    setLayers((current) => ({
-      ...current,
-      ...(session.backgroundUrl != null ? { backgroundUrl: session.backgroundUrl } : {}),
-      ...(session.characterUrl != null ? { characterUrl: session.characterUrl } : {}),
-      ...(session.frameUrl != null ? { frameUrl: session.frameUrl } : {}),
-    }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    abortRef.current?.abort();
+    const session = loadForgeSession(sessionOwnerKey);
+    setGenerated(session?.card ?? null);
+    setCharacterBlend(session?.characterBlend ?? DEFAULT_CHARACTER_BLEND);
+    setForging(false);
+    setBoardImageLoading(false);
+    setRevealedFaction(null);
+    setLayers({
+      loading: { background: false, character: false, frame: false },
+      errors: [],
+      ...(session?.backgroundUrl != null ? { backgroundUrl: session.backgroundUrl } : {}),
+      ...(session?.characterUrl != null ? { characterUrl: session.characterUrl } : {}),
+      ...(session?.frameUrl != null ? { frameUrl: session.frameUrl } : {}),
+    });
+  }, [abortRef, sessionOwnerKey, setLayers]);
 
   // Persist the current forge state to sessionStorage whenever it changes.
   useEffect(() => {
@@ -108,8 +114,8 @@ export function useForgeGeneration() {
       characterUrl: layers.characterUrl,
       frameUrl: layers.frameUrl,
       characterBlend,
-    });
-  }, [generated, layers.backgroundUrl, layers.characterUrl, layers.frameUrl, characterBlend]);
+    }, sessionOwnerKey);
+  }, [generated, layers.backgroundUrl, layers.characterUrl, layers.frameUrl, characterBlend, sessionOwnerKey]);
 
   const setPrompt = useCallback(<K extends keyof CardPrompts>(key: K, value: CardPrompts[K]) => {
     setPrompts((current) => ({ ...current, [key]: value }));

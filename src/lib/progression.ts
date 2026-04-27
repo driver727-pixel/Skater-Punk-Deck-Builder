@@ -336,6 +336,12 @@ export const PROGRESSION_TERMINOLOGY = {
 
 /**
  * Rarity of the card rewarded to players upon first signup / account creation.
+ *
+ * Rare was chosen as the starting bonus tier to give new players a meaningful
+ * head start — meaningful enough to feel exciting, but not so powerful that it
+ * trivialises early progression.  Players still need to build their collection
+ * through play to unlock Master and Legendary tiers.
+ *
  * Defined here so the onboarding flow, server, and tests reference a single
  * constant rather than a magic string.
  */

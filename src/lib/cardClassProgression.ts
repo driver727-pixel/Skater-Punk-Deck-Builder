@@ -96,7 +96,7 @@ export function isForgeClassUnlocked(
   progression: PlayerProgressionSnapshot,
 ): boolean {
   const rule = getUnlockRule(rarity);
-  if (rule.minXp === 0 && rule.minDeckPower === 0) return true;
+  if (rule.minXp === 0 && rule.minOzzies === 0 && rule.minDeckPower === 0) return true;
   const missionXp = normalizeProgressionValue(progression.missionXp);
   const missionOzzies = normalizeProgressionValue(progression.missionOzzies);
   const deckPower = normalizeProgressionValue(progression.deckPower);
@@ -107,7 +107,7 @@ export function getForgeClassOptions(progression: PlayerProgressionSnapshot): Fo
   return FORGE_CLASS_RULES.map((rule) => ({
     rarity: rule.rarity,
     unlocked: isForgeClassUnlocked(rule.rarity, progression),
-    unlockHint: rule.minXp === 0 && rule.minDeckPower === 0
+    unlockHint: rule.minXp === 0 && rule.minOzzies === 0 && rule.minDeckPower === 0
       ? null
       : `Unlock with ${rule.minXp.toLocaleString()} XP, ${rule.minOzzies.toLocaleString()} Ozzies, or ${rule.minDeckPower.toLocaleString()} Deck Power.`,
   }));

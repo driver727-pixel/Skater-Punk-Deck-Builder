@@ -66,11 +66,11 @@ export const DRIVETRAIN_IMAGE_DESCRIPTIONS = {
   '4WD': 'It has powered front and rear trucks in a true four-wheel-drive setup with all four wheels driven.',
 };
 
-const WHEEL_IMAGE_DESCRIPTIONS = {
-  Urethane: 'It has 4 poly-urethane wheels.',
-  Pneumatic: 'It has 4 large pneumatic all-terrain tires with visible tread.',
-  Rubber: 'It has 4 solid rubber all-terrain wheels with thick puncture-proof sidewalls.',
-  Cloud: 'It has 4 oversized vapor wheels with a soft semi-transparent cushioned look.',
+export const WHEEL_IMAGE_DESCRIPTIONS = {
+  Urethane: 'It has 4 poly-urethane wheels, each 97 mm in diameter, the smallest wheel option and a scale anchor for the skateboard beside an adult rider.',
+  Pneumatic: 'It has 4 large pneumatic all-terrain tires, each 150 mm in diameter, with visible tread and a taller stance than vapor or polyurethane wheels.',
+  Rubber: 'It has 4 solid rubber all-terrain wheels, each 175 mm in diameter, with thick puncture-proof sidewalls; these are the largest wheel option and make the board visibly taller beside an adult rider.',
+  Cloud: 'It has 4 oversized vapor wheels, each 107 mm in diameter, with a soft semi-transparent cushioned look; they are slightly larger than 97 mm polyurethane wheels but much smaller than 150 mm pneumatic tires.',
 };
 
 const BATTERY_IMAGE_DESCRIPTIONS = {
@@ -121,7 +121,7 @@ export function buildBoardImagePrompt(config) {
     `${WHEEL_IMAGE_DESCRIPTIONS[config.wheels] ?? ''} ` +
     `${BATTERY_IMAGE_DESCRIPTIONS[battery] ?? ''} ` +
     `Show one fully assembled complete skateboard only. ` +
-    `The final board must clearly preserve the selected deck shape, drivetrain hardware, motor size, wheel type${batteryPreservationClause} with no substitutions. ` +
+    `The final board must clearly preserve the selected deck shape, drivetrain hardware, motor size, wheel type and wheel diameter${batteryPreservationClause} with no substitutions. ` +
     `For Belt, Hub, and Gear builds, keep all drive hardware on the rear truck and rear wheels only; do not add any front drive hardware unless the selected drivetrain is 4WD. ` +
     `${CRITICAL_NOSE_CONSTRAINT} ` +
     `Three-quarter product display view, centered composition, crisp painted detail, clearly illustrated gouache texture, not photoreal, no rider, no extra parts, no exploded view, exactly one skateboard in the image. ` +

@@ -59,7 +59,7 @@ export function useDecks() {
   const uid = user?.uid ?? null;
 
   const [decks, setDecks] = useState<DeckPayload[]>([]);
-  const lastSavedDecksRef = useRef<DeckPayload[]>(decks);
+  const lastSavedDecksRef = useRef<DeckPayload[]>([]);
   const initialGuestDecksRef = useRef<DeckPayload[] | null>(null);
   const guestHydratingRef = useRef(!uid);
 

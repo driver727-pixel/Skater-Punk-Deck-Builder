@@ -2394,11 +2394,12 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 
 /* ===== Layered Card Art Composite ===== */
 /*
- * Four art layers are stacked inside .card-art-composite:
+ * Five composited art layers are stacked inside .card-art-composite:
  *   1. background  – district environment scene (normal blend)
  *   2. exact board – generated board asset composited without model redraw
  *   3. character   – courier portrait (transparent PNG from background removal; normal blend)
  *   4. frame       – ornate rarity border on black background (screen blend removes black BG)
+ *   5. svg-frame   – deterministic frame overlay when static frame assets are used
  *
  * Character layer is a transparent PNG produced by running the white-background
  * portrait through the birefnet background-removal model.  With a real transparent

@@ -178,9 +178,11 @@ export function useForgeGeneration() {
       try {
         const boardImageUrl = await generateGouacheBoard(boardConfig);
         if (signal.aborted) return;
+        const transparentBoardUrl = (await removeBackground(boardImageUrl)).imageUrl;
+        if (signal.aborted) return;
         setGenerated((current) => current ? {
           ...current,
-          board: { ...current.board, imageUrl: boardImageUrl },
+          board: { ...current.board, imageUrl: transparentBoardUrl },
         } : current);
       } catch (error) {
         console.warn("Board image generation failed:", error);

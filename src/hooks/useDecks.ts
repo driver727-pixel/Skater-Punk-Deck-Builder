@@ -250,6 +250,37 @@ export function useDecks() {
     return { deckFull: false };
   }, [uid, addCardToDeck]);
 
+  const setPrimaryDeck = useCallback((deckId: string) => {
+    const now = new Date().toISOString();
+    const updates = decksRef.current.map((deck) => {
+      const shouldBePrimary = deck.id === deckId;
+      if (Boolean(deck.isPrimary) === shouldBePrimary) return null;
+      return { ...deck, isPrimary: shouldBePrimary, updatedAt: now };
+    }).filter((d): d is DeckPayload => d !== null);
+    if (updates.length === 0) return;
+    if (uid) {
+      void Promise.all(updates.map((deck) => setDoc(doc(db, "users", uid, "decks", deck.id), deck)))
+        .catch(console.error);
+    } else {
+      setDecks((prev) => prev.map((d) => {
+        const next = updates.find((u) => u.id === d.id);
+        return next ?? d;
+      }));
+    }
+  }, [uid]);
+
+  const setChallengerCard = useCallback((deckId: string, cardId: string | null) => {
+    const deck = decksRef.current.find((d) => d.id === deckId);
+    if (!deck) return;
+    if (cardId && !deck.cards.some((c) => c.id === cardId)) return;
+    const next: DeckPayload = {
+      ...deck,
+      ...(cardId ? { challengerCardId: cardId } : { challengerCardId: undefined }),
+      updatedAt: new Date().toISOString(),
+    };
+    saveDeck(next);
+  }, [saveDeck]);
+
   return {
     decks,
     createDeck,
@@ -262,5 +293,7 @@ export function useDecks() {
     moveCardInDeck,
     moveDeck,
     saveCardToFirstDeck,
+    setPrimaryDeck,
+    setChallengerCard,
   };
 }

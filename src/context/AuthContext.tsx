@@ -40,6 +40,8 @@ interface UserProfile {
   isAdmin?: boolean;
   missionXp?: number;
   missionOzzies?: number;
+  /** Account-level Ozzy balance — escrow currency for race wagers. */
+  ozzies?: number;
 }
 
 interface AuthContextValue {

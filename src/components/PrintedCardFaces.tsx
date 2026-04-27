@@ -75,6 +75,9 @@ export function PrintedCardPreviewPair({
               card={card}
               backgroundImageUrl={backgroundImageUrl}
               editable={editable}
+              onNameChange={onNameChange}
+              onBioChange={onBioChange}
+              onAgeChange={onAgeChange}
               onStatChange={onStatChange}
               boardImageLoading={boardImageLoading}
             />

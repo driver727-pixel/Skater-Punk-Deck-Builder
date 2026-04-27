@@ -80,9 +80,7 @@ function CardFront({
   fallbackHeight = 264,
   editable = false,
   onNameChange,
-  onBioChange,
-  onAgeChange,
-}: Omit<SkaterCardFaceProps, "face" | "onStatChange">) {
+}: Omit<SkaterCardFaceProps, "face" | "onStatChange" | "onBioChange" | "onAgeChange">) {
   const hasAnyLayer = backgroundImageUrl || characterImageUrl || frameImageUrl;
   const bgClass = shouldInsetBackgroundForFrame(card.prompts.rarity, frameImageUrl)
     ? "print-art-layer print-art-layer--bg print-art-layer--bg-inset"
@@ -106,7 +104,6 @@ function CardFront({
       }
     : undefined;
 
-  const flavorText = card.front.flavorText ?? "";
   const nameField = editable ? (
     <input
       className="card-name-input"
@@ -163,44 +160,6 @@ function CardFront({
       <div className="print-front-name-overlay">
         {nameField}
       </div>
-
-      <div className="print-front-overlay">
-        {editable ? (
-          <>
-            <label className="card-age-field">
-              <span className="card-age-label">AGE</span>
-              <input
-                className="card-age-input"
-                value={card.identity.age ?? ""}
-                onChange={(e) => onAgeChange?.(e.target.value)}
-                placeholder="Age"
-              />
-            </label>
-            <textarea
-              className="card-bio-input"
-              value={flavorText}
-              onChange={(e) => onBioChange?.(e.target.value)}
-              placeholder="Bio / flavor text"
-              rows={2}
-            />
-          </>
-        ) : (
-          <>
-            {card.identity.age && (
-              <span className="print-front-age">{card.identity.age}</span>
-            )}
-            {flavorText && (
-              <p className="print-front-bio">&ldquo;{flavorText}&rdquo;</p>
-            )}
-          </>
-        )}
-
-        <div className="print-front-class-role">
-          <span className="print-front-badge">{card.class.badgeLabel}</span>
-          <span className="print-front-role">{card.role.label}</span>
-          {card.board.tuned && <span className="print-front-tuned">⚡ Tuned</span>}
-        </div>
-      </div>
     </>
   );
 }
@@ -210,9 +169,12 @@ function CardFront({
 function CardBack({
   card,
   editable = false,
+  onNameChange,
+  onBioChange,
+  onAgeChange,
   onStatChange,
   boardImageLoading = false,
-}: Pick<SkaterCardFaceProps, "card" | "editable" | "onStatChange" | "boardImageLoading">) {
+}: Pick<SkaterCardFaceProps, "card" | "editable" | "onNameChange" | "onBioChange" | "onAgeChange" | "onStatChange" | "boardImageLoading">) {
   const accent = card.visuals.accentColor || "#00ff88";
   const rarityColor = RARITY_COLORS[card.prompts.rarity] || "#aaaaaa";
   const backFrameUrl = getStaticFrameBackUrl(card.prompts.rarity);
@@ -228,8 +190,9 @@ function CardBack({
   const backInfoRows = [
     ["DISTRICT", card.prompts.district],
     ["CREW",     getDisplayedCrew(card)],
-    ["SERIAL",   card.identity.serialNumber],
   ] as [string, string][];
+
+  const flavorText = card.front.flavorText ?? "";
 
   const bt = BOARD_TYPE_OPTIONS.find((o) => o.value === card.board.config.boardType);
   const dr = DRIVETRAIN_OPTIONS.find((o) => o.value === card.board.config.drivetrain);
@@ -246,8 +209,50 @@ function CardBack({
 
   return (
     <>
-      <div className="print-back-header-slim">
-        {card.board.tuned && <span className="print-back-tuned">⚡ TUNED</span>}
+      <div className="print-back-identity">
+        {editable ? (
+          <input
+            className="card-name-input print-back-identity-name-input"
+            value={card.identity.name}
+            onChange={(e) => onNameChange?.(e.target.value)}
+            placeholder="Name"
+          />
+        ) : (
+          <span className="print-back-identity-name">{card.identity.name}</span>
+        )}
+        <div className="print-back-identity-meta">
+          <span className="print-back-identity-badge">{card.class.badgeLabel}</span>
+          <span className="print-back-identity-role">{card.role.label}</span>
+          {card.board.tuned && <span className="print-back-identity-tuned">⚡ TUNED</span>}
+          {card.identity.age && (
+            editable ? (
+              <label className="print-back-identity-age-field">
+                <span className="print-back-identity-age-label">AGE</span>
+                <input
+                  className="card-age-input print-back-identity-age-input"
+                  value={card.identity.age ?? ""}
+                  onChange={(e) => onAgeChange?.(e.target.value)}
+                  placeholder="Age"
+                />
+              </label>
+            ) : (
+              <span className="print-back-identity-age">{card.identity.age}</span>
+            )
+          )}
+        </div>
+        {editable ? (
+          <textarea
+            className="card-bio-input print-back-identity-bio-input"
+            value={flavorText}
+            onChange={(e) => onBioChange?.(e.target.value)}
+            placeholder="Bio / flavor text"
+            rows={2}
+          />
+        ) : (
+          flavorText && (
+            <p className="print-back-identity-bio">&ldquo;{flavorText}&rdquo;</p>
+          )
+        )}
       </div>
 
       <div className="print-back-hero">
@@ -388,8 +393,6 @@ export function SkaterCardFace({
         fallbackHeight={fallbackHeight}
         editable={editable}
         onNameChange={onNameChange}
-        onBioChange={onBioChange}
-        onAgeChange={onAgeChange}
       />
     );
   }
@@ -398,6 +401,9 @@ export function SkaterCardFace({
     <CardBack
       card={card}
       editable={editable}
+      onNameChange={onNameChange}
+      onBioChange={onBioChange}
+      onAgeChange={onAgeChange}
       onStatChange={onStatChange}
       boardImageLoading={boardImageLoading}
     />

@@ -17,6 +17,7 @@ import {
   shouldInsetBackgroundForFrame,
   shouldRenderSvgFrame,
 } from "../services/staticAssets";
+import { resolveBoardPoseScene } from "../lib/boardPoseScenes";
 
 interface LayerLoading {
   background: boolean;
@@ -184,6 +185,8 @@ function CompositeArt({
   const frameLayerClassName = hasBackFrame
     ? "card-art-layer card-art-layer--frame card-art-layer--frame-wrap"
     : "card-art-layer card-art-layer--frame";
+  const boardPoseScene = resolveBoardPoseScene(card.characterSeed);
+  const showExactBoardLayer = Boolean(card.board.imageUrl && (backgroundImageUrl || characterImageUrl));
 
   // No AI layer data at all — render SVG fallback
   if (!hasAnyLayer) {
@@ -206,7 +209,16 @@ function CompositeArt({
         </div>
       ) : null}
 
-      {/* Layer 2 – Character (courier portrait, feathered-mask composited) */}
+      {/* Layer 2 – Exact generated board asset (never redrawn by the character model) */}
+      {showExactBoardLayer && card.board.imageUrl ? (
+        <img
+          src={card.board.imageUrl}
+          alt="exact generated skateboard"
+          className={`card-art-layer card-art-layer--board-exact card-art-layer--board-${boardPoseScene.key}`}
+        />
+      ) : null}
+
+      {/* Layer 3 – Character (courier portrait, feathered-mask composited) */}
       {characterImageUrl ? (
         <img
           src={characterImageUrl}
@@ -221,7 +233,7 @@ function CompositeArt({
         </div>
       ) : null}
 
-      {/* Layer 3 – Frame (ornate rarity border, screen-blended AI image — used for Punch Skater) */}
+      {/* Layer 4 – Frame (ornate rarity border, screen-blended AI image — used for Punch Skater) */}
       {frameImageUrl && !showSvgFrame ? (
         <img
           src={frameImageUrl}
@@ -236,7 +248,7 @@ function CompositeArt({
         </div>
       ) : null}
 
-      {/* Layer 4 – SVG neon border overlay for the four redesigned rarity frames */}
+      {/* Layer 5 – SVG neon border overlay for the four redesigned rarity frames */}
       {showSvgFrame && (
         <FrameOverlay
           rarity={card.prompts.rarity}

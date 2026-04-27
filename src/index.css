@@ -2487,6 +2487,27 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   height: 24%;
   transform: rotate(4deg);
 }
+.card-art-layer--board-painting {
+  left: 6%;
+  bottom: 15%;
+  width: 60%;
+  height: 25%;
+  transform: rotate(-8deg);
+}
+.card-art-layer--board-wheels {
+  left: 16%;
+  bottom: 7%;
+  width: 65%;
+  height: 26%;
+  transform: rotate(-5deg);
+}
+.card-art-layer--board-cleaning {
+  right: 5%;
+  bottom: 14%;
+  width: 54%;
+  height: 24%;
+  transform: rotate(6deg);
+}
 .card-art-layer--frame {
   /* Screen blend: black interior becomes transparent, coloured foil border stays visible.
      object-fit: fill stretches the frame to exactly match the container so the border

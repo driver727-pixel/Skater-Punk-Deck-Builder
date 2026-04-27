@@ -13,6 +13,7 @@ interface ForgeResultOverlaysProps {
   onClosePrint: () => void;
   onCloseViewer3D: () => void;
   onGoToCollection: () => void;
+  onKeepForging: () => void;
   onOpenFactions: () => void;
   printing: boolean;
   revealedFaction: { faction: Faction; isNew: boolean } | null;
@@ -29,6 +30,7 @@ export function ForgeResultOverlays({
   onClosePrint,
   onCloseViewer3D,
   onGoToCollection,
+  onKeepForging,
   onOpenFactions,
   printing,
   revealedFaction,
@@ -58,7 +60,7 @@ export function ForgeResultOverlays({
         />
       )}
       {savedCard && (
-        <div className="save-celebrate-overlay" onClick={onGoToCollection}>
+        <div className="save-celebrate-overlay" onClick={onKeepForging}>
           <div className="save-celebrate-modal" onClick={(event) => event.stopPropagation()}>
             <div className="save-celebrate-emoji">🎉</div>
             <h2 className="save-celebrate-title">
@@ -68,15 +70,26 @@ export function ForgeResultOverlays({
             </h2>
             <p className="save-celebrate-name">{savedCard.identity.name}</p>
             <p className="save-celebrate-seed">SEED · {savedCard.seed}</p>
-            <button
-              className="btn-primary"
-              onClick={() => {
-                sfxClick();
-                onGoToCollection();
-              }}
-            >
-              Go to My Collection →
-            </button>
+            <div className="forge-generated-buttons">
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  sfxClick();
+                  onGoToCollection();
+                }}
+              >
+                Go to My Collection →
+              </button>
+              <button
+                className="btn-outline"
+                onClick={() => {
+                  sfxClick();
+                  onKeepForging();
+                }}
+              >
+                Keep Forging
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -26,6 +26,7 @@ export function useCardForgeController() {
     boardImageLoading: forge.boardImageLoading,
     canForge: forge.canForge,
     characterBlend: forge.characterBlend,
+    clearSavedCard: save.clearSavedCard,
     closeWelcome: navigation.closeWelcome,
     downloading: save.downloading,
     forging: forge.forging,

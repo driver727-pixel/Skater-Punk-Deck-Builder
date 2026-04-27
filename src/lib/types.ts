@@ -196,6 +196,24 @@ export interface CardPayload {
   backgroundImageUrl?: string;
   characterImageUrl?: string;
   frameImageUrl?: string;
+
+  /**
+   * Accumulated gameplay experience for this card.
+   * Starts at 0; maximum is 100,000,000.
+   * Earned through missions, battles, login streaks, and other gameplay.
+   * XP shows what you have done — it represents how seasoned a card is.
+   */
+  xp?: number;
+
+  /**
+   * Earned Ozzy value for this card.
+   * Assigned randomly at forge time (seeded by card prompts) and can increase
+   * through missions and special events.
+   * Ozzies show how valuable and respected a card is in the world of Sk8rpunk.
+   * Account Ozzies = sum across the entire collection.
+   * Crew Ozzies = sum across the active 6-card Crew.
+   */
+  ozzies?: number;
 }
 
 // ── Deck payload ──────────────────────────────────────────────────────────────
@@ -275,15 +293,38 @@ export interface BattleResult {
 
 // ── Leaderboard payload ───────────────────────────────────────────────────────
 
-/** A public leaderboard entry uploaded from a player's chosen deck. */
+/** A public leaderboard entry uploaded from a player's chosen deck/Crew. */
 export interface LeaderboardEntry {
   uid: string;
   displayName: string;
+  /** Player-facing name for the active 6-card Crew/deck. */
   deckName: string;
   cardCount: number;
+  /**
+   * Deck Power = sum of all stat Points across all cards in the active Crew.
+   * Deck Power shows how strong your Crew is.
+   */
   deckPower: number;
-  /** Total Ozzycred worth of the deck (sum of every card's stat total). */
+  /**
+   * Legacy stat-based deck worth (kept for backward compatibility).
+   * New code should prefer crewOzzies.
+   */
   ozzies: number;
+  /**
+   * Crew Ozzies = sum of each card's individual Ozzy value across the
+   * active 6-card Crew.  Ozzies show how valuable and respected the Crew is.
+   */
+  crewOzzies?: number;
+  /**
+   * Crew XP = sum of XP across all cards in the active 6-card Crew.
+   * XP shows what the Crew has done through gameplay.
+   */
+  crewXp?: number;
+  /**
+   * Combined leaderboard score:
+   *   Deck Power + Crew Ozzies + (Crew XP / 10,000) + district reputation
+   */
+  leaderboardScore?: number;
   strongestStat: StatKey;
   strongestStatTotal: number;
   synergyBonusPct: number;

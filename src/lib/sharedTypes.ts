@@ -288,3 +288,59 @@ export const XP_REWARD = {
 } as const;
 
 export type XpRewardKey = keyof typeof XP_REWARD;
+
+// ── Mission risk/reward types (progression overhaul) ─────────────────────────
+
+/**
+ * Types of rewards a mission can grant to a card, Crew, or account.
+ * @sprint 3 @owner gamma
+ */
+export type MissionRewardKind =
+  | "xp"               // card XP
+  | "stat_increase"    // increase a card's stat Points
+  | "ozzies"           // Ozzy value for a card / the Crew / the account
+  | "card"             // add a card to the player's collection
+  | "component"        // add or upgrade a board component
+  | "district_rep";    // district reputation standing
+
+/**
+ * Types of risks / penalties a mission can apply on failure.
+ * @sprint 3 @owner gamma
+ */
+export type MissionRiskKind =
+  | "stat_damage"       // decrease a card's stat Points (e.g. -10 Range)
+  | "component_damage"  // damage a board component, requiring repair
+  | "card_lockout"      // temporarily lock a card out of play
+  | "repair_cooldown"   // add a repair cooldown to one or more cards
+  | "jail_time"         // narrative lockout event (district-specific)
+  | "event_lockout";    // generic time-based lockout
+
+/**
+ * A single reward item awarded by a mission run.
+ * @sprint 3 @owner gamma
+ */
+export interface MissionReward {
+  kind: MissionRewardKind;
+  /** Human-readable label shown in the mission UI. */
+  label: string;
+  /** Numeric magnitude (e.g. XP amount, stat delta, Ozzy value). */
+  amount?: number;
+  /** Target stat key for stat_increase rewards. */
+  stat?: MissionStat;
+}
+
+/**
+ * A single risk item that may be applied on mission failure.
+ * @sprint 3 @owner gamma
+ */
+export interface MissionRisk {
+  kind: MissionRiskKind;
+  /** Human-readable label shown in the mission UI. */
+  label: string;
+  /** Numeric magnitude (e.g. stat delta, lockout duration in minutes). */
+  amount?: number;
+  /** Target stat key for stat_damage risks. */
+  stat?: MissionStat;
+  /** Number of cards that may be affected (for multi-card risks). */
+  cardCount?: number;
+}

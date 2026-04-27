@@ -16,6 +16,7 @@ import { getCoverIdentityProfile } from "./coverIdentity";
 import { getClassMultiplier, getClassBadgeLabel } from "./classScaling";
 import { createDefaultMaintenance } from "./cardMaintenance";
 import { resolveArchetypeStyle } from "./styles";
+import { assignBaseOzzies } from "./progression";
 import type { CardPayload, CardPrompts, ForgedBoardComponents, ForgedRoleData, ForgedVarianceData } from "./types";
 import type { BoardConfig } from "./boardBuilderTypes";
 
@@ -123,6 +124,9 @@ export function buildForgedCard({ prompts, boardConfig, idNonce }: BuildForgedCa
     stealth: charRng.range(-varianceRange, varianceRange),
     grit:    charRng.range(-varianceRange, varianceRange),
   };
+
+  // ── Base Ozzies (deterministic, seeded per rarity) ─────────────────────────
+  const ozzies = assignBaseOzzies(rarity, charRng.next());
 
   // ── Final stats: scale board → 0-10, add role bonuses + variance, apply class multiplier ──
   const rb = role.roleBonuses;
@@ -232,6 +236,10 @@ export function buildForgedCard({ prompts, boardConfig, idNonce }: BuildForgedCa
     },
 
     back: {},
+
+    // ── Progression fields ─────────────────────────────────────────────────
+    xp:     0,
+    ozzies,
   };
 }
 

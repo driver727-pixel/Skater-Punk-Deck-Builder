@@ -43,7 +43,7 @@ export function useNotifications() {
       await updateDoc(doc(db, "notifications", uid, "items", notifId), { read: true });
     } catch (err) {
       // Best-effort — failure to mark as read shouldn't break the UI.
-      console.warn("Failed to mark notification as read:", err);
+      console.warn("Failed to mark notification as read:", notifId, err);
     }
   }, [uid]);
 

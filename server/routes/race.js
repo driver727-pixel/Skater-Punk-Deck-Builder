@@ -19,6 +19,20 @@
  * challenger is refunded.
  */
 import { createRaceCardSnapshot, resolveRace, RACE_TICK_MS } from '../lib/race.js';
+import rateLimit from 'express-rate-limit';
+
+// CodeQL-visible fallback rate limiter. The injected `raceRateLimit` is the
+// production limiter (shared Redis store across the cluster); this fallback
+// guarantees that every race route is wrapped with a real rate limiter even
+// if the caller forgets to pass one in (e.g. unit-test harnesses) and gives
+// CodeQL a definite middleware reference to recognise.
+const fallbackRaceRateLimit = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Too many race requests — please wait a moment and try again.' },
+});
 
 const CHALLENGES_COLLECTION = 'challenges';
 const RACES_COLLECTION = 'races';
@@ -113,8 +127,9 @@ export function registerRaceRoutes(app, {
 }) {
   if (!app) throw new Error('registerRaceRoutes requires an Express app.');
 
-  // Rate-limit all race endpoints (use battle limit if no dedicated one supplied).
-  const limiter = raceRateLimit ?? ((_req, _res, next) => next());
+  // Always have a real rate limiter wrapped around every route — defaults
+  // to the locally-constructed fallback when no shared limiter is provided.
+  const limiter = raceRateLimit ?? fallbackRaceRateLimit;
 
   // ── POST /api/race/challenge ─────────────────────────────────────────────
   app.post('/api/race/challenge', limiter, async (req, res) => {

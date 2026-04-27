@@ -11,6 +11,7 @@ import { useAuth } from "../context/AuthContext";
 import { TIERS } from "../lib/tiers";
 import { db } from "../lib/firebase";
 import { TierModal } from "./TierModal";
+import { NotificationBell } from "./NotificationBell";
 import { useFactionDiscovery } from "../hooks/useFactionDiscovery";
 import { sfxNavigate } from "../lib/sfx";
 import { GeoAtlas } from "./GeoAtlas";
@@ -161,7 +162,9 @@ export function Nav() {
             {authLoading ? (
               <span className="nav-auth-loading" aria-label="Loading…" />
             ) : user ? (
-              <div className="user-menu-wrap" ref={menuRef}>
+              <>
+                <NotificationBell />
+                <div className="user-menu-wrap" ref={menuRef}>
                 <button
                   className="user-avatar-btn"
                   onClick={() => setMenuOpen((v) => !v)}
@@ -193,6 +196,7 @@ export function Nav() {
                   </div>
                 )}
               </div>
+              </>
             ) : (
               <button
                 className="btn-outline nav-logout"

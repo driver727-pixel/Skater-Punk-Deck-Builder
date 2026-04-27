@@ -309,15 +309,18 @@ export function buildRaceResult(simulation, { challengerStats, defenderStats, wa
     winnerSide = "defender";
   }
 
-  const safeWager = clampInt(wager, 0, 100_000);
+  // Defense-in-depth: re-clamp the wager here (route also clamps via
+  // `clampWager`) so the resolver remains safe to call from tests/scripts
+  // that bypass the HTTP layer.
+  const clampedWager = clampInt(wager, 0, 100_000);
   let challengerOzzy = 0;
   let defenderOzzy = 0;
-  if (winnerSide === "challenger" && safeWager > 0) {
-    challengerOzzy = safeWager;
-    defenderOzzy = -safeWager;
-  } else if (winnerSide === "defender" && safeWager > 0) {
-    challengerOzzy = -safeWager;
-    defenderOzzy = safeWager;
+  if (winnerSide === "challenger" && clampedWager > 0) {
+    challengerOzzy = clampedWager;
+    defenderOzzy = -clampedWager;
+  } else if (winnerSide === "defender" && clampedWager > 0) {
+    challengerOzzy = -clampedWager;
+    defenderOzzy = clampedWager;
   }
   // Draws refund both wagers (handled by caller).
 

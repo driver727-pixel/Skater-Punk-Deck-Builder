@@ -16,6 +16,7 @@ import {
   CRITICAL_NOSE_CONSTRAINT,
   CRITICAL_SINGLE_ASSEMBLY_CONSTRAINT,
   DRIVETRAIN_IMAGE_DESCRIPTIONS,
+  WHEEL_IMAGE_DESCRIPTIONS,
   buildBoardImagePrompt,
   resolveReferenceUrlCategories,
 } from '../lib/boardBuilderPrompt.js';
@@ -119,6 +120,38 @@ test('buildBoardImagePrompt [4WD] — drive hardware described on both nose and 
     '4WD prompt must include the 4WD drivetrain description',
   );
 });
+
+const WHEEL_DIAMETERS = {
+  Urethane: '97 mm',
+  Cloud: '107 mm',
+  Pneumatic: '150 mm',
+  Rubber: '175 mm',
+};
+
+for (const [wheels, diameter] of Object.entries(WHEEL_DIAMETERS)) {
+  test(`buildBoardImagePrompt [${wheels}] — includes real wheel diameter scale anchor`, () => {
+    const prompt = buildBoardImagePrompt({
+      ...BASE_CONFIG,
+      drivetrain: wheels === 'Pneumatic' || wheels === 'Rubber' ? '4WD' : 'Belt',
+      boardType: wheels === 'Pneumatic' || wheels === 'Rubber' ? 'Mountain' : 'Street',
+      wheels,
+    });
+
+    assert.ok(
+      WHEEL_IMAGE_DESCRIPTIONS[wheels].includes(diameter),
+      `Expected ${wheels} description to include ${diameter}`,
+    );
+    assert.ok(
+      prompt.includes(WHEEL_IMAGE_DESCRIPTIONS[wheels]),
+      `Prompt for ${wheels} must include the diameter-bearing wheel description`,
+    );
+    assert.match(
+      prompt,
+      /wheel type and wheel diameter/,
+      'Prompt must preserve wheel diameter as a generation requirement',
+    );
+  });
+}
 
 // TODO: buildBoardImagePrompt currently appends CRITICAL_NOSE_CONSTRAINT
 // unconditionally, so 4WD prompts include "On non-4WD boards the nose truck

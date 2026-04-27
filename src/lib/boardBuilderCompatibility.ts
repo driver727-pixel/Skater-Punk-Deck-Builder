@@ -64,11 +64,8 @@ export function validateBoardCompatibility(config: BoardConfig): CompatibilityEr
       if (normalizedConfig.wheels === "Rubber") {
         errors.push({ component: "wheels", message: "Surf skateboard cannot use Solid Rubber wheels." });
       }
-      if (normalizedConfig.drivetrain === "Belt") {
-        errors.push({ component: "drivetrain", message: "Surf skateboard cannot use Belt drive." });
-      }
-      if (normalizedConfig.drivetrain === "4WD") {
-        errors.push({ component: "drivetrain", message: "Surf skateboard cannot use 4WD drivetrain." });
+      if (normalizedConfig.drivetrain !== "Hub") {
+        errors.push({ component: "drivetrain", message: "Surf skateboard can only use Hub drive." });
       }
       if (normalizedConfig.motor === "Torque") {
         errors.push({ component: "motor", message: "Surf skateboard cannot use the Torque 7000 motor." });
@@ -114,7 +111,7 @@ export function getAllowedComponents(boardType: BoardType): AllowedBoardComponen
       };
     case "Surf":
       return {
-        drivetrains: allDrivetrains.filter((drivetrain) => drivetrain !== "Belt" && drivetrain !== "4WD"),
+        drivetrains: ["Hub"],
         motors: allMotors.filter((motor) => motor !== "Torque" && motor !== "Outrunner"),
         wheels: allWheels.filter((wheel) => wheel !== "Pneumatic" && wheel !== "Rubber"),
         batteries: nonTopMountBatteries.filter((battery) => battery !== "DoubleStack"),

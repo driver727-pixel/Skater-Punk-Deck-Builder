@@ -103,7 +103,7 @@ export function useDecks() {
     if (uid) return;
 
     if (guestHydratingRef.current) {
-      if (initialGuestDecksRef.current !== decks) return;
+      if (!initialGuestDecksRef.current || !shallowEqualDeckArrays(initialGuestDecksRef.current, decks)) return;
       guestHydratingRef.current = false;
     }
 

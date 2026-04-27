@@ -67,7 +67,7 @@ export function useCollection() {
     if (uid) return;
 
     if (guestHydratingRef.current) {
-      if (initialGuestCardsRef.current !== cards) return;
+      if (!initialGuestCardsRef.current || !shallowEqualCardArrays(initialGuestCardsRef.current, cards)) return;
       guestHydratingRef.current = false;
     }
 

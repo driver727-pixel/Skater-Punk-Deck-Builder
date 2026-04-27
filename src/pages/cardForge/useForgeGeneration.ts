@@ -90,6 +90,7 @@ export function useForgeGeneration() {
   // Restore the per-user forge session whenever the active auth identity changes.
   useEffect(() => {
     abortRef.current?.abort();
+    abortRef.current = null;
     const session = loadForgeSession(sessionOwnerKey);
     setGenerated(session?.card ?? null);
     setCharacterBlend(session?.characterBlend ?? DEFAULT_CHARACTER_BLEND);
@@ -103,7 +104,7 @@ export function useForgeGeneration() {
       ...(session?.characterUrl != null ? { characterUrl: session.characterUrl } : {}),
       ...(session?.frameUrl != null ? { frameUrl: session.frameUrl } : {}),
     });
-  }, [abortRef, sessionOwnerKey, setLayers]);
+  }, [sessionOwnerKey, setLayers]);
 
   // Persist the current forge state to sessionStorage whenever it changes.
   useEffect(() => {

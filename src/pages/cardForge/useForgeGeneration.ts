@@ -62,10 +62,12 @@ export function useForgeGeneration() {
     setLayerParams,
     setLayers,
   } = useForgeLayers();
+  // abortRef is a stable ref object from useForgeLayers.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const abortCurrentGeneration = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
-  }, [abortRef]);
+  }, []);
   const forgeClassOptions = useMemo<ForgeClassOption[]>(
     () => getForgeClassOptions({
       missionXp: userProfile?.missionXp ?? 0,
@@ -133,6 +135,8 @@ export function useForgeGeneration() {
     }));
   }, []);
 
+  // abortRef is a stable ref object from useForgeLayers.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleForge = useCallback(() => {
     if (!canForge) {
       openUpgradeModal();
@@ -261,7 +265,6 @@ export function useForgeGeneration() {
     setForging(false);
   }, [
      abortCurrentGeneration,
-     abortRef,
     boardConfig,
     canForge,
     consumeCredit,

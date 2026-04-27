@@ -16,7 +16,7 @@ import { getFrameBlendMode, shouldRenderSvgFrame } from "./staticAssets";
 /** Output dimensions for the downloaded card (poker card at 300 dpi). */
 const CARD_WIDTH  = 750;
 const CARD_HEIGHT = 1050;
-const CHARACTER_LAYER_SCALE = 0.85;
+const CHARACTER_LAYER_SCALE = 0.8;
 
 function drawImageCover(
   ctx: CanvasRenderingContext2D,

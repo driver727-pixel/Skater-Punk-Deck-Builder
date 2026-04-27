@@ -100,7 +100,7 @@ export function normalizeForgeRarity(
 }
 
 function pick<T>(rng: ReturnType<typeof createSeededRandom>, values: readonly T[]): T {
-  return rng.pick([...values]);
+  return rng.pick(values as T[]);
 }
 
 export function buildSignupBonusCard(uid: string): CardPayload {

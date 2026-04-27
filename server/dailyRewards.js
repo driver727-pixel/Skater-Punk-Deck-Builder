@@ -4,6 +4,7 @@
 
 export const DAILY_STREAK_COLLECTION = 'dailyStreaks';
 export const DAILY_REWARD_STREAK_CAP = 7;
+const DAY_MS = 86_400_000;
 
 export function toDateKey(value = new Date()) {
   const date = value instanceof Date ? value : new Date(value);
@@ -24,7 +25,7 @@ export function diffDateKeys(previousDateKey, nextDateKey) {
   if (previous == null || next == null) {
     return Number.NaN;
   }
-  return Math.round((next - previous) / 86_400_000);
+  return Math.round((next - previous) / DAY_MS);
 }
 
 export function buildDailyReward(currentStreak) {

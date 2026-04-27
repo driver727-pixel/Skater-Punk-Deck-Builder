@@ -38,22 +38,24 @@ export function registerRewardRoutes(app, {
   rewardRateLimit,
   authenticateFirebaseUser,
 }) {
-  app.post('/api/player-rewards/sync', rewardRateLimit, async (req, res) => {
+  async function authenticateRewardCaller(req, res, next) {
+    try {
+      req.caller = await authenticateFirebaseUser(req);
+      next();
+    } catch (error) {
+      res.status(error.statusCode ?? 500).json({ error: error.message ?? 'Authentication failed.' });
+    }
+  }
+
+  app.post('/api/player-rewards/sync', rewardRateLimit, authenticateRewardCaller, async (req, res) => {
     if (!adminDb) {
       res.status(503).json({ error: 'Player rewards are not configured on this server.' });
       return;
     }
 
-    let caller;
-    try {
-      caller = await authenticateFirebaseUser(req);
-    } catch (error) {
-      res.status(error.statusCode ?? 500).json({ error: error.message ?? 'Authentication failed.' });
-      return;
-    }
-
     const signupBonusCard = req.body?.signupBonusCard;
     const todayDateKey = toDateKey();
+    const caller = req.caller;
 
     try {
       const result = await adminDb.runTransaction(async (tx) => {
@@ -69,7 +71,7 @@ export function registerRewardRoutes(app, {
         const progression = normalizeProgression(profile);
 
         let signupBonusGranted = false;
-        let signupBonusCardId = typeof profile?.signupRareCardId === 'string' ? profile.signupRareCardId : '';
+        let signupBonusCardId = typeof profile?.signupBonusCardId === 'string' ? profile.signupBonusCardId : '';
 
         if (!profile?.signupRareCardClaimedAt) {
           const validation = validateSignupBonusCard(signupBonusCard);
@@ -84,7 +86,7 @@ export function registerRewardRoutes(app, {
           );
           tx.set(profileRef, {
             signupRareCardClaimedAt: FieldValue.serverTimestamp(),
-            signupRareCardId,
+            signupBonusCardId,
             updatedAt: FieldValue.serverTimestamp(),
           }, { merge: true });
           signupBonusGranted = true;

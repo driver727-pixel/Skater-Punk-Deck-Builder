@@ -82,9 +82,7 @@ export function useForgeGeneration() {
 
   useEffect(() => {
     if (prompts.rarity !== selectedForgeRarity) {
-      setPrompts((current) => current.rarity === selectedForgeRarity
-        ? current
-        : { ...current, rarity: selectedForgeRarity });
+      setPrompts((current) => ({ ...current, rarity: selectedForgeRarity }));
     }
   }, [prompts.rarity, selectedForgeRarity]);
 

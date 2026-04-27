@@ -126,6 +126,8 @@ export function ForgeControlsPanel({
   ageGroups,
 }: ForgeControlsPanelProps) {
   const isFreeTier = tier === "free";
+  const selectedClassHint = classOptions.find((option) => option.rarity === prompts.rarity)?.unlockHint
+    || `Start with Punch Skaters, then unlock higher classes with XP or Ozzies. ${LEGENDARY_FORGE_NOTICE}`;
 
   return (
     <div className="forge-form">
@@ -163,10 +165,7 @@ export function ForgeControlsPanel({
             />
           ))}
         </div>
-        <p className="form-hint">
-          {classOptions.find((option) => option.rarity === prompts.rarity)?.unlockHint
-            ?? `Start with Punch Skaters, then unlock higher classes with XP or Ozzies. ${LEGENDARY_FORGE_NOTICE}`}
-        </p>
+        <p className="form-hint">{selectedClassHint}</p>
       </div>
 
       <div className="form-group">

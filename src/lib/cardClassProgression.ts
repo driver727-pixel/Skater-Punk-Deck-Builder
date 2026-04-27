@@ -18,6 +18,12 @@ import type {
 export interface PlayerProgressionSnapshot {
   missionXp: number;
   missionOzzies: number;
+  /**
+   * Current Deck Power of the player's active 6-card Crew.
+   * Once this reaches a threshold, the corresponding forge rarity tier unlocks.
+   * Deck Power = sum of all stat Points across all 6 Crew cards.
+   */
+  deckPower?: number;
 }
 
 export interface ForgeClassOption {
@@ -30,6 +36,8 @@ interface ClassUnlockRule {
   rarity: ForgeClassOption["rarity"];
   minXp: number;
   minOzzies: number;
+  /** Deck Power threshold — reaches this by building a strong 6-card Crew. */
+  minDeckPower: number;
 }
 
 const ARCHETYPES: Archetype[] = [
@@ -53,11 +61,26 @@ const FACE_CHARACTERS: FaceCharacter[] = ["Conventional", "Attractive", "Weather
 const ACCENT_PRESETS = ["#00ff88", "#00ccff", "#3366ff", "#ff4444", "#ffaa00", "#8b5cf6", "#ff66cc"];
 
 export const LEGENDARY_FORGE_NOTICE = "Legendary cards are not forgeable.";
+
+/**
+ * Forge-class unlock rules.
+ *
+ * A rarity tier unlocks when the player meets ANY of:
+ *   - `minXp`      mission XP threshold, OR
+ *   - `minOzzies`  mission Ozzies threshold, OR
+ *   - `minDeckPower` active Crew Deck Power threshold
+ *
+ * The Deck Power thresholds are expressed relative to the long-term design
+ * target of 10,000 max Deck Power (see progression.ts).  As the stat ceiling
+ * rises in future sprints, these numbers will remain the authoritative target.
+ *
+ * No-pay-to-win: progression must come from play.
+ */
 export const FORGE_CLASS_RULES: readonly ClassUnlockRule[] = [
-  { rarity: "Punch Skater", minXp: 0, minOzzies: 0 },
-  { rarity: "Apprentice", minXp: 80, minOzzies: 40 },
-  { rarity: "Master", minXp: 220, minOzzies: 110 },
-  { rarity: "Rare", minXp: 480, minOzzies: 240 },
+  { rarity: "Punch Skater", minXp: 0,   minOzzies: 0,   minDeckPower: 0 },
+  { rarity: "Apprentice",   minXp: 80,  minOzzies: 40,  minDeckPower: 1_000 },
+  { rarity: "Master",       minXp: 220, minOzzies: 110, minDeckPower: 2_500 },
+  { rarity: "Rare",         minXp: 480, minOzzies: 240, minDeckPower: 5_000 },
 ] as const;
 
 function normalizeProgressionValue(value: number | undefined): number {
@@ -73,18 +96,20 @@ export function isForgeClassUnlocked(
   progression: PlayerProgressionSnapshot,
 ): boolean {
   const rule = getUnlockRule(rarity);
+  if (rule.minXp === 0 && rule.minOzzies === 0 && rule.minDeckPower === 0) return true;
   const missionXp = normalizeProgressionValue(progression.missionXp);
   const missionOzzies = normalizeProgressionValue(progression.missionOzzies);
-  return rule.minXp === 0 || missionXp >= rule.minXp || missionOzzies >= rule.minOzzies;
+  const deckPower = normalizeProgressionValue(progression.deckPower);
+  return missionXp >= rule.minXp || missionOzzies >= rule.minOzzies || deckPower >= rule.minDeckPower;
 }
 
 export function getForgeClassOptions(progression: PlayerProgressionSnapshot): ForgeClassOption[] {
   return FORGE_CLASS_RULES.map((rule) => ({
     rarity: rule.rarity,
     unlocked: isForgeClassUnlocked(rule.rarity, progression),
-    unlockHint: rule.minXp === 0
+    unlockHint: rule.minXp === 0 && rule.minOzzies === 0 && rule.minDeckPower === 0
       ? null
-      : `Unlock with ${rule.minXp} XP or ${rule.minOzzies} Ozzies.`,
+      : `Unlock with ${rule.minXp.toLocaleString()} XP, ${rule.minOzzies.toLocaleString()} Ozzies, or ${rule.minDeckPower.toLocaleString()} Deck Power.`,
   }));
 }
 

@@ -81,7 +81,8 @@ Owner-only sub-collection. Each document mirrors `CardPayload` from `src/lib/typ
   },
   flavorText: string,
   tags: string[],
-  ozzies?: number,              // $1.00–$100.00
+  ozzies?: number,              // base Ozzy value assigned at forge time; increases via missions/events
+  xp?: number,                 // accumulated gameplay XP — starts at 0, max 100,000,000
   board?: BoardConfig,
   boardLoadout?: BoardLoadout,
   boardImageUrl?: string,
@@ -243,16 +244,19 @@ Server-written battle outcomes. Participant read only.
 
 ### `leaderboard/{uid}` — LeaderboardEntry
 
-Public leaderboard. Owner write.
+Public leaderboard. Owner write. Ordered by `deckPower` DESC, `ozzies` DESC.
 
 ```
 {
   uid: string,
   displayName: string,
-  deckName: string,
+  deckName: string,             // player-facing Crew name
   cardCount: number,
-  deckPower: number,
-  ozzies: number,
+  deckPower: number,            // Deck Power = sum of all stat Points across active 6-card Crew
+  ozzies: number,               // legacy stat-based worth (backward compat)
+  crewOzzies?: number,          // sum of card Ozzy values across active 6-card Crew
+  crewXp?: number,              // sum of card XP across active 6-card Crew
+  leaderboardScore?: number,    // deckPower + crewOzzies + (crewXp / 10,000) + districtRep
   strongestStat: StatKey,
   strongestStatTotal: number,
   synergyBonusPct: number,
@@ -260,6 +264,8 @@ Public leaderboard. Owner write.
   updatedAt: string,
 }
 ```
+
+See `docs/PROGRESSION.md` for the full leaderboard scoring formula.
 
 ### `factionImages/{factionKey}`
 

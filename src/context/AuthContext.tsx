@@ -31,17 +31,21 @@ import { doc, onSnapshot, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, firebaseUnavailableMessage } from "../lib/firebase";
 import { resolveApiUrl } from "../lib/apiUrls";
 import { syncReferralCredits } from "../services/referrals";
+import { syncPlayerRewards, type PlayerRewardsSyncResult } from "../services/playerRewards";
 
 interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
   isAdmin?: boolean;
+  missionXp?: number;
+  missionOzzies?: number;
 }
 
 interface AuthContextValue {
   user: User | null;
   userProfile: UserProfile | null;
+  playerRewards: PlayerRewardsSyncResult | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
@@ -122,6 +126,7 @@ async function syncAdminSession(user: User): Promise<boolean> {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [playerRewards, setPlayerRewards] = useState<PlayerRewardsSyncResult | null>(null);
   const [adminClaim, setAdminClaim] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -141,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       setUserProfile(null);
+      setPlayerRewards(null);
       setAdminClaim(false);
       if (!u) {
         setLoading(false);
@@ -153,6 +159,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       setAdminClaim(admin);
       syncReferralCredits(u.uid).catch(() => {/* non-fatal */});
+      syncPlayerRewards(u)
+        .then((result) => {
+          setPlayerRewards(
+            result.signupBonusGranted || result.dailyReward.claimed
+              ? result
+              : null,
+          );
+          setUserProfile((prev) => prev ? {
+            ...prev,
+            missionXp: result.progression.missionXp,
+            missionOzzies: result.progression.missionOzzies,
+          } : prev);
+        })
+        .catch((error) => {
+          console.warn("[Rewards] Failed to sync player rewards:", error);
+        });
       setLoading(false);
     });
     return unsubscribe;
@@ -169,6 +191,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: user.email ?? "",
           displayName: getFallbackDisplayName(user),
           isAdmin: adminClaim,
+          missionXp: 0,
+          missionOzzies: 0,
         });
       return;
     }
@@ -185,6 +209,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             getProfileString(data.displayName)
             ?? getFallbackDisplayName(user),
           isAdmin: adminClaim,
+          missionXp: typeof data.missionXp === "number" ? data.missionXp : 0,
+          missionOzzies: typeof data.missionOzzies === "number" ? data.missionOzzies : 0,
         });
       },
       () => {
@@ -193,6 +219,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: user.email ?? "",
           displayName: getFallbackDisplayName(user),
           isAdmin: adminClaim,
+          missionXp: 0,
+          missionOzzies: 0,
         });
       },
     );
@@ -281,7 +309,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, signIn, signUp, signOut, signInWithGoogle, sendPasswordReset, signInWithPhone, changePassword, changeDisplayName, deleteAccount }}>
+    <AuthContext.Provider value={{ user, userProfile, playerRewards, loading, signIn, signUp, signOut, signInWithGoogle, sendPasswordReset, signInWithPhone, changePassword, changeDisplayName, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );

@@ -11,7 +11,6 @@ import {
   GENDERS,
   HAIR_LENGTHS,
   RANDOM_SKATER_TOOLTIP,
-  RARITIES,
   SKIN_TONES,
 } from "./cardForge/constants";
 import { useCardForgeController } from "./cardForge/useCardForgeController";
@@ -26,6 +25,7 @@ export function CardForge() {
     closeWelcome,
     downloading,
     forging,
+    forgeClassOptions,
     freeCardUsed,
     generated,
     generateCredits,
@@ -104,6 +104,7 @@ export function CardForge() {
           canForge={canForge}
           canSaveToCollection={tierCanSave}
           characterBlend={characterBlend}
+          classOptions={forgeClassOptions}
           districts={DISTRICTS}
           downloading={downloading}
           faceCharacters={FACE_CHARACTERS}
@@ -126,7 +127,6 @@ export function CardForge() {
           onPromptChange={setPrompt}
           onSaveToCollection={handleSaveToCollection}
           prompts={prompts}
-          rarities={RARITIES}
           saveError={saveError}
           saving={saving}
           skinTones={SKIN_TONES}

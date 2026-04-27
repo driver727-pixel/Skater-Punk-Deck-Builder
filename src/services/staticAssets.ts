@@ -166,6 +166,7 @@ const FACTION_ASSETS: Partial<Record<Faction, string>> = {
   "D4rk $pider":                          "/assets/factions/d4rk_pider.webp",
   "Hermes' Squirmies":                    "/assets/factions/hermes_squirmies.webp",
   "Iron Curtains":                        "/assets/factions/iron_curtains.webp",
+  "Moonrisers":                           "/assets/factions/moonrisers.webp",
   "Ne0n Legion":                          "/assets/factions/ne0n_legion.webp",
   "Qu111s (Quills)":                      "/assets/factions/qu111s_quills.webp",
   "The Asclepians":                       "/assets/factions/the_asclepians.webp",

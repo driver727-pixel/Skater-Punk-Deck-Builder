@@ -65,7 +65,7 @@ export function useForgeGeneration() {
   const abortCurrentGeneration = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
-  }, []);
+  }, [abortRef]);
   const forgeClassOptions = useMemo<ForgeClassOption[]>(
     () => getForgeClassOptions({
       missionXp: userProfile?.missionXp ?? 0,
@@ -261,6 +261,7 @@ export function useForgeGeneration() {
     setForging(false);
   }, [
      abortCurrentGeneration,
+     abortRef,
     boardConfig,
     canForge,
     consumeCredit,

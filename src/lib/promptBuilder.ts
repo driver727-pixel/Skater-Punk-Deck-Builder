@@ -1,4 +1,5 @@
 import { createSeededRandom } from "./prng";
+import { resolveBoardPoseScene } from "./boardPoseScenes";
 import { getCoverIdentityProfile } from "./coverIdentity";
 import { PUNCH_SKATER_RARITY, type CardPrompts, type Rarity } from "./types";
 
@@ -21,7 +22,7 @@ const DISTRICT_DESCRIPTIONS: Record<string, string> = {
 
 const STYLE_CLOTHING: Record<string, string> = {
   Corporate:      "a sleek corporate suit with a high-tech earpiece",
-  Street:         "a street-style hoodie and cargo pants with graffiti patches",
+  Street:         "a street-style hoodie and cargo pants with sewn patches",
   "Off-grid":     "rugged off-grid survivalist gear with utility belts",
   Union:          "union worker overalls covered in badge patches",
   Olympic:        "a coordinated high-end athletic ensemble — matching top and bottoms in sponsor colours, performance fabric, logo patches, and a professional snowboard warm-up suit or full snowsuit",
@@ -65,13 +66,16 @@ const CORE_COMIC_BOOK_STYLE =
   "Comic-book illustration for a premium trading card: crisp detail, grounded faces, and strong silhouette readability. ";
 
 const ELECTRIC_SKATEBOARD_REQUIREMENT =
-  "Vehicle: an electric skateboard only — a single board deck under the rider's feet with exactly four skateboard wheels. " +
+  "Vehicle: an electric skateboard only — a single board deck with exactly four skateboard wheels. " +
   "The wheels are mounted in two aligned pairs on front and rear trucks with visible axles parallel to the deck width. " +
   "All four wheels point in the same riding direction as the board, never sideways or perpendicular to the deck, and they do not pivot like caster wheels. " +
   "No handlebars, no seat, no extra chassis. ";
 
 export const ELECTRIC_SKATEBOARD_EXCLUSIONS =
   "Never depict a scooter, mobility chair, roller skates, inline skates, children’s hoverboard, self-balancing board, segway, caster wheels, sideways wheels, perpendicular wheels, swivel wheels, or any other device underfoot. ";
+
+export const CHARACTER_LAYER_BOARD_EXCLUSIONS =
+  "No generated skateboard, no invented skateboard deck, no skateboard wheels, no trucks, no board underfoot. ";
 
 function joinPromptBlocks(...blocks: Array<string | undefined>): string {
   return blocks
@@ -108,11 +112,11 @@ function buildDynamicComposition(prompts: CardPrompts): string {
     "slightly worm's-eye comic-book perspective",
   ]);
   const motionLine = rng.pick([
-    "captured mid-carve with the rider leaning hard into momentum",
-    "caught in a fast push forward with one shoulder leading the motion",
-    "shown bracing through a sharp turn with the body counterbalancing the deck",
-    "posed as if popping over rough ground with the board alive underfoot",
-    "framed in a hard-driving glide with the deck cutting diagonally through the scene",
+    "captured leaning hard into courier momentum",
+    "caught in a fast forward drive with one shoulder leading the motion",
+    "shown bracing through a sharp route change with strong counterbalance",
+    "posed as if popping over rough ground with action energy in the legs",
+    "framed in a hard-driving movement beat cutting diagonally through the scene",
   ]);
   const gazeLine = rng.pick([
     "eyes focused down the route instead of staring blankly at the camera",
@@ -254,15 +258,13 @@ function buildBodyDescription(bodyType: string): string {
  * (matching the character-image cache key). Changing district or rarity leaves
  * this layer untouched.
  */
-export function buildCharacterPrompt(prompts: CardPrompts, graffitiWords?: string[]): string {
+export function buildCharacterPrompt(prompts: CardPrompts): string {
   const coverIdentity = getCoverIdentityProfile(prompts.archetype);
   const clothing  = coverIdentity?.lookPrompt ?? STYLE_CLOTHING[prompts.style] ?? prompts.style;
   const pose      = buildCoverIdentityPose(prompts.archetype);
   const composition = buildDynamicComposition(prompts);
+  const boardScene = resolveBoardPoseScene(buildCharacterVisualSeed(prompts));
   const mood      = RARITY_MOOD[prompts.rarity]       ?? "bold";
-  const graffitiLine = graffitiWords?.length
-    ? `The skateboard deck and wheels feature graffiti tags or brand logos reading '${graffitiWords.join("' and '")}'. `
-    : "";
 
   const genderDesc =
     prompts.gender === "Woman" ? "a woman" :
@@ -281,10 +283,9 @@ export function buildCharacterPrompt(prompts: CardPrompts, graffitiWords?: strin
 
   return joinPromptBlocks(
     CORE_COMIC_BOOK_STYLE,
-    `Full-body comic-book portrait of an adult courier operating under a ${coverIdentity?.label.toLowerCase() ?? "civilian"} cover identity, wearing ${clothing}, ${pose}, riding an electric skateboard, ${composition}.`,
-    ELECTRIC_SKATEBOARD_REQUIREMENT,
+    `Full-body comic-book portrait of an adult courier operating under a ${coverIdentity?.label.toLowerCase() ?? "civilian"} cover identity, wearing ${clothing}, ${pose}, ${boardScene.characterPrompt}, ${composition}.`,
+    `The skateboard itself is not generated in this character layer; leave clean compositing space for the exact board image asset.`,
     characterDesc,
-    graffitiLine,
     `Mood: ${mood}.`,
     `Background: solid neutral medium-gray studio, full figure head-to-toe, centered.`,
     `Adult subject (21+), fully clothed, SFW, LGBTQIA+ inclusive.`,
@@ -407,6 +408,7 @@ export function buildImagePrompt(prompts: CardPrompts): string {
   const clothing = coverIdentity?.lookPrompt ?? STYLE_CLOTHING[prompts.style] ?? prompts.style;
   const pose     = buildCoverIdentityPose(prompts.archetype);
   const composition = buildDynamicComposition(prompts);
+  const boardScene = resolveBoardPoseScene(buildCharacterVisualSeed(prompts));
   const mood     = RARITY_MOOD[prompts.rarity]       ?? "bold";
   const genderDesc =
     prompts.gender === "Woman" ? "a woman" :
@@ -425,7 +427,7 @@ export function buildImagePrompt(prompts: CardPrompts): string {
 
   return joinPromptBlocks(
     CORE_COMIC_BOOK_STYLE,
-    `Full-body comic-book portrait of an adult courier operating under a ${coverIdentity?.label.toLowerCase() ?? "civilian"} cover identity, wearing ${clothing}, ${pose}, riding an electric skateboard, ${composition}.`,
+    `Full-body comic-book portrait of an adult courier operating under a ${coverIdentity?.label.toLowerCase() ?? "civilian"} cover identity, wearing ${clothing}, ${pose}, ${boardScene.imagePrompt}, ${composition}.`,
     ELECTRIC_SKATEBOARD_REQUIREMENT,
     characterDesc,
     `Mood: ${mood}.`,

@@ -2394,10 +2394,12 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 
 /* ===== Layered Card Art Composite ===== */
 /*
- * Three AI-generated layers are stacked inside .card-art-composite:
+ * Five composited art layers are stacked inside .card-art-composite:
  *   1. background  – district environment scene (normal blend)
- *   2. character   – courier portrait (transparent PNG from background removal; normal blend)
- *   3. frame       – ornate rarity border on black background (screen blend removes black BG)
+ *   2. exact board – generated board asset composited without model redraw
+ *   3. character   – courier portrait (transparent PNG from background removal; normal blend)
+ *   4. frame       – ornate rarity border on black background (screen blend removes black BG)
+ *   5. svg-frame   – deterministic frame overlay when static frame assets are used
  *
  * Character layer is a transparent PNG produced by running the white-background
  * portrait through the birefnet background-removal model.  With a real transparent
@@ -2444,17 +2446,52 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   /* Normal blend: character has a transparent background from background removal,
      so it composites cleanly over the background layer without any masking.
      Scaled down 15% from the bottom so the head clears the top border. */
-  z-index: 2;
+  z-index: 3;
   mix-blend-mode: normal;
   object-fit: contain;
   transform: scale(0.85);
   transform-origin: bottom center;
 }
+.card-art-layer--board-exact {
+  z-index: 2;
+  inset: auto;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 7px rgba(0, 0, 0, 0.55));
+}
+.card-art-layer--board-workshop {
+  left: 8%;
+  bottom: 17%;
+  width: 58%;
+  height: 24%;
+  transform: rotate(-7deg);
+}
+.card-art-layer--board-loadout {
+  right: 5%;
+  top: 28%;
+  width: 43%;
+  height: 26%;
+  transform: rotate(9deg);
+}
+.card-art-layer--board-airborne {
+  left: 21%;
+  bottom: 9%;
+  width: 60%;
+  height: 23%;
+  transform: rotate(-10deg);
+}
+.card-art-layer--board-showcase {
+  right: 6%;
+  bottom: 16%;
+  width: 50%;
+  height: 24%;
+  transform: rotate(4deg);
+}
 .card-art-layer--frame {
   /* Screen blend: black interior becomes transparent, coloured foil border stays visible.
      object-fit: fill stretches the frame to exactly match the container so the border
      aligns with the card edges regardless of the frame image's intrinsic aspect ratio. */
-  z-index: 3;
+  z-index: 4;
   mix-blend-mode: screen;
   object-fit: fill;
 }
@@ -2471,7 +2508,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   /* SVG neon border overlay for the four redesigned rarity frames (Apprentice, Master,
      Rare, Legendary).  Sits above the AI frame image layer so the deterministic neon
      borders are always visible regardless of whether AI generation has completed. */
-  z-index: 4;
+  z-index: 5;
   mix-blend-mode: normal;
   pointer-events: none;
 }
@@ -5075,20 +5112,55 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   mix-blend-mode: normal;
 }
 .print-art-layer--char  {
-  z-index: 2;
+  z-index: 3;
   mix-blend-mode: normal;
   object-fit: contain;
   object-position: center bottom;
   transform: scale(0.85);
   transform-origin: bottom center;
 }
+.print-art-layer--board-exact {
+  z-index: 2;
+  inset: auto;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 7px rgba(0, 0, 0, 0.55));
+}
+.print-art-layer--board-workshop {
+  left: 8%;
+  bottom: 17%;
+  width: 58%;
+  height: 24%;
+  transform: rotate(-7deg);
+}
+.print-art-layer--board-loadout {
+  right: 5%;
+  top: 28%;
+  width: 43%;
+  height: 26%;
+  transform: rotate(9deg);
+}
+.print-art-layer--board-airborne {
+  left: 21%;
+  bottom: 9%;
+  width: 60%;
+  height: 23%;
+  transform: rotate(-10deg);
+}
+.print-art-layer--board-showcase {
+  right: 6%;
+  bottom: 16%;
+  width: 50%;
+  height: 24%;
+  transform: rotate(4deg);
+}
 .print-art-layer--frame {
-  z-index: 3;
+  z-index: 4;
   mix-blend-mode: screen;
   object-fit: fill;
 }
 .print-art-layer--svg-frame {
-  z-index: 3;
+  z-index: 5;
   mix-blend-mode: normal;
   pointer-events: none;
 }
@@ -5863,20 +5935,55 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
     mix-blend-mode: normal;
   }
   .print-only-card .print-art-layer--char  {
-    z-index: 2;
+    z-index: 3;
     mix-blend-mode: normal;
     object-fit: contain;
     object-position: center bottom;
     transform: scale(0.85);
     transform-origin: bottom center;
   }
+  .print-only-card .print-art-layer--board-exact {
+    z-index: 2;
+    inset: auto;
+    object-fit: contain;
+    pointer-events: none;
+    filter: drop-shadow(0 6px 7px rgba(0, 0, 0, 0.55));
+  }
+  .print-only-card .print-art-layer--board-workshop {
+    left: 8%;
+    bottom: 17%;
+    width: 58%;
+    height: 24%;
+    transform: rotate(-7deg);
+  }
+  .print-only-card .print-art-layer--board-loadout {
+    right: 5%;
+    top: 28%;
+    width: 43%;
+    height: 26%;
+    transform: rotate(9deg);
+  }
+  .print-only-card .print-art-layer--board-airborne {
+    left: 21%;
+    bottom: 9%;
+    width: 60%;
+    height: 23%;
+    transform: rotate(-10deg);
+  }
+  .print-only-card .print-art-layer--board-showcase {
+    right: 6%;
+    bottom: 16%;
+    width: 50%;
+    height: 24%;
+    transform: rotate(4deg);
+  }
   .print-only-card .print-art-layer--frame {
-    z-index: 3;
+    z-index: 4;
     mix-blend-mode: screen;
     object-fit: fill;
   }
   .print-only-card .print-art-layer--svg-frame {
-    z-index: 3;
+    z-index: 5;
     mix-blend-mode: normal;
     pointer-events: none;
   }

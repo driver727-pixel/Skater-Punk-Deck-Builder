@@ -27,6 +27,7 @@ import {
   shouldRenderSvgFrame,
 } from "../services/staticAssets";
 import { computeFocalCrop } from "../lib/focalCrop";
+import { resolveBoardPoseScene } from "../lib/boardPoseScenes";
 import { BOARD_TYPE_OPTIONS, DRIVETRAIN_OPTIONS, MOTOR_OPTIONS, WHEEL_OPTIONS, BATTERY_OPTIONS } from "../lib/boardBuilder";
 
 // ── Rarity colour map used on the card-back header ───────────────────────────
@@ -94,6 +95,8 @@ function CardFront({
   const frameLayerClass = hasBackFrame
     ? "print-art-layer print-art-layer--frame print-art-layer--frame-wrap"
     : "print-art-layer print-art-layer--frame";
+  const boardPoseScene = resolveBoardPoseScene(card.characterSeed);
+  const showExactBoardLayer = Boolean(card.board.imageUrl && (backgroundImageUrl || characterImageUrl));
 
   // Focal-crop background when the rarity has a dual-face PNG frame.
   const bgStyle: React.CSSProperties | undefined = (backgroundImageUrl && hasBackFrame)
@@ -121,6 +124,13 @@ function CardFront({
         <div className="print-art-composite">
           {backgroundImageUrl && (
             <img src={backgroundImageUrl} alt="background" className={bgClass} style={bgStyle} />
+          )}
+          {showExactBoardLayer && card.board.imageUrl && (
+            <img
+              src={card.board.imageUrl}
+              alt="exact generated skateboard"
+              className={`print-art-layer print-art-layer--board-exact print-art-layer--board-${boardPoseScene.key}`}
+            />
           )}
           {characterImageUrl && (
             <img

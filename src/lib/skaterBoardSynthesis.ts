@@ -45,7 +45,7 @@ function scaleRaw(raw: number): number {
 
 const HELMET_STYLES: Record<string, string[]> = {
   Corporate:      ["exec-visor",   "mirror-shield",  "corp-dome"],
-  Street:         ["graffiti-lid", "open-face",       "half-shell"],
+  Street:         ["sticker-lid",  "open-face",       "half-shell"],
   "Off-grid":     ["salvage-dome", "rough-cut",       "wrapped-rag"],
   Union:          ["hard-hat",     "bump-cap",        "safety-dome"],
   Olympic:        ["aero-helm",    "pro-visor",       "race-dome"],

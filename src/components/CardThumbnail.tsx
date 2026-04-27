@@ -7,6 +7,7 @@ import {
   shouldInsetBackgroundForFrame,
   shouldRenderSvgFrame,
 } from "../services/staticAssets";
+import { resolveBoardPoseScene } from "../lib/boardPoseScenes";
 
 interface CardThumbnailProps {
   card: CardPayload;
@@ -32,6 +33,8 @@ export function CardThumbnail({ card, width = 160, height = 112 }: CardThumbnail
   const frameLayerClassName = hasBackFrame
     ? "card-art-layer card-art-layer--frame card-art-layer--frame-wrap"
     : "card-art-layer card-art-layer--frame";
+  const boardPoseScene = resolveBoardPoseScene(card.characterSeed);
+  const showExactBoardLayer = Boolean(card.board.imageUrl && (backgroundImageUrl || characterImageUrl));
 
   if (!hasLayers) {
     return <CardArt card={card} width={width} height={height} />;
@@ -44,6 +47,13 @@ export function CardThumbnail({ card, width = 160, height = 112 }: CardThumbnail
           src={backgroundImageUrl}
           alt="background"
           className={backgroundLayerClassName}
+        />
+      )}
+      {showExactBoardLayer && card.board.imageUrl && (
+        <img
+          src={card.board.imageUrl}
+          alt="exact generated skateboard"
+          className={`card-art-layer card-art-layer--board-exact card-art-layer--board-${boardPoseScene.key}`}
         />
       )}
       {characterImageUrl && (

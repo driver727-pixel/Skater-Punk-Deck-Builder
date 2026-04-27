@@ -77,6 +77,11 @@ export const ELECTRIC_SKATEBOARD_EXCLUSIONS =
 export const CHARACTER_LAYER_BOARD_EXCLUSIONS =
   "No generated skateboard, no invented skateboard deck, no skateboard wheels, no trucks, no board underfoot. ";
 
+export const CRITICAL_NO_EXTRA_LIMBS_CONSTRAINT =
+  "CRITICAL: The human figure must have exactly two arms and two legs — " +
+  "no extra arms, no duplicate limbs, no third arm, no phantom limb, no floating appendage. " +
+  "Any anatomy error producing more than two arms or more than two legs is strictly forbidden.";
+
 function joinPromptBlocks(...blocks: Array<string | undefined>): string {
   return blocks
     .filter((block): block is string => Boolean(block?.trim()))
@@ -289,6 +294,7 @@ export function buildCharacterPrompt(prompts: CardPrompts): string {
     `Mood: ${mood}.`,
     `Background: solid neutral medium-gray studio, full figure head-to-toe, centered.`,
     `Adult subject (21+), fully clothed, SFW, LGBTQIA+ inclusive.`,
+    CRITICAL_NO_EXTRA_LIMBS_CONSTRAINT,
   );
 }
 

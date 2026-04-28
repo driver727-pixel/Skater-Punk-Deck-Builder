@@ -117,10 +117,22 @@ export interface ForgedBoardComponents {
   battery: string;
 }
 
+export interface BoardPlacement {
+  /** Center X position on the front artwork, as a percentage of card width. */
+  xPercent: number;
+  /** Center Y position on the front artwork, as a percentage of card height. */
+  yPercent: number;
+  /** Locked-dimension board size multiplier. */
+  scale: number;
+  /** Board orientation in degrees. */
+  rotationDeg: number;
+}
+
 export interface ForgedBoardData {
   config: import("./boardBuilder").BoardConfig;
   loadout?: import("./boardBuilder").BoardLoadout;
   imageUrl?: string;
+  placement?: BoardPlacement;
   totalWeight: number;
   tuned: boolean;
   components: ForgedBoardComponents;

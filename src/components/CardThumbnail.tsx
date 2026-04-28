@@ -8,6 +8,7 @@ import {
   shouldRenderSvgFrame,
 } from "../services/staticAssets";
 import { resolveBoardPoseScene } from "../lib/boardPoseScenes";
+import { buildBoardPlacementStyle } from "../lib/boardPlacement";
 
 interface CardThumbnailProps {
   card: CardPayload;
@@ -35,6 +36,7 @@ export function CardThumbnail({ card, width = 160, height = 112 }: CardThumbnail
     : "card-art-layer card-art-layer--frame";
   const boardPoseScene = resolveBoardPoseScene(card.characterSeed);
   const showExactBoardLayer = Boolean(card.board.imageUrl && (backgroundImageUrl || characterImageUrl));
+  const boardPlacementStyle = buildBoardPlacementStyle(boardPoseScene.key, card.board.placement);
 
   if (!hasLayers) {
     return <CardArt card={card} width={width} height={height} />;
@@ -53,7 +55,8 @@ export function CardThumbnail({ card, width = 160, height = 112 }: CardThumbnail
         <img
           src={card.board.imageUrl}
           alt="exact generated skateboard"
-          className={`card-art-layer card-art-layer--board-exact card-art-layer--board-${boardPoseScene.key}`}
+          className="card-art-layer card-art-layer--board-exact"
+          style={boardPlacementStyle}
         />
       )}
       {characterImageUrl && (

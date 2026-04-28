@@ -20,6 +20,7 @@ export function CardForge() {
   const {
     boardConfig,
     boardImageLoading,
+    boardPlacement,
     canForge,
     characterBlend,
     clearSavedCard,
@@ -42,7 +43,6 @@ export function CardForge() {
     handleRandomSkater,
     handleReopenWelcome,
     handleSaveToCollection,
-    hasAnyLayerUrl,
     isAnyLayerLoading,
     isFirstCard,
     layers,
@@ -57,8 +57,9 @@ export function CardForge() {
     savedCard,
     saving,
     setArchetype,
+    setBoardPlacement,
+    setBoardScale,
     setBoardConfig,
-    setCharacterBlend,
     setPrompt,
     showWelcome,
     tier,
@@ -102,9 +103,9 @@ export function CardForge() {
           ageGroups={AGE_GROUPS}
           bodyTypes={BODY_TYPES}
           boardConfig={boardConfig}
+          boardScale={boardPlacement?.scale ?? 1}
           canForge={canForge}
           canSaveToCollection={tierCanSave}
-          characterBlend={characterBlend}
           classOptions={forgeClassOptions}
           districts={DISTRICTS}
           downloading={downloading}
@@ -115,10 +116,9 @@ export function CardForge() {
           generateCredits={generateCredits}
           generated={generated}
           hairLengths={HAIR_LENGTHS}
-          hasAnyLayerUrl={hasAnyLayerUrl}
           isAnyLayerLoading={isAnyLayerLoading}
           onArchetypeChange={setArchetype}
-          onBlendChange={setCharacterBlend}
+          onBoardScaleChange={setBoardScale}
           onBoardConfigChange={setBoardConfig}
           onDownloadJpg={handleDownloadJpg}
           onForge={handleForge}
@@ -143,6 +143,7 @@ export function CardForge() {
           patchGeneratedCard={patchGeneratedCard}
           patchIdentity={patchIdentity}
           patchStats={patchStats}
+          onBoardPlacementChange={setBoardPlacement}
         />
       </div>
 

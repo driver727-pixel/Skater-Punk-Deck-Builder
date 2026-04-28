@@ -15,7 +15,7 @@ import { buildBackgroundPrompt, buildCharacterPrompt, buildFramePrompt } from ".
 import { useTier } from "../../context/TierContext";
 import { useAuth } from "../../context/AuthContext";
 import { useFactionDiscovery } from "../../hooks/useFactionDiscovery";
-import type { Archetype, CardPayload, CardPrompts, Faction } from "../../lib/types";
+import type { Archetype, BoardPlacement, CardPayload, CardPrompts, Faction } from "../../lib/types";
 import {
   getForgeClassOptions,
   normalizeForgeRarity,
@@ -30,6 +30,8 @@ import {
 } from "./constants";
 import { applyPreviewUpdates, buildRandomizedBoardConfig, buildRandomizedPrompts } from "./helpers";
 import { loadForgeSession, saveForgeSession } from "../../services/forgeSessionCache";
+import { resolveBoardPoseScene } from "../../lib/boardPoseScenes";
+import { normalizeBoardPlacement } from "../../lib/boardPlacement";
 
 const ARCHETYPE_VALUES = FORGE_ARCHETYPE_OPTIONS.map((option) => option.value);
 const DEFAULT_CHARACTER_BLEND = 1;
@@ -82,6 +84,11 @@ export function useForgeGeneration() {
     }),
     [prompts.rarity, userProfile?.missionOzzies, userProfile?.missionXp],
   );
+  const boardPlacement = useMemo(() => {
+    if (!generated) return null;
+    const scene = resolveBoardPoseScene(generated.characterSeed);
+    return normalizeBoardPlacement(scene.key, generated.board.placement);
+  }, [generated]);
 
   useEffect(() => {
     if (prompts.rarity !== selectedForgeRarity) {
@@ -165,7 +172,14 @@ export function useForgeGeneration() {
     );
 
     // ── Board stats & forge state (now inside buildForgedCard, but keep for board image) ─────
-    const cardWithBoard = { ...card, board: { ...card.board } };
+    const boardPoseScene = resolveBoardPoseScene(card.characterSeed);
+    const cardWithBoard = {
+      ...card,
+      board: {
+        ...card.board,
+        placement: normalizeBoardPlacement(boardPoseScene.key, card.board.placement),
+      },
+    };
     setGenerated(cardWithBoard);
     setForging(true);
     if (secretFaction) {
@@ -310,6 +324,35 @@ export function useForgeGeneration() {
     );
   }, []);
 
+  const setBoardPlacement = useCallback((placement: BoardPlacement) => {
+    setGenerated((prev) => {
+      if (!prev) return prev;
+      const scene = resolveBoardPoseScene(prev.characterSeed);
+      return {
+        ...prev,
+        board: {
+          ...prev.board,
+          placement: normalizeBoardPlacement(scene.key, placement),
+        },
+      };
+    });
+  }, []);
+
+  const setBoardScale = useCallback((scale: number) => {
+    setGenerated((prev) => {
+      if (!prev) return prev;
+      const scene = resolveBoardPoseScene(prev.characterSeed);
+      const currentPlacement = normalizeBoardPlacement(scene.key, prev.board.placement);
+      return {
+        ...prev,
+        board: {
+          ...prev.board,
+          placement: normalizeBoardPlacement(scene.key, { ...currentPlacement, scale }),
+        },
+      };
+    });
+  }, []);
+
   const handleCloseFactionReveal = useCallback(() => {
     setRevealedFaction(null);
   }, []);
@@ -317,6 +360,7 @@ export function useForgeGeneration() {
   return useMemo(() => ({
     boardConfig,
     boardImageLoading,
+    boardPlacement,
     canForge,
     characterBlend,
     forging,
@@ -340,12 +384,15 @@ export function useForgeGeneration() {
     revealedFaction,
     setArchetype,
     setBoardConfig,
+    setBoardPlacement,
+    setBoardScale,
     setCharacterBlend,
     setPrompt,
     tier,
   }), [
     boardConfig,
     boardImageLoading,
+    boardPlacement,
     canForge,
     characterBlend,
     forging,
@@ -369,6 +416,8 @@ export function useForgeGeneration() {
     revealedFaction,
     setArchetype,
     setBoardConfig,
+    setBoardPlacement,
+    setBoardScale,
     setCharacterBlend,
     setPrompt,
     tier,

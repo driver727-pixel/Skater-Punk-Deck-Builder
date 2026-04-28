@@ -1,5 +1,8 @@
 import type { Rarity } from "../lib/types";
+import type { BoardPlacement } from "../lib/types";
 import { RARITY_COLORS, shouldRenderInsetNeonTube } from "../lib/cardRarityVisuals";
+import { getBoardPlacementBox, normalizeBoardPlacement } from "../lib/boardPlacement";
+import { resolveBoardPoseScene } from "../lib/boardPoseScenes";
 import { buildFrameSvgDataUrl } from "./frameSvg";
 import { getFrameBlendMode, shouldRenderSvgFrame } from "./staticAssets";
 
@@ -120,6 +123,28 @@ function drawImageContainBottom(
   ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
 }
 
+function drawBoardImage(
+  ctx: CanvasRenderingContext2D,
+  img: CanvasImageSource & { width: number; height: number },
+  sceneSeed: string,
+  placement?: BoardPlacement,
+): void {
+  const scene = resolveBoardPoseScene(sceneSeed);
+  const normalized = normalizeBoardPlacement(scene.key, placement);
+  const box = getBoardPlacementBox(scene.key, normalized.scale);
+  const targetWidth = (box.widthPercent / 100) * CARD_WIDTH;
+  const targetHeight = (box.heightPercent / 100) * CARD_HEIGHT;
+  const containScale = Math.min(targetWidth / img.width, targetHeight / img.height);
+  const drawWidth = img.width * containScale;
+  const drawHeight = img.height * containScale;
+
+  ctx.save();
+  ctx.translate((normalized.xPercent / 100) * CARD_WIDTH, (normalized.yPercent / 100) * CARD_HEIGHT);
+  ctx.rotate((normalized.rotationDeg * Math.PI) / 180);
+  ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+  ctx.restore();
+}
+
 function loadCrossOriginImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -149,6 +174,9 @@ export async function downloadCardAsJpg(
   frameSeed: string,
   accentColor?: string,
   characterBlend = 1,
+  boardUrl?: string,
+  characterSeed?: string,
+  boardPlacement?: BoardPlacement,
 ): Promise<void> {
   const canvas = document.createElement("canvas");
   canvas.width  = CARD_WIDTH;
@@ -175,7 +203,15 @@ export async function downloadCardAsJpg(
     ctx.globalAlpha = 1;
   }
 
-  // ── Layer 3: frame (screen blend — black frame interior becomes transparent) ─
+  // ── Layer 3: exact generated board, with user placement ────────────────────
+  if (boardUrl && characterSeed) {
+    const img = await loadCrossOriginImage(boardUrl);
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = 1;
+    drawBoardImage(ctx, img, characterSeed, boardPlacement);
+  }
+
+  // ── Layer 4: frame (screen blend — black frame interior becomes transparent) ─
   if (frameUrl || shouldRenderSvgFrame(rarity, frameUrl)) {
     const resolvedFrameUrl = shouldRenderSvgFrame(rarity, frameUrl)
       ? buildFrameSvgDataUrl(rarity, frameSeed)

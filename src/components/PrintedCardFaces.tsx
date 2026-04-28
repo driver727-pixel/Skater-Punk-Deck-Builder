@@ -39,6 +39,7 @@ export function PrintedCardPreviewPair({
   onBioChange,
   onAgeChange,
   onStatChange,
+  onBoardPlacementChange,
   boardImageLoading,
 }: PrintedCardPreviewPairProps) {
   const previewClassName = className ? `print-preview-area ${className}` : "print-preview-area";
@@ -61,6 +62,7 @@ export function PrintedCardPreviewPair({
               onNameChange={onNameChange}
               onBioChange={onBioChange}
               onAgeChange={onAgeChange}
+              onBoardPlacementChange={onBoardPlacementChange}
             />
           </div>
         </div>
@@ -87,4 +89,3 @@ export function PrintedCardPreviewPair({
     </div>
   );
 }
-

@@ -20,6 +20,7 @@ import {
   shouldRenderSvgFrame,
 } from "../services/staticAssets";
 import { resolveBoardPoseScene } from "../lib/boardPoseScenes";
+import { buildBoardPlacementStyle } from "../lib/boardPlacement";
 
 interface LayerLoading {
   background: boolean;
@@ -99,7 +100,8 @@ function areCardsEqual(previous: CardPayload, next: CardPayload): boolean {
     shallowEqualObject(previous.back as unknown as Record<string, unknown>, next.back as unknown as Record<string, unknown>) &&
     shallowEqualObject(previous.maintenance as unknown as Record<string, unknown>, next.maintenance as unknown as Record<string, unknown>) &&
     previous.board.imageUrl === next.board.imageUrl &&
-    previous.board.tuned === next.board.tuned
+    previous.board.tuned === next.board.tuned &&
+    shallowEqualObject(previous.board.placement as unknown as Record<string, unknown>, next.board.placement as unknown as Record<string, unknown>)
   );
 }
 
@@ -181,6 +183,7 @@ function CompositeArt({
     : "card-art-layer card-art-layer--frame";
   const boardPoseScene = resolveBoardPoseScene(card.characterSeed);
   const showExactBoardLayer = Boolean(card.board.imageUrl && (backgroundImageUrl || characterImageUrl));
+  const boardPlacementStyle = buildBoardPlacementStyle(boardPoseScene.key, card.board.placement);
 
   // No AI layer data at all — render SVG fallback
   if (!hasAnyLayer) {
@@ -209,7 +212,8 @@ function CompositeArt({
         <img
           src={card.board.imageUrl}
           alt="exact generated skateboard"
-          className={`card-art-layer card-art-layer--board-exact card-art-layer--board-${boardPoseScene.key}`}
+          className="card-art-layer card-art-layer--board-exact"
+          style={boardPlacementStyle}
         />
       ) : null}
 

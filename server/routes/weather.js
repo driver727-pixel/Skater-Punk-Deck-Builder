@@ -2,7 +2,6 @@ const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast';
 const WEATHER_CACHE_TTL_MS = 15 * 60 * 1000;
 const WEATHER_RETRY_ATTEMPTS = 3;
 const WEATHER_RETRY_BASE_DELAY_MS = 2000;
-const WEATHER_STAGGER_MS = 250;
 const HEAVY_RAIN_MM = 7;
 const HEATWAVE_TEMP_C = 35;
 const STRONG_WIND_KPH = 45;
@@ -66,19 +65,23 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchDistrictWeatherSnapshot(district, location, staggerMs = 0) {
-  if (staggerMs > 0) {
-    await sleep(staggerMs);
-  }
+// Batches all district locations into a single open-meteo request.
+// open-meteo supports comma-separated latitude/longitude values and returns an
+// array of results in the same order.  One request instead of eight eliminates
+// the per-district rate-limit pressure that caused repeated 429 failures.
+async function fetchAllDistrictWeatherSnapshots() {
+  const districtEntries = Object.entries(DISTRICT_WEATHER_LOCATIONS);
+  const latitudes = districtEntries.map(([, loc]) => loc.latitude).join(',');
+  const longitudes = districtEntries.map(([, loc]) => loc.longitude).join(',');
 
   const url = new URL(WEATHER_URL);
-  url.searchParams.set('latitude', String(location.latitude));
-  url.searchParams.set('longitude', String(location.longitude));
+  url.searchParams.set('latitude', latitudes);
+  url.searchParams.set('longitude', longitudes);
   url.searchParams.set('current', 'temperature_2m,rain,weather_code,wind_speed_10m');
   url.searchParams.set('timezone', 'Australia/Sydney');
   url.searchParams.set('forecast_days', '1');
 
-  let lastError = new Error(`Weather upstream rate limited for ${district}.`);
+  let lastError = new Error('Weather upstream rate limited.');
   for (let attempt = 0; attempt < WEATHER_RETRY_ATTEMPTS; attempt++) {
     if (attempt > 0) {
       const jitter = Math.random() * WEATHER_RETRY_BASE_DELAY_MS;
@@ -91,73 +94,63 @@ async function fetchDistrictWeatherSnapshot(district, location, staggerMs = 0) {
         ? retryAfterSecs * 1000
         : WEATHER_RETRY_BASE_DELAY_MS * 2 ** attempt;
       const jitter = Math.random() * WEATHER_RETRY_BASE_DELAY_MS;
-      lastError = new Error(`Weather upstream rate limited for ${district} (attempt ${attempt + 1}).`);
+      lastError = new Error(`Weather upstream rate limited (attempt ${attempt + 1}).`);
       await sleep(baseDelay + jitter);
       continue;
     }
     if (!upstream.ok) {
-      throw new Error(`Weather upstream failed for ${district} with ${upstream.status}.`);
+      throw new Error(`Weather upstream batch failed with ${upstream.status}.`);
     }
 
     const data = await upstream.json();
-    const current = data?.current ?? {};
-    const temperatureC = roundWeatherMetric(current.temperature_2m);
-    const windSpeedKph = roundWeatherMetric(current.wind_speed_10m);
-    const rainMm = roundWeatherMetric(current.rain);
-    const weatherCode = typeof current.weather_code === 'number' ? current.weather_code : null;
-    const summary = resolveWeatherSummary({ rainMm, weatherCode, windSpeedKph, temperatureC });
+    if (!Array.isArray(data) || data.length !== districtEntries.length) {
+      throw new Error(`Weather upstream returned unexpected response shape.`);
+    }
+    const results = data;
+    const updatedAt = new Date().toISOString();
 
-    return {
-      district,
-      city: location.city,
-      state: location.state,
-      summary,
-      temperatureC,
-      windSpeedKph,
-      rainMm,
-      weatherCode,
-      updatedAt: new Date().toISOString(),
-      accessRule: buildWeatherAccessRule(district, location.city, summary),
-    };
+    return districtEntries.map(([district, location], i) => {
+      const current = results[i]?.current ?? null;
+      if (!current) {
+        return {
+          district,
+          city: location.city,
+          state: location.state,
+          summary: 'Weather uplink offline',
+          temperatureC: null,
+          windSpeedKph: null,
+          rainMm: null,
+          weatherCode: null,
+          updatedAt,
+          accessRule: null,
+          source: 'fallback',
+        };
+      }
+      const temperatureC = roundWeatherMetric(current.temperature_2m);
+      const windSpeedKph = roundWeatherMetric(current.wind_speed_10m);
+      const rainMm = roundWeatherMetric(current.rain);
+      const weatherCode = typeof current.weather_code === 'number' ? current.weather_code : null;
+      const summary = resolveWeatherSummary({ rainMm, weatherCode, windSpeedKph, temperatureC });
+      return {
+        district,
+        city: location.city,
+        state: location.state,
+        summary,
+        temperatureC,
+        windSpeedKph,
+        rainMm,
+        weatherCode,
+        updatedAt,
+        accessRule: buildWeatherAccessRule(district, location.city, summary),
+      };
+    });
   }
   throw lastError;
 }
 
 async function buildDistrictWeatherPayload() {
-  const districtEntries = Object.entries(DISTRICT_WEATHER_LOCATIONS);
-  const districtFetchResults = await Promise.all(
-    districtEntries.map(async ([district, location], index) => {
-      try {
-        const snapshot = await fetchDistrictWeatherSnapshot(district, location, index * WEATHER_STAGGER_MS);
-        return { status: 'fulfilled', district, location, snapshot };
-      } catch (error) {
-        return { status: 'rejected', district, location, error };
-      }
-    }),
-  );
-  const fallbackGeneratedAt = new Date().toISOString();
-  const districts = districtFetchResults.map((result) => {
-    if (result.status === 'fulfilled') {
-      return result.snapshot;
-    }
-    const { district, location } = result;
-    console.error(`District weather refresh failed for ${district}:`, result.error);
-    return {
-      district,
-      city: location.city,
-      state: location.state,
-      summary: 'Weather uplink offline',
-      temperatureC: null,
-      windSpeedKph: null,
-      rainMm: null,
-      weatherCode: null,
-      updatedAt: fallbackGeneratedAt,
-      accessRule: null,
-      source: 'fallback',
-    };
-  });
-  const stale = districtFetchResults.some((result) => result.status === 'rejected');
-
+  const districts = await fetchAllDistrictWeatherSnapshots();
+  const stale = districts.some((d) => d.source === 'fallback');
   return {
     generatedAt: new Date().toISOString(),
     stale,

@@ -137,7 +137,13 @@ function CardFront({
 
   const handleBoardPointerDown = useCallback(
     (event: PointerEvent<HTMLImageElement>) => {
-      if (!boardPlacementChangeHandler || event.button !== 0) return;
+      if (
+        !boardPlacementChangeHandler ||
+        !event.isPrimary ||
+        (event.pointerType === "mouse" && event.button !== 0)
+      ) {
+        return;
+      }
       event.preventDefault();
       boardDragPointerIdRef.current = event.pointerId;
       event.currentTarget.setPointerCapture(event.pointerId);

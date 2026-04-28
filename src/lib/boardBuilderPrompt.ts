@@ -4,6 +4,9 @@ import type { BatteryType, BoardConfig, BoardType, Drivetrain, WheelType } from 
 export const CRITICAL_SINGLE_ASSEMBLY_CONSTRAINT =
   "CRITICAL: Render one coherent, fully assembled skateboard product only — not a collage of separate parts or reference cutouts. It has exactly TWO trucks only: one front truck mounted under the NOSE and one rear truck mounted under the TAIL. Each truck has exactly ONE axle carrying exactly TWO wheels, for exactly four wheels total. Never duplicate, split, stack, offset, or graft extra trucks, axles, wheel pods, motors, or drivetrain assemblies anywhere on the board.";
 
+export const MOUNTAINBOARD_LORE_CONSTRAINT =
+  "Mountainboards, Mountain Boards, and 4WD boards always have foot straps on top of the deck plus a compact top-mounted battery pack sized so an adult rider's feet can still fit naturally in the straps. Never omit the foot straps, never make the battery so large that it blocks the stance area, and do not treat a battery-free deck reference as permission to omit the top battery.";
+
 const BOARD_IMAGE_BASE_CONCEPT =
   "An electric skateboard, high-detail product display in Gouache style painting on a neutral dark gray background. " +
   "CRITICAL: The image must contain exactly ONE skateboard. Never show two or more skateboards in the same image under any circumstances. " +
@@ -75,6 +78,10 @@ function getMotorImageDescription(config: BoardConfig): string {
   }
 }
 
+function getMountainboardLoreDescription(config: BoardConfig): string {
+  return config.boardType === "Mountain" || config.drivetrain === "4WD" ? MOUNTAINBOARD_LORE_CONSTRAINT : "";
+}
+
 export function buildBoardImagePrompt(config: BoardConfig): string {
   const normalizedConfig = normalizeBoardConfig(config);
   const batteryPreservationClause =
@@ -89,6 +96,7 @@ export function buildBoardImagePrompt(config: BoardConfig): string {
     `${getMotorImageDescription(normalizedConfig)} ` +
     `${WHEEL_IMAGE_DESCRIPTIONS[normalizedConfig.wheels]} ` +
     `${BATTERY_IMAGE_DESCRIPTIONS[normalizedConfig.battery]} ` +
+    `${getMountainboardLoreDescription(normalizedConfig)} ` +
     `Show one fully assembled complete skateboard only. ` +
     `The final board must clearly preserve the selected deck shape, drivetrain hardware, motor size, wheel type and wheel diameter${batteryPreservationClause} with no substitutions. ` +
     `For Belt, Hub, and Gear builds, keep all drive hardware on the rear truck and rear wheels only; do not add any front drive hardware unless the selected drivetrain is 4WD. ` +

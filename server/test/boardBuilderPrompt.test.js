@@ -16,6 +16,7 @@ import {
   CRITICAL_NOSE_CONSTRAINT,
   CRITICAL_SINGLE_ASSEMBLY_CONSTRAINT,
   DRIVETRAIN_IMAGE_DESCRIPTIONS,
+  MOUNTAINBOARD_LORE_CONSTRAINT,
   WHEEL_IMAGE_DESCRIPTIONS,
   buildBoardImagePrompt,
   resolveReferenceUrlCategories,
@@ -118,6 +119,21 @@ test('buildBoardImagePrompt [4WD] — drive hardware described on both nose and 
   assert.ok(
     prompt.includes(desc),
     '4WD prompt must include the 4WD drivetrain description',
+  );
+});
+
+test('buildBoardImagePrompt [Mountain 4WD] — includes mountainboard lore constraints', () => {
+  const prompt = buildBoardImagePrompt({
+    boardType: 'Mountain',
+    drivetrain: '4WD',
+    motor: 'Outrunner',
+    wheels: 'Pneumatic',
+    battery: 'TopPeli',
+  });
+
+  assert.ok(
+    prompt.includes(MOUNTAINBOARD_LORE_CONSTRAINT),
+    'Mountain 4WD prompt must describe foot straps and compact top-mounted battery lore',
   );
 });
 

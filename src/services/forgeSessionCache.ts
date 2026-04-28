@@ -24,11 +24,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === "object";
 }
 
-function hasString(value: unknown): value is string {
+function isString(value: unknown): value is string {
   return typeof value === "string";
 }
 
-function hasNumber(value: unknown): value is number {
+function isNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
@@ -36,37 +36,37 @@ function isRenderableForgeCard(value: unknown): value is CardPayload {
   if (!isRecord(value)) return false;
 
   return (
-    hasString(value.id) &&
-    hasString(value.seed) &&
-    hasString(value.frameSeed) &&
-    hasString(value.backgroundSeed) &&
-    hasString(value.characterSeed) &&
+    isString(value.id) &&
+    isString(value.seed) &&
+    isString(value.frameSeed) &&
+    isString(value.backgroundSeed) &&
+    isString(value.characterSeed) &&
     isRecord(value.prompts) &&
-    hasString(value.prompts.rarity) &&
+    isString(value.prompts.rarity) &&
     isRecord(value.class) &&
-    hasString(value.class.rarity) &&
-    hasString(value.class.badgeLabel) &&
+    isString(value.class.rarity) &&
+    isString(value.class.badgeLabel) &&
     isRecord(value.identity) &&
-    hasString(value.identity.name) &&
-    hasString(value.identity.serialNumber) &&
+    isString(value.identity.name) &&
+    isString(value.identity.serialNumber) &&
     isRecord(value.role) &&
-    hasString(value.role.label) &&
-    hasString(value.role.passiveName) &&
-    hasString(value.role.passiveDescription) &&
+    isString(value.role.label) &&
+    isString(value.role.passiveName) &&
+    isString(value.role.passiveDescription) &&
     isRecord(value.stats) &&
-    hasNumber(value.stats.speed) &&
-    hasNumber(value.stats.range) &&
-    hasNumber(value.stats.rangeNm) &&
-    hasNumber(value.stats.stealth) &&
-    hasNumber(value.stats.grit) &&
+    isNumber(value.stats.speed) &&
+    isNumber(value.stats.range) &&
+    isNumber(value.stats.rangeNm) &&
+    isNumber(value.stats.stealth) &&
+    isNumber(value.stats.grit) &&
     isRecord(value.board) &&
     isRecord(value.board.config) &&
     isRecord(value.board.components) &&
     isRecord(value.maintenance) &&
-    hasString(value.maintenance.state) &&
-    hasNumber(value.maintenance.chargePct) &&
+    isString(value.maintenance.state) &&
+    isNumber(value.maintenance.chargePct) &&
     isRecord(value.visuals) &&
-    hasString(value.visuals.accentColor) &&
+    isString(value.visuals.accentColor) &&
     isRecord(value.front) &&
     isRecord(value.back)
   );
@@ -76,10 +76,10 @@ function isForgeSessionData(value: unknown): value is ForgeSessionData {
   return (
     isRecord(value) &&
     isRenderableForgeCard(value.card) &&
-    hasNumber(value.characterBlend) &&
-    (value.backgroundUrl == null || hasString(value.backgroundUrl)) &&
-    (value.characterUrl == null || hasString(value.characterUrl)) &&
-    (value.frameUrl == null || hasString(value.frameUrl))
+    isNumber(value.characterBlend) &&
+    (value.backgroundUrl == null || isString(value.backgroundUrl)) &&
+    (value.characterUrl == null || isString(value.characterUrl)) &&
+    (value.frameUrl == null || isString(value.frameUrl))
   );
 }
 

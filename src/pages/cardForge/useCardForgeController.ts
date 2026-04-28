@@ -24,6 +24,7 @@ export function useCardForgeController() {
   return useMemo(() => ({
     boardConfig: forge.boardConfig,
     boardImageLoading: forge.boardImageLoading,
+    boardPlacement: forge.boardPlacement,
     canForge: forge.canForge,
     characterBlend: forge.characterBlend,
     clearSavedCard: save.clearSavedCard,
@@ -64,6 +65,8 @@ export function useCardForgeController() {
     saving: save.saving,
     setArchetype: forge.setArchetype,
     setBoardConfig: forge.setBoardConfig,
+    setBoardPlacement: forge.setBoardPlacement,
+    setBoardScale: forge.setBoardScale,
     setCharacterBlend: forge.setCharacterBlend,
     setPrompt: forge.setPrompt,
     showWelcome: navigation.showWelcome,

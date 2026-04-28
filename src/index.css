@@ -2712,7 +2712,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   margin-bottom: 8px;
 }
 
-/* Blend opacity slider shown below the card in the forge preview */
+/* Board size slider shown below the card in the forge preview */
 .blend-control {
   display: flex;
   flex-direction: column;
@@ -5203,6 +5203,14 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   object-fit: contain;
   pointer-events: none;
   filter: drop-shadow(0 6px 7px rgba(0, 0, 0, 0.55));
+}
+.print-art-layer--board-editable {
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+.print-art-layer--board-editable:active {
+  cursor: grabbing;
 }
 .print-art-layer--board-workshop {
   left: 4%;

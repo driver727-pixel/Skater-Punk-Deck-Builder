@@ -14,6 +14,7 @@ import { BoardBuilder } from "../../components/BoardBuilder";
 import { GeoAtlas } from "../../components/GeoAtlas";
 import { ReferralPanel } from "../../components/ReferralPanel";
 import type { BoardConfig } from "../../lib/boardBuilder";
+import { BOARD_PLACEMENT_MAX_SCALE, BOARD_PLACEMENT_MIN_SCALE, BOARD_PLACEMENT_SCALE_STEP } from "../../lib/boardPlacement";
 import { LEGENDARY_FORGE_NOTICE, type ForgeClassOption } from "../../lib/cardClassProgression";
 import { FORGE_ARCHETYPE_OPTIONS } from "../../lib/factionDiscovery";
 import { sfxClick } from "../../lib/sfx";
@@ -56,9 +57,9 @@ interface ForgeControlsPanelProps {
   accentPresets: string[];
   bodyTypes: BodyType[];
   boardConfig: BoardConfig;
+  boardScale: number;
   canForge: boolean;
   canSaveToCollection: boolean;
-  characterBlend: number;
   classOptions: ForgeClassOption[];
   districts: District[];
   downloading: boolean;
@@ -69,11 +70,10 @@ interface ForgeControlsPanelProps {
   generateCredits: number;
   generated: CardPayload | null;
   hairLengths: HairLength[];
-  hasAnyLayerUrl: boolean;
   isAnyLayerLoading: boolean;
   onArchetypeChange: (archetype: Archetype) => void;
-  onBlendChange: (value: number) => void;
   onBoardConfigChange: (config: BoardConfig) => void;
+  onBoardScaleChange: (value: number) => void;
   onDownloadJpg: () => void;
   onForge: () => void;
   onOpen3D: () => void;
@@ -93,9 +93,9 @@ export function ForgeControlsPanel({
   accentPresets,
   bodyTypes,
   boardConfig,
+  boardScale,
   canForge,
   canSaveToCollection,
-  characterBlend,
   classOptions,
   districts,
   downloading,
@@ -106,11 +106,10 @@ export function ForgeControlsPanel({
   generateCredits,
   generated,
   hairLengths,
-  hasAnyLayerUrl,
   isAnyLayerLoading,
   onArchetypeChange,
-  onBlendChange,
   onBoardConfigChange,
+  onBoardScaleChange,
   onDownloadJpg,
   onForge,
   onOpen3D,
@@ -332,23 +331,23 @@ export function ForgeControlsPanel({
 
       {generated && (
         <div className="forge-generated-actions">
-          {(hasAnyLayerUrl || isAnyLayerLoading) && (
-            <div className="blend-control">
-              <label className="blend-control__label">
-                <span>Character Blend</span>
-                <span>{Math.round(characterBlend * 100)}%</span>
-              </label>
-              <input
-                type="range"
-                className="range-slider"
-                min={0}
-                max={1}
-                step={0.05}
-                value={characterBlend}
-                onChange={(event) => onBlendChange(Number(event.target.value))}
-              />
-            </div>
-          )}
+          <div className="blend-control">
+            <label className="blend-control__label">
+              <span>Skateboard Size</span>
+              <span>{Math.round(boardScale * 100)}%</span>
+            </label>
+            <input
+              type="range"
+              className="range-slider"
+              min={BOARD_PLACEMENT_MIN_SCALE}
+              max={BOARD_PLACEMENT_MAX_SCALE}
+              step={BOARD_PLACEMENT_SCALE_STEP}
+              value={boardScale}
+              onChange={(event) => onBoardScaleChange(Number(event.target.value))}
+              aria-label="Skateboard size"
+            />
+            <p className="form-hint">Drag the board on the card face to place it before saving.</p>
+          </div>
           <div className="forge-generated-buttons">
             <button className="btn-outline btn-3d" onClick={onOpen3D} title="View card in 3D">
               ◈ 3D

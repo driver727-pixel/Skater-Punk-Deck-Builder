@@ -13,7 +13,9 @@
  * set for each context.
  */
 
-import type { CardPayload } from "../lib/types";
+import { useCallback, useRef } from "react";
+import type { PointerEvent } from "react";
+import type { BoardPlacement, CardPayload } from "../lib/types";
 import { CardArt } from "./CardArt";
 import { FrameOverlay } from "./FrameOverlay";
 import { StatBar } from "./StatBar";
@@ -30,6 +32,7 @@ import {
 } from "../services/staticAssets";
 import { computeFocalCrop } from "../lib/focalCrop";
 import { resolveBoardPoseScene } from "../lib/boardPoseScenes";
+import { buildBoardPlacementStyle, normalizeBoardPlacement } from "../lib/boardPlacement";
 import { BOARD_TYPE_OPTIONS, DRIVETRAIN_OPTIONS, MOTOR_OPTIONS, WHEEL_OPTIONS, BATTERY_OPTIONS } from "../lib/boardBuilder";
 
 // ── Rarity colour map used on the card-back header ───────────────────────────
@@ -50,6 +53,7 @@ export interface SkaterCardFaceProps {
   fallbackHeight?: number;
   /** When true, name/bio/age (front) and stats (back) become editable inputs. */
   editable?: boolean;
+  onBoardPlacementChange?: (placement: BoardPlacement) => void;
   onNameChange?: (value: string) => void;
   onBioChange?: (value: string) => void;
   onAgeChange?: (value: string) => void;
@@ -74,7 +78,9 @@ function CardFront({
   fallbackHeight = 264,
   editable = false,
   onNameChange,
+  onBoardPlacementChange,
 }: Omit<SkaterCardFaceProps, "face" | "onStatChange" | "onBioChange" | "onAgeChange">) {
+  const boardDragPointerIdRef = useRef<number | null>(null);
   const hasAnyLayer = backgroundImageUrl || characterImageUrl || frameImageUrl;
   const bgClass = shouldInsetBackgroundForFrame(card.prompts.rarity, frameImageUrl)
     ? "print-art-layer print-art-layer--bg print-art-layer--bg-inset"
@@ -89,6 +95,9 @@ function CardFront({
     : "print-art-layer print-art-layer--frame";
   const boardPoseScene = resolveBoardPoseScene(card.characterSeed);
   const showExactBoardLayer = Boolean(card.board.imageUrl && (backgroundImageUrl || characterImageUrl));
+  const boardPlacement = normalizeBoardPlacement(boardPoseScene.key, card.board.placement);
+  const boardPlacementStyle = buildBoardPlacementStyle(boardPoseScene.key, boardPlacement);
+  const canMoveBoard = editable && onBoardPlacementChange;
 
   // Focal-crop background when the rarity has a dual-face PNG frame.
   const bgStyle: React.CSSProperties | undefined = (backgroundImageUrl && hasBackFrame)
@@ -109,6 +118,49 @@ function CardFront({
     <span className="print-front-name">{card.identity.name}</span>
   );
 
+  const updateBoardPlacementFromPointer = useCallback(
+    (event: PointerEvent<HTMLImageElement>) => {
+      if (!canMoveBoard) return;
+      const container = event.currentTarget.parentElement;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      const nextPlacement = normalizeBoardPlacement(boardPoseScene.key, {
+        ...boardPlacement,
+        xPercent: ((event.clientX - rect.left) / rect.width) * 100,
+        yPercent: ((event.clientY - rect.top) / rect.height) * 100,
+      });
+      canMoveBoard(nextPlacement);
+    },
+    [boardPlacement, boardPoseScene.key, canMoveBoard],
+  );
+
+  const handleBoardPointerDown = useCallback(
+    (event: PointerEvent<HTMLImageElement>) => {
+      if (!canMoveBoard || event.button !== 0) return;
+      event.preventDefault();
+      boardDragPointerIdRef.current = event.pointerId;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      updateBoardPlacementFromPointer(event);
+    },
+    [canMoveBoard, updateBoardPlacementFromPointer],
+  );
+
+  const handleBoardPointerMove = useCallback(
+    (event: PointerEvent<HTMLImageElement>) => {
+      if (boardDragPointerIdRef.current !== event.pointerId) return;
+      event.preventDefault();
+      updateBoardPlacementFromPointer(event);
+    },
+    [updateBoardPlacementFromPointer],
+  );
+
+  const handleBoardPointerUp = useCallback((event: PointerEvent<HTMLImageElement>) => {
+    if (boardDragPointerIdRef.current !== event.pointerId) return;
+    boardDragPointerIdRef.current = null;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+  }, []);
+
   return (
     <>
       {hasAnyLayer ? (
@@ -121,7 +173,12 @@ function CardFront({
             <img
               src={card.board.imageUrl}
               alt="exact generated skateboard"
-              className={`print-art-layer print-art-layer--board-exact print-art-layer--board-${boardPoseScene.key}`}
+              className={`print-art-layer print-art-layer--board-exact${canMoveBoard ? " print-art-layer--board-editable" : ""}`}
+              style={boardPlacementStyle}
+              onPointerDown={handleBoardPointerDown}
+              onPointerMove={handleBoardPointerMove}
+              onPointerUp={handleBoardPointerUp}
+              onPointerCancel={handleBoardPointerUp}
             />
           )}
           {characterImageUrl && (
@@ -391,6 +448,7 @@ export function SkaterCardFace({
         fallbackHeight={fallbackHeight}
         editable={editable}
         onNameChange={onNameChange}
+        onBoardPlacementChange={onBoardPlacementChange}
       />
     );
   }

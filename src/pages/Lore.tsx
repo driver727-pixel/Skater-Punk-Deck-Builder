@@ -1,6 +1,8 @@
 import {
   WORLD_LORE,
   DISTRICT_LORE,
+  ARCHETYPE_LORE,
+  LORE_UPDATES,
 } from "../lib/lore";
 import { GeoAtlas } from "../components/GeoAtlas";
 
@@ -18,11 +20,11 @@ export function Lore() {
           <div className="lore-world-cols">
             <div>
               <h3 className="lore-subheading">Known Power Blocs</h3>
-              <p className="lore-body">
-                The city is crowded with corporate governments, courier unions, insurgent crews,
-                and shadow actors. Specific faction dossiers now stay obscured until you uncover
-                them through forging.
-              </p>
+              <ul className="lore-list">
+                {WORLD_LORE.factions.map((faction) => (
+                  <li key={faction} className="lore-list-item">{faction}</li>
+                ))}
+              </ul>
             </div>
             <div>
               <h3 className="lore-subheading">The Code</h3>
@@ -77,6 +79,30 @@ export function Lore() {
             </div>
           ))}
         </div>
+        <p className="lore-body lore-body--sm">
+          Classified note: Electropolis remains intentionally sealed from the public district grid
+          until the Fuzz pushes the next reveal into open play.
+        </p>
+      </section>
+
+      <section className="lore-section">
+        <h2 className="lore-heading">Courier Archetypes</h2>
+        <div className="lore-grid">
+          {ARCHETYPE_LORE.map((archetype) => (
+            <div key={archetype.name} className="lore-card">
+              <div className="lore-card-header">
+                <span className="lore-card-name">{archetype.name}</span>
+                <span className="lore-card-control">Courier school</span>
+              </div>
+              <p className="lore-tagline">"{archetype.tagline}"</p>
+              <p className="lore-body">{archetype.description}</p>
+              <div className="lore-card-meta">
+                <span className="lore-meta-label">Strength profile</span>
+                <span className="lore-meta-value">{archetype.strengths}</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* ── Factions / Crews ────────────────────────────────────────────── */}
@@ -88,6 +114,31 @@ export function Lore() {
             When a forged combination trips a secret signal, a new entry appears in the
             Factions tab with its full lore profile.
           </p>
+          <ul className="lore-list">
+            <li className="lore-list-item">The Codex keeps the macro world-state public.</li>
+            <li className="lore-list-item">The Factions tab tracks only the crews you have actually uncovered.</li>
+            <li className="lore-list-item">Recent discoveries stay aligned with the live forge and current narrative canon.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="lore-section">
+        <h2 className="lore-heading">Recent Codex Revisions</h2>
+        <div className="lore-grid">
+          {LORE_UPDATES.map((update) => (
+            <div key={`${update.changedAt}-${update.title}`} className="lore-card">
+              <div className="lore-card-header">
+                <span className="lore-card-name">{update.title}</span>
+                <span className="lore-card-control">{update.changedAt}</span>
+              </div>
+              <p className="lore-body">{update.summary}</p>
+              <ul className="lore-list">
+                {update.highlights.map((highlight) => (
+                  <li key={highlight} className="lore-list-item">{highlight}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </section>
     </div>

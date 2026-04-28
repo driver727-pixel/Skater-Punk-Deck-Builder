@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { CardPayload } from "../lib/types";
 import { CardArt } from "./CardArt";
 import { FrameOverlay } from "./FrameOverlay";
@@ -21,6 +22,7 @@ interface CardThumbnailProps {
  * falling back to the SVG CardArt when no layer images have been stored.
  */
 export function CardThumbnail({ card, width = 160, height = 112 }: CardThumbnailProps) {
+  const [boardImageFailed, setBoardImageFailed] = useState(false);
   const { backgroundImageUrl, characterImageUrl, frameImageUrl } = card;
   const showSvgFrame = shouldRenderSvgFrame(card.prompts.rarity, frameImageUrl);
   const hasBackFrame = getStaticFrameBackUrl(card.prompts.rarity) != null;
@@ -51,12 +53,13 @@ export function CardThumbnail({ card, width = 160, height = 112 }: CardThumbnail
           className={backgroundLayerClassName}
         />
       )}
-      {showExactBoardLayer && card.board.imageUrl && (
+      {showExactBoardLayer && card.board.imageUrl && !boardImageFailed && (
         <img
           src={card.board.imageUrl}
           alt="exact generated skateboard"
           className="card-art-layer card-art-layer--board-exact"
           style={boardPlacementStyle}
+          onError={() => setBoardImageFailed(true)}
         />
       )}
       {characterImageUrl && (

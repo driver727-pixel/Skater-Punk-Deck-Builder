@@ -13,7 +13,7 @@
  * set for each context.
  */
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import type { BoardPlacement, CardPayload } from "../lib/types";
 import { CardArt } from "./CardArt";
@@ -80,6 +80,7 @@ function CardFront({
   onNameChange,
   onBoardPlacementChange,
 }: Omit<SkaterCardFaceProps, "face" | "onStatChange" | "onBioChange" | "onAgeChange">) {
+  const [boardImageFailed, setBoardImageFailed] = useState(false);
   const boardDragPointerIdRef = useRef<number | null>(null);
   const hasAnyLayer = backgroundImageUrl || characterImageUrl || frameImageUrl;
   const bgClass = shouldInsetBackgroundForFrame(card.prompts.rarity, frameImageUrl)
@@ -175,7 +176,7 @@ function CardFront({
             <img src={backgroundImageUrl} alt="background" className={bgClass} style={bgStyle} />
           )}
           <InsetNeonTube rarity={card.prompts.rarity} accentColor={card.visuals.accentColor} />
-          {showExactBoardLayer && card.board.imageUrl && (
+          {showExactBoardLayer && card.board.imageUrl && !boardImageFailed && (
             <div
               className={`print-art-layer print-art-layer--board-exact${boardPlacementChangeHandler ? " print-art-layer--board-editable" : ""}`}
               style={boardPlacementStyle}
@@ -191,6 +192,7 @@ function CardFront({
                 alt="exact generated skateboard"
                 className="print-art-layer--board-image"
                 draggable={false}
+                onError={() => setBoardImageFailed(true)}
               />
             </div>
           )}
@@ -240,6 +242,7 @@ function CardBack({
   onStatChange,
   boardImageLoading = false,
 }: Pick<SkaterCardFaceProps, "card" | "editable" | "onNameChange" | "onBioChange" | "onAgeChange" | "onStatChange" | "boardImageLoading">) {
+  const [boardImageFailed, setBoardImageFailed] = useState(false);
   const accent = card.visuals.accentColor || "#00ff88";
   const rarityColor = RARITY_COLORS[card.prompts.rarity] || "#aaaaaa";
   const hasBuiltInDesignator = hasBuiltInFrameDesignator(card.prompts.rarity);
@@ -323,8 +326,13 @@ function CardBack({
 
       <div className="print-back-hero">
         <div className="print-back-board">
-          {card.board.imageUrl ? (
-            <img src={card.board.imageUrl} alt="Electric skateboard" className="print-back-board-image" />
+          {card.board.imageUrl && !boardImageFailed ? (
+            <img
+              src={card.board.imageUrl}
+              alt="Electric skateboard"
+              className="print-back-board-image"
+              onError={() => setBoardImageFailed(true)}
+            />
           ) : boardImageLoading ? (
             <div className="print-back-board-loading">
               <img

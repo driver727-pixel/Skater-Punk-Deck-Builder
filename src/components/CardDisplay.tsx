@@ -167,6 +167,7 @@ function CompositeArt({
   fullSize = false,
   onLayerError,
 }: CompositeArtProps) {
+  const [boardImageFailed, setBoardImageFailed] = useState(false);
   const hasAnyLayer =
     backgroundImageUrl || characterImageUrl || frameImageUrl ||
     layerLoading?.background || layerLoading?.character || layerLoading?.frame;
@@ -208,12 +209,13 @@ function CompositeArt({
       <InsetNeonTube rarity={card.prompts.rarity} accentColor={card.visuals.accentColor} />
 
       {/* Layer 2 – Exact generated board asset (never redrawn by the character model) */}
-      {showExactBoardLayer && card.board.imageUrl ? (
+      {showExactBoardLayer && card.board.imageUrl && !boardImageFailed ? (
         <img
           src={card.board.imageUrl}
           alt="exact generated skateboard"
           className="card-art-layer card-art-layer--board-exact"
           style={boardPlacementStyle}
+          onError={() => setBoardImageFailed(true)}
         />
       ) : null}
 
@@ -284,6 +286,7 @@ function CardDisplayComponent({
   const [sharing, setSharing] = useState(false);
   const [viewing3D, setViewing3D] = useState(false);
   const [printing, setPrinting] = useState(false);
+  const [boardBackImageFailed, setBoardBackImageFailed] = useState(false);
 
   // ── Inline editable name, age & bio ──────────────────────────────────────
   const [localName, setLocalName] = useState(card.identity.name);
@@ -542,11 +545,12 @@ function CardDisplayComponent({
 
           <div className="card-board">
             <span className="card-board__label">BOARD</span>
-            {card.board.imageUrl ? (
+            {card.board.imageUrl && !boardBackImageFailed ? (
               <img
                 src={card.board.imageUrl}
                 alt="Electric skateboard"
                 className="card-board__generated-img"
+                onError={() => setBoardBackImageFailed(true)}
               />
             ) : (
               <div className="card-board__placeholder">🛹</div>

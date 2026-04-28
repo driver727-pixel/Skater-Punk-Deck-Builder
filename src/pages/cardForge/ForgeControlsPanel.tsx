@@ -347,7 +347,7 @@ export function ForgeControlsPanel({
               aria-label="Skateboard size"
             />
             <p className="form-hint">
-              Drag the board on the card face to place it before saving. On mobile, tap and hold with one finger, then drag.
+              Drag the board on the card face to place it before saving. On mobile, drag with one finger to reposition.
             </p>
           </div>
           <div className="forge-generated-buttons">

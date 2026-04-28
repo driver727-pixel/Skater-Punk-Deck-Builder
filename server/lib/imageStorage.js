@@ -13,8 +13,11 @@ const FIREBASE_STORAGE_BASE_URL = 'https://firebasestorage.googleapis.com';
 function isFirebaseStorageUrl(url) {
   if (typeof url !== 'string') return false;
   try {
-    return new URL(url).hostname.endsWith('firebasestorage.googleapis.com') ||
-      new URL(url).hostname.endsWith('storage.googleapis.com');
+    const { hostname } = new URL(url);
+    return hostname === 'firebasestorage.googleapis.com' ||
+      hostname.endsWith('.firebasestorage.googleapis.com') ||
+      hostname === 'storage.googleapis.com' ||
+      hostname.endsWith('.storage.googleapis.com');
   } catch {
     return false;
   }

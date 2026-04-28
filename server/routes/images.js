@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { persistImageToStorage } from '../lib/imageStorage.js';
 
 const BOARD_IMAGE_SIZE = { width: 512, height: 512 };
@@ -75,7 +76,6 @@ export function registerImageRoutes(app, {
         data.images = await Promise.all(
           data.images.map(async (img, index) => {
             if (typeof img?.url !== 'string') return img;
-            const { randomUUID } = await import('node:crypto');
             const storagePath = `generatedImages/gen/${randomUUID()}-${index}.png`;
             const persistedUrl = await persistImageToStorage(adminStorage, img.url, storageBucket, storagePath);
             return { ...img, url: persistedUrl };
@@ -213,7 +213,6 @@ export function registerImageRoutes(app, {
 
       // Persist the background-removed image to Firebase Storage for a permanent URL.
       if (adminStorage && storageBucket && typeof data?.image?.url === 'string') {
-        const { randomUUID } = await import('node:crypto');
         const storagePath = `generatedImages/characters/${randomUUID()}.png`;
         data.image = {
           ...data.image,

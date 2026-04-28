@@ -93,7 +93,7 @@ test('persistImageToStorage returns Firebase Storage URL on success', async () =
     );
 
     assert.ok(result.startsWith('https://firebasestorage.googleapis.com/v0/b/'), `Expected Firebase Storage URL, got: ${result}`);
-    assert.ok(result.includes('my-project.appspot.com'), 'URL should contain bucket name');
+    assert.ok(result.startsWith('https://firebasestorage.googleapis.com/v0/b/my-project.appspot.com/'), 'URL should contain encoded bucket name');
     assert.ok(result.includes('alt=media&token='), 'URL should contain download token');
     assert.equal(savedData.length, 1);
     assert.equal(savedData[0].name, 'my-project.appspot.com');

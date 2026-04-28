@@ -447,6 +447,7 @@ export function SkaterCardFace({
   onBioChange,
   onAgeChange,
   onStatChange,
+  onBoardPlacementChange,
   boardImageLoading,
 }: SkaterCardFaceProps) {
   if (face === "front") {

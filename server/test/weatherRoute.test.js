@@ -120,14 +120,15 @@ test('createDistrictWeatherService fetches live weather and reuses fresh cache',
     return {
       ok: true,
       status: 200,
-      json: async () => ({
-        current: {
-          temperature_2m: 24.44,
-          wind_speed_10m: 12.34,
-          rain: 0,
-          weather_code: 0,
-        },
-      }),
+      json: async () =>
+        Array.from({ length: 8 }, () => ({
+          current: {
+            temperature_2m: 24.44,
+            wind_speed_10m: 12.34,
+            rain: 0,
+            weather_code: 0,
+          },
+        })),
     };
   };
 
@@ -136,7 +137,7 @@ test('createDistrictWeatherService fetches live weather and reuses fresh cache',
     const first = await service.getDistrictWeatherPayload();
     const second = await service.getDistrictWeatherPayload();
 
-    assert.equal(fetchCalls.length, 8);
+    assert.equal(fetchCalls.length, 1);
     assert.equal(first.source, 'live');
     assert.equal(first.stale, false);
     assert.equal(first.districts.length, 8);
@@ -151,28 +152,26 @@ test('createDistrictWeatherService fetches live weather and reuses fresh cache',
   }
 });
 
-test('createDistrictWeatherService returns partial-live payload when one district fetch fails', async () => {
+test('createDistrictWeatherService returns partial-live payload when one batch entry has no current data', async () => {
   const originalFetch = globalThis.fetch;
   const originalConsoleError = console.error;
-  globalThis.fetch = async (url) => {
-    const requestUrl = new URL(url);
-    if (requestUrl.searchParams.get('latitude') === '-33.8688') {
-      return {
-        ok: false,
-        status: 503,
-      };
-    }
+  globalThis.fetch = async () => {
+    // Return an array where Electropolis (index 1) has a missing current block.
     return {
       ok: true,
       status: 200,
-      json: async () => ({
-        current: {
-          temperature_2m: 18,
-          wind_speed_10m: 8,
-          rain: 8,
-          weather_code: 63,
-        },
-      }),
+      json: async () =>
+        Array.from({ length: 8 }, (_, i) => ({
+          current:
+            i === 1
+              ? null
+              : {
+                  temperature_2m: 18,
+                  wind_speed_10m: 8,
+                  rain: 8,
+                  weather_code: 63,
+                },
+        })),
     };
   };
   console.error = () => {};

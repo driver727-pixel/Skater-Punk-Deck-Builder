@@ -1,4 +1,4 @@
-import { Component, ReactNode, lazy, Suspense, useEffect } from "react";
+import { Component, type ReactNode, type ErrorInfo, lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { TierProvider } from "./context/TierContext";
@@ -37,8 +37,8 @@ function PlayerRewardBanner() {
 
   const message = [
     playerRewards.signupBonusGranted ? "🎁 Rare signup bonus added to your Collection." : "",
-    playerRewards.dailyReward.claimed
-      ? `🔥 ${playerRewards.dailyReward.currentStreak}-day streak claimed for +${playerRewards.dailyReward.rewardXp} XP and +${playerRewards.dailyReward.rewardOzzies} Ozzies.`
+    playerRewards.dailyReward?.claimed
+      ? `🔥 ${playerRewards.dailyReward?.currentStreak}-day streak claimed for +${playerRewards.dailyReward?.rewardXp} XP and +${playerRewards.dailyReward?.rewardOzzies} Ozzies.`
       : "",
   ].filter(Boolean).join(" ");
 
@@ -70,6 +70,10 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 
   static getDerivedStateFromError() {
     return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("[ErrorBoundary] Unhandled render error:", error, info.componentStack);
   }
 
   render() {

@@ -164,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       syncPlayerRewards(u)
         .then((result) => {
           setPlayerRewards(
-            result.signupBonusGranted || result.dailyReward.claimed
+            result.signupBonusGranted || result.dailyReward?.claimed
               ? result
               : null,
           );

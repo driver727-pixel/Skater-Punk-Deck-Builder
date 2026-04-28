@@ -38,6 +38,7 @@ export function buildRateLimiter({ windowMs, max, message, store }) {
     standardHeaders: 'draft-8',
     legacyHeaders: false,
     message,
+    passOnStoreError: true,
     ...(store ? { store } : {}),
   });
 }

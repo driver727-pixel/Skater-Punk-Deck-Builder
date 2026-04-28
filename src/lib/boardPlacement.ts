@@ -25,7 +25,8 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function finiteOrDefault(value: number | undefined, fallback: number): number {
+function finiteOrDefault(value: number | null | undefined, fallback: number): number {
+  if (value == null) return fallback;
   return Number.isFinite(value) ? Number(value) : fallback;
 }
 

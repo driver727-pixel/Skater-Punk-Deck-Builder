@@ -97,7 +97,7 @@ function CardFront({
   const showExactBoardLayer = Boolean(card.board.imageUrl && (backgroundImageUrl || characterImageUrl));
   const boardPlacement = normalizeBoardPlacement(boardPoseScene.key, card.board.placement);
   const boardPlacementStyle = buildBoardPlacementStyle(boardPoseScene.key, boardPlacement);
-  const canMoveBoard = editable && onBoardPlacementChange;
+  const boardPlacementChangeHandler = editable ? onBoardPlacementChange : undefined;
 
   // Focal-crop background when the rarity has a dual-face PNG frame.
   const bgStyle: React.CSSProperties | undefined = (backgroundImageUrl && hasBackFrame)
@@ -120,7 +120,7 @@ function CardFront({
 
   const updateBoardPlacementFromPointer = useCallback(
     (event: PointerEvent<HTMLImageElement>) => {
-      if (!canMoveBoard) return;
+      if (!boardPlacementChangeHandler) return;
       const container = event.currentTarget.parentElement;
       if (!container) return;
 
@@ -130,20 +130,20 @@ function CardFront({
         xPercent: ((event.clientX - rect.left) / rect.width) * 100,
         yPercent: ((event.clientY - rect.top) / rect.height) * 100,
       });
-      canMoveBoard(nextPlacement);
+      boardPlacementChangeHandler(nextPlacement);
     },
-    [boardPlacement, boardPoseScene.key, canMoveBoard],
+    [boardPlacement, boardPlacementChangeHandler, boardPoseScene.key],
   );
 
   const handleBoardPointerDown = useCallback(
     (event: PointerEvent<HTMLImageElement>) => {
-      if (!canMoveBoard || event.button !== 0) return;
+      if (!boardPlacementChangeHandler || event.button !== 0) return;
       event.preventDefault();
       boardDragPointerIdRef.current = event.pointerId;
       event.currentTarget.setPointerCapture(event.pointerId);
       updateBoardPlacementFromPointer(event);
     },
-    [canMoveBoard, updateBoardPlacementFromPointer],
+    [boardPlacementChangeHandler, updateBoardPlacementFromPointer],
   );
 
   const handleBoardPointerMove = useCallback(
@@ -173,7 +173,7 @@ function CardFront({
             <img
               src={card.board.imageUrl}
               alt="exact generated skateboard"
-              className={`print-art-layer print-art-layer--board-exact${canMoveBoard ? " print-art-layer--board-editable" : ""}`}
+              className={`print-art-layer print-art-layer--board-exact${boardPlacementChangeHandler ? " print-art-layer--board-editable" : ""}`}
               style={boardPlacementStyle}
               onPointerDown={handleBoardPointerDown}
               onPointerMove={handleBoardPointerMove}

@@ -5204,13 +5204,35 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   pointer-events: none;
   filter: drop-shadow(0 6px 7px rgba(0, 0, 0, 0.55));
 }
+.print-art-layer--board-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
 .print-art-layer--board-editable {
   pointer-events: auto;
   cursor: grab;
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: left, top, transform;
 }
 .print-art-layer--board-editable:active {
   cursor: grabbing;
+}
+.print-art-layer--board-editable::before {
+  content: "";
+  position: absolute;
+  inset: -16px;
+}
+@media (hover: none), (pointer: coarse) {
+  .print-art-layer--board-editable::before {
+    inset: -28px;
+  }
 }
 .print-art-layer--board-workshop {
   left: 4%;

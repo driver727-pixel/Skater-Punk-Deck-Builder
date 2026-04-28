@@ -119,7 +119,7 @@ function CardFront({
   );
 
   const updateBoardPlacementFromPointer = useCallback(
-    (event: PointerEvent<HTMLImageElement>) => {
+    (event: PointerEvent<HTMLElement>) => {
       if (!boardPlacementChangeHandler) return;
       const container = event.currentTarget.parentElement;
       if (!container) return;
@@ -136,7 +136,7 @@ function CardFront({
   );
 
   const handleBoardPointerDown = useCallback(
-    (event: PointerEvent<HTMLImageElement>) => {
+    (event: PointerEvent<HTMLElement>) => {
       if (
         !boardPlacementChangeHandler ||
         !event.isPrimary ||
@@ -153,7 +153,7 @@ function CardFront({
   );
 
   const handleBoardPointerMove = useCallback(
-    (event: PointerEvent<HTMLImageElement>) => {
+    (event: PointerEvent<HTMLElement>) => {
       if (boardDragPointerIdRef.current !== event.pointerId) return;
       event.preventDefault();
       updateBoardPlacementFromPointer(event);
@@ -161,7 +161,7 @@ function CardFront({
     [updateBoardPlacementFromPointer],
   );
 
-  const handleBoardPointerUp = useCallback((event: PointerEvent<HTMLImageElement>) => {
+  const handleBoardPointerUp = useCallback((event: PointerEvent<HTMLElement>) => {
     if (boardDragPointerIdRef.current !== event.pointerId) return;
     boardDragPointerIdRef.current = null;
     event.currentTarget.releasePointerCapture(event.pointerId);
@@ -176,16 +176,23 @@ function CardFront({
           )}
           <InsetNeonTube rarity={card.prompts.rarity} accentColor={card.visuals.accentColor} />
           {showExactBoardLayer && card.board.imageUrl && (
-            <img
-              src={card.board.imageUrl}
-              alt="exact generated skateboard"
+            <div
               className={`print-art-layer print-art-layer--board-exact${boardPlacementChangeHandler ? " print-art-layer--board-editable" : ""}`}
               style={boardPlacementStyle}
+              role={boardPlacementChangeHandler ? "img" : undefined}
+              aria-label={boardPlacementChangeHandler ? "Draggable skateboard. Press and drag to reposition it on the card." : undefined}
               onPointerDown={handleBoardPointerDown}
               onPointerMove={handleBoardPointerMove}
               onPointerUp={handleBoardPointerUp}
               onPointerCancel={handleBoardPointerUp}
-            />
+            >
+              <img
+                src={card.board.imageUrl}
+                alt="exact generated skateboard"
+                className="print-art-layer--board-image"
+                draggable={false}
+              />
+            </div>
           )}
           {characterImageUrl && (
             <img

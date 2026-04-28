@@ -346,7 +346,9 @@ export function ForgeControlsPanel({
               onChange={(event) => onBoardScaleChange(Number(event.target.value))}
               aria-label="Skateboard size"
             />
-            <p className="form-hint">Drag the board on the card face to place it before saving.</p>
+            <p className="form-hint">
+              Drag the board on the card face to place it before saving. On mobile, press and drag with one finger.
+            </p>
           </div>
           <div className="forge-generated-buttons">
             <button className="btn-outline btn-3d" onClick={onOpen3D} title="View card in 3D">

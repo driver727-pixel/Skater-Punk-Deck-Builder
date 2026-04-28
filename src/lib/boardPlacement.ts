@@ -25,7 +25,7 @@ function clampPlacementValue(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function getFiniteNumberOrDefault(value: number | null | undefined, fallback: number): number {
+function getValidNumberOrDefault(value: number | null | undefined, fallback: number): number {
   if (value == null) return fallback;
   return Number.isFinite(value) ? Number(value) : fallback;
 }
@@ -55,7 +55,7 @@ export function normalizeBoardPlacement(
 ): BoardPlacement {
   const fallback = getDefaultBoardPlacement(sceneKey);
   const scale = clampPlacementValue(
-    getFiniteNumberOrDefault(placement?.scale, fallback.scale),
+    getValidNumberOrDefault(placement?.scale, fallback.scale),
     BOARD_PLACEMENT_MIN_SCALE,
     BOARD_PLACEMENT_MAX_SCALE,
   );
@@ -66,10 +66,10 @@ export function normalizeBoardPlacement(
   const yMax = 100 - yMin;
 
   return {
-    xPercent: clampPlacementValue(getFiniteNumberOrDefault(placement?.xPercent, fallback.xPercent), xMin, xMax),
-    yPercent: clampPlacementValue(getFiniteNumberOrDefault(placement?.yPercent, fallback.yPercent), yMin, yMax),
+    xPercent: clampPlacementValue(getValidNumberOrDefault(placement?.xPercent, fallback.xPercent), xMin, xMax),
+    yPercent: clampPlacementValue(getValidNumberOrDefault(placement?.yPercent, fallback.yPercent), yMin, yMax),
     scale,
-    rotationDeg: getFiniteNumberOrDefault(placement?.rotationDeg, fallback.rotationDeg),
+    rotationDeg: getValidNumberOrDefault(placement?.rotationDeg, fallback.rotationDeg),
   };
 }
 

@@ -173,10 +173,10 @@ test('createDistrictWeatherService deduplicates concurrent cache-miss requests i
 
   try {
     const service = createDistrictWeatherService();
-    const [first, second] = await Promise.all([
-      service.getDistrictWeatherPayload(),
-      (resolveFetch(), service.getDistrictWeatherPayload()),
-    ]);
+    const p1 = service.getDistrictWeatherPayload();
+    resolveFetch();
+    const p2 = service.getDistrictWeatherPayload();
+    const [first, second] = await Promise.all([p1, p2]);
 
     assert.equal(fetchCallCount, 1, 'upstream fetch should be called exactly once');
     assert.equal(first.source, 'live');

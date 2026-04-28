@@ -135,6 +135,7 @@ app.use(cors({
     }
     callback(new Error('CORS origin is not allowed.'));
   },
+  maxAge: 600,
 }));
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────

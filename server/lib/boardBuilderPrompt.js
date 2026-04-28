@@ -39,6 +39,13 @@ export const CRITICAL_SINGLE_ASSEMBLY_CONSTRAINT =
   'offset, or graft extra trucks, axles, wheel pods, motors, or drivetrain ' +
   'assemblies anywhere on the board.';
 
+export const MOUNTAINBOARD_LORE_CONSTRAINT =
+  'Mountainboards, Mountain Boards, and 4WD boards always have foot straps on ' +
+  'top of the deck plus a compact top-mounted battery pack sized so an adult ' +
+  "rider's feet can still fit naturally in the straps. Never omit the foot " +
+  'straps, never make the battery so large that it blocks the stance area, and ' +
+  'do not treat a battery-free deck reference as permission to omit the top battery.';
+
 const BOARD_IMAGE_BASE_CONCEPT =
   'An electric skateboard, high-detail product display in Gouache style painting on a neutral dark gray background. ' +
   'CRITICAL: The image must contain exactly ONE skateboard. Never show two or more skateboards in the same image under any circumstances. ' +
@@ -101,6 +108,12 @@ function getMotorImageDescription(config) {
   }
 }
 
+function getMountainboardLoreDescription(config) {
+  return config.boardType === 'Mountain' || config.drivetrain === '4WD'
+    ? MOUNTAINBOARD_LORE_CONSTRAINT
+    : '';
+}
+
 /**
  * Builds the image-generation prompt for the given BoardConfig.
  * Mirrors src/lib/boardBuilderPrompt.ts#buildBoardImagePrompt.
@@ -120,6 +133,7 @@ export function buildBoardImagePrompt(config) {
     `${getMotorImageDescription(config)} ` +
     `${WHEEL_IMAGE_DESCRIPTIONS[config.wheels] ?? ''} ` +
     `${BATTERY_IMAGE_DESCRIPTIONS[battery] ?? ''} ` +
+    `${getMountainboardLoreDescription(config)} ` +
     `Show one fully assembled complete skateboard only. ` +
     `The final board must clearly preserve the selected deck shape, drivetrain hardware, motor size, wheel type and wheel diameter${batteryPreservationClause} with no substitutions. ` +
     `For Belt, Hub, and Gear builds, keep all drive hardware on the rear truck and rear wheels only; do not add any front drive hardware unless the selected drivetrain is 4WD. ` +

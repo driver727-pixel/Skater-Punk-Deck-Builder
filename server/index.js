@@ -135,6 +135,8 @@ app.use(cors({
     }
     callback(new Error('CORS origin is not allowed.'));
   },
+  // Cache browser preflight checks briefly to reduce repeated OPTIONS traffic
+  // without locking clients into stale CORS policy for long periods.
   maxAge: 600,
 }));
 

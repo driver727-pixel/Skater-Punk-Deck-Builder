@@ -570,7 +570,7 @@ if (!stripeWebhookSecret) {
   console.warn('⚠️  STRIPE_WEBHOOK_SECRET environment variable is not set — Stripe webhooks will be unavailable.');
 }
 
-const { adminAuth, adminDb } = createFirebaseAdminServices({
+const { adminAuth, adminDb, adminStorage } = createFirebaseAdminServices({
   env: process.env,
   logger: console,
 });
@@ -783,6 +783,8 @@ registerImageRoutes(app, {
   resolveFalProfile,
   boardImageJobs,
   pruneBoardImageJobs,
+  adminStorage,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET || process.env.VITE_FIREBASE_STORAGE_BUCKET || '',
 });
 
 registerImportRoutes(app, {

@@ -5231,7 +5231,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 @media (hover: none), (pointer: coarse) {
   .print-art-layer--board-editable::before {
-    inset: -28px;
+    inset: -40px;
   }
 }
 .print-art-layer--board-workshop {

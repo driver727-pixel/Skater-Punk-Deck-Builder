@@ -69,6 +69,9 @@ const ALLOWED_APP_ORIGINS = new Set([
   ...DEFAULT_ALLOWED_APP_ORIGINS,
   ...APP_ORIGINS,
 ]);
+// Cache browser CORS preflight checks for 10 minutes. This trims repeated
+// authenticated OPTIONS traffic while keeping CORS policy changes reasonably quick to propagate.
+const PREFLIGHT_CACHE_SECONDS = 10 * 60;
 const MAX_TEXT_FIELD_LENGTH = 4_000;
 const MAX_BOARD_PROMPT_LENGTH = 1_500;
 const MAX_IMAGE_DIMENSION = 1_536;
@@ -135,6 +138,7 @@ app.use(cors({
     }
     callback(new Error('CORS origin is not allowed.'));
   },
+  maxAge: PREFLIGHT_CACHE_SECONDS,
 }));
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────

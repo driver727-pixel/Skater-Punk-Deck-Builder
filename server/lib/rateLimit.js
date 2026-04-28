@@ -26,10 +26,15 @@ export function createRateLimitStore(redisUrl, log = console) {
   };
 }
 
+export function shouldSkipRateLimitRequest(req) {
+  return req?.method === 'OPTIONS';
+}
+
 export function buildRateLimiter({ windowMs, max, message, store }) {
   return rateLimit({
     windowMs,
     max,
+    skip: shouldSkipRateLimitRequest,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
     message,

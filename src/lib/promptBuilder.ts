@@ -83,7 +83,7 @@ export const CRITICAL_NO_EXTRA_LIMBS_CONSTRAINT =
   "Any anatomy error producing more than two arms or more than two legs is strictly forbidden.";
 
 const CHARACTER_LAYER_COMPOSITION_REQUIREMENT =
-  "Composition: pulled-back full-body framing with generous headroom, visible boots, and a clear skateboard-sized pocket of empty space beside or in front of the courier. Do not push the subject too close to the camera or crop the board zone.";
+  "Composition: pulled-back full-body framing with generous headroom, visible boots, and a clear long empty pocket of space beside or in front of the courier for a separate composited asset. Do not push the subject too close to the camera or crop the empty zone.";
 
 const COMBINED_BOARD_PLACEMENT_REQUIREMENT =
   "Place the full electric skateboard completely inside the frame beside or slightly in front of the courier, never hidden behind the body and never cropped out of view. No extra people and no extra skateboards.";
@@ -126,13 +126,13 @@ function buildDynamicComposition(prompts: CardPrompts): string {
     "captured leaning hard into courier momentum",
     "caught in a fast forward drive with one shoulder leading the motion",
     "shown bracing through a sharp route change with strong counterbalance",
-    "posed as if popping over rough ground with action energy in the legs",
+    "posed as if leaping over rough ground with action energy in the legs",
     "framed in a hard-driving movement beat cutting diagonally through the scene",
   ]);
   const gazeLine = rng.pick([
     "eyes focused down the route instead of staring blankly at the camera",
     "attention locked on the next obstacle or delivery line",
-    "expression alert and reactive, like the rider is already making the next move",
+    "expression alert and reactive, like the courier is already making the next move",
     "gaze aimed just past the viewer with a sense of forward intent",
   ]);
 
@@ -295,9 +295,9 @@ export function buildCharacterPrompt(prompts: CardPrompts): string {
   return joinPromptBlocks(
     CORE_COMIC_BOOK_STYLE,
     `Full-body comic-book portrait of an adult courier operating under a ${coverIdentity?.label.toLowerCase() ?? "civilian"} cover identity, wearing ${clothing}, ${pose}, ${boardScene.characterPrompt}, ${composition}.`,
-    `The skateboard itself is not generated in this character layer; leave clean compositing space for the exact board image asset.`,
+    `This character layer must contain only the courier; leave clean empty space for the separately composited equipment asset.`,
     CHARACTER_LAYER_COMPOSITION_REQUIREMENT,
-    `No extra people, no crowd, no spare props, no skateboard wall art, no secondary vehicles.`,
+    `No extra people, no crowd, no spare props, no wall art, no secondary vehicles.`,
     characterDesc,
     `Mood: ${mood}.`,
     `Background: solid neutral medium-gray studio, no scenery or props, full figure head-to-toe with generous margins, centered.`,

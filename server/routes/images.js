@@ -76,7 +76,7 @@ export function registerImageRoutes(app, {
         data.images = await Promise.all(
           data.images.map(async (img, index) => {
             if (typeof img?.url !== 'string') return img;
-            const storagePath = `generatedImages/gen/${randomUUID()}-${index}.png`;
+            const storagePath = `generatedImages/generated/${randomUUID()}-${index}.png`;
             const persistedUrl = await persistImageToStorage(adminStorage, img.url, storageBucket, storagePath);
             return { ...img, url: persistedUrl };
           }),

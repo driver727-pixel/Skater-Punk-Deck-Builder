@@ -167,7 +167,7 @@ function CompositeArt({
   fullSize = false,
   onLayerError,
 }: CompositeArtProps) {
-  const [boardImageFailed, setBoardImageFailed] = useState(false);
+  const [boardFrontImageFailed, setBoardFrontImageFailed] = useState(false);
   const hasAnyLayer =
     backgroundImageUrl || characterImageUrl || frameImageUrl ||
     layerLoading?.background || layerLoading?.character || layerLoading?.frame;
@@ -209,13 +209,13 @@ function CompositeArt({
       <InsetNeonTube rarity={card.prompts.rarity} accentColor={card.visuals.accentColor} />
 
       {/* Layer 2 – Exact generated board asset (never redrawn by the character model) */}
-      {showExactBoardLayer && card.board.imageUrl && !boardImageFailed ? (
+      {showExactBoardLayer && card.board.imageUrl && !boardFrontImageFailed ? (
         <img
           src={card.board.imageUrl}
           alt="exact generated skateboard"
           className="card-art-layer card-art-layer--board-exact"
           style={boardPlacementStyle}
-          onError={() => setBoardImageFailed(true)}
+          onError={() => setBoardFrontImageFailed(true)}
         />
       ) : null}
 

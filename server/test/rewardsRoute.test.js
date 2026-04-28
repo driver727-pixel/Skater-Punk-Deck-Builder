@@ -147,23 +147,41 @@ test('player reward sync returns auth errors before touching reward state', asyn
 });
 
 test('player reward sync rejects invalid signup bonus cards before granting rewards', async () => {
+  const originalConsoleError = console.error;
   const adminDb = makeAdminDb({
     'userProfiles/user-1': makeSnapshot({ missionXp: 0, missionOzzies: 0 }),
     'dailyStreaks/user-1': makeSnapshot({}),
   });
   const { route } = registerHarnessRoute({ adminDb });
+  console.error = () => {};
 
-  const res = await invokeRoute(route, {
-    body: {
-      signupBonusCard: createRareSignupCard({
-        prompts: { rarity: 'Master' },
-      }),
-    },
-  });
+  try {
+    const missingPayloadRes = await invokeRoute(route);
+    assert.equal(missingPayloadRes.statusCode, 400);
+    assert.deepEqual(missingPayloadRes.body, { error: 'signupBonusCard payload is required.' });
+    assert.deepEqual(adminDb.lastTransaction.sets, []);
 
-  assert.equal(res.statusCode, 400);
-  assert.deepEqual(res.body, { error: 'Signup bonus cards must be Rare class cards.' });
-  assert.deepEqual(adminDb.lastTransaction.sets, []);
+    const missingIdRes = await invokeRoute(route, {
+      body: { signupBonusCard: createRareSignupCard({ id: '   ' }) },
+    });
+    assert.equal(missingIdRes.statusCode, 400);
+    assert.deepEqual(missingIdRes.body, { error: 'signupBonusCard.id must be a non-empty string.' });
+    assert.deepEqual(adminDb.lastTransaction.sets, []);
+
+    const wrongRarityRes = await invokeRoute(route, {
+      body: {
+        signupBonusCard: createRareSignupCard({
+          prompts: { rarity: 'Master' },
+        }),
+      },
+    });
+
+    assert.equal(wrongRarityRes.statusCode, 400);
+    assert.deepEqual(wrongRarityRes.body, { error: 'Signup bonus cards must be Rare class cards.' });
+    assert.deepEqual(adminDb.lastTransaction.sets, []);
+  } finally {
+    console.error = originalConsoleError;
+  }
 });
 
 test('player reward sync grants first signup card and continuing daily streak', async () => {

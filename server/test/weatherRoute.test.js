@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   buildFallbackDistrictWeatherPayload,
   buildWeatherAccessRule,
+  createDistrictWeatherService,
   registerWeatherRoutes,
   resolveWeatherSummary,
 } from '../routes/weather.js';
@@ -109,4 +110,89 @@ test('registerWeatherRoutes serves district weather through rate limit middlewar
   assert.equal(rateLimitCalls, 1);
   assert.equal(res.statusCode, 200);
   assert.deepEqual(res.body, expectedPayload);
+});
+
+test('createDistrictWeatherService fetches live weather and reuses fresh cache', async () => {
+  const originalFetch = globalThis.fetch;
+  const fetchCalls = [];
+  globalThis.fetch = async (url) => {
+    fetchCalls.push(url.toString());
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        current: {
+          temperature_2m: 24.44,
+          wind_speed_10m: 12.34,
+          rain: 0,
+          weather_code: 0,
+        },
+      }),
+    };
+  };
+
+  try {
+    const service = createDistrictWeatherService();
+    const first = await service.getDistrictWeatherPayload();
+    const second = await service.getDistrictWeatherPayload();
+
+    assert.equal(fetchCalls.length, 8);
+    assert.equal(first.source, 'live');
+    assert.equal(first.stale, false);
+    assert.equal(first.districts.length, 8);
+    assert.equal(first.districts.every((district) => district.summary === 'Clear'), true);
+    assert.equal(first.districts[0].temperatureC, 24.4);
+    assert.equal(first.districts[0].windSpeedKph, 12.3);
+    assert.equal(second.source, 'cache');
+    assert.equal(second.stale, false);
+    assert.deepEqual(second.districts, first.districts);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('createDistrictWeatherService returns partial-live payload when one district fetch fails', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalConsoleError = console.error;
+  globalThis.fetch = async (url) => {
+    const requestUrl = new URL(url);
+    if (requestUrl.searchParams.get('latitude') === '-33.8688') {
+      return {
+        ok: false,
+        status: 503,
+      };
+    }
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        current: {
+          temperature_2m: 18,
+          wind_speed_10m: 8,
+          rain: 8,
+          weather_code: 63,
+        },
+      }),
+    };
+  };
+  console.error = () => {};
+
+  try {
+    const service = createDistrictWeatherService();
+    const payload = await service.getDistrictWeatherPayload();
+
+    assert.equal(payload.source, 'partial-live');
+    assert.equal(payload.stale, true);
+    assert.equal(payload.districts.length, 8);
+    assert.equal(payload.districts.find((district) => district.district === 'Electropolis').source, 'fallback');
+    assert.equal(payload.districts.find((district) => district.district === 'Airaway').summary, 'Heavy rain');
+    assert.deepEqual(payload.districts.find((district) => district.district === 'Airaway').accessRule, {
+      requiredBoardType: 'Mountain',
+      reason: 'Heavy rain over Brisbane has turned Airaway into Mountain-board-only territory.',
+      source: 'heavy-rain',
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.error = originalConsoleError;
+  }
 });

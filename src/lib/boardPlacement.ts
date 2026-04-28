@@ -21,11 +21,11 @@ const BOARD_PLACEMENT_PRESETS: Record<BoardPoseSceneKey, BoardPlacementPreset> =
   cleaning: { xPercent: 67, yPercent: 77, scale: 1, rotationDeg: 5, widthPercent: 60, heightPercent: 24 },
 };
 
-function clamp(value: number, min: number, max: number): number {
+function clampPlacementValue(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function finiteOrDefault(value: number | null | undefined, fallback: number): number {
+function getFiniteNumberOrDefault(value: number | null | undefined, fallback: number): number {
   if (value == null) return fallback;
   return Number.isFinite(value) ? Number(value) : fallback;
 }
@@ -42,7 +42,7 @@ export function getDefaultBoardPlacement(sceneKey: BoardPoseSceneKey): BoardPlac
 
 export function getBoardPlacementBox(sceneKey: BoardPoseSceneKey, scale: number): { widthPercent: number; heightPercent: number } {
   const preset = BOARD_PLACEMENT_PRESETS[sceneKey];
-  const clampedScale = clamp(scale, BOARD_PLACEMENT_MIN_SCALE, BOARD_PLACEMENT_MAX_SCALE);
+  const clampedScale = clampPlacementValue(scale, BOARD_PLACEMENT_MIN_SCALE, BOARD_PLACEMENT_MAX_SCALE);
   return {
     widthPercent: preset.widthPercent * clampedScale,
     heightPercent: preset.heightPercent * clampedScale,
@@ -54,8 +54,8 @@ export function normalizeBoardPlacement(
   placement?: Partial<BoardPlacement>,
 ): BoardPlacement {
   const fallback = getDefaultBoardPlacement(sceneKey);
-  const scale = clamp(
-    finiteOrDefault(placement?.scale, fallback.scale),
+  const scale = clampPlacementValue(
+    getFiniteNumberOrDefault(placement?.scale, fallback.scale),
     BOARD_PLACEMENT_MIN_SCALE,
     BOARD_PLACEMENT_MAX_SCALE,
   );
@@ -66,10 +66,10 @@ export function normalizeBoardPlacement(
   const yMax = 100 - yMin;
 
   return {
-    xPercent: clamp(finiteOrDefault(placement?.xPercent, fallback.xPercent), xMin, xMax),
-    yPercent: clamp(finiteOrDefault(placement?.yPercent, fallback.yPercent), yMin, yMax),
+    xPercent: clampPlacementValue(getFiniteNumberOrDefault(placement?.xPercent, fallback.xPercent), xMin, xMax),
+    yPercent: clampPlacementValue(getFiniteNumberOrDefault(placement?.yPercent, fallback.yPercent), yMin, yMax),
     scale,
-    rotationDeg: finiteOrDefault(placement?.rotationDeg, fallback.rotationDeg),
+    rotationDeg: getFiniteNumberOrDefault(placement?.rotationDeg, fallback.rotationDeg),
   };
 }
 

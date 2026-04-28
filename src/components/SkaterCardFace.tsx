@@ -144,9 +144,9 @@ function CardFront({
       ) {
         return;
       }
-      event.preventDefault();
       boardDragPointerIdRef.current = event.pointerId;
       event.currentTarget.setPointerCapture(event.pointerId);
+      event.preventDefault();
       updateBoardPlacementFromPointer(event);
     },
     [boardPlacementChangeHandler, updateBoardPlacementFromPointer],

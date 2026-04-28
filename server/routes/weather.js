@@ -24,7 +24,7 @@ function roundWeatherMetric(value) {
   return Number(value.toFixed(1));
 }
 
-function resolveWeatherSummary({ rainMm, weatherCode, windSpeedKph, temperatureC }) {
+export function resolveWeatherSummary({ rainMm, weatherCode, windSpeedKph, temperatureC }) {
   if ((rainMm ?? 0) >= HEAVY_RAIN_MM || HEAVY_RAIN_CODES.has(weatherCode ?? -1)) return 'Heavy rain';
   if ((rainMm ?? 0) > 0) return 'Rain';
   if ((windSpeedKph ?? 0) >= STRONG_WIND_KPH) return 'Strong wind';
@@ -32,7 +32,7 @@ function resolveWeatherSummary({ rainMm, weatherCode, windSpeedKph, temperatureC
   return 'Clear';
 }
 
-function buildWeatherAccessRule(district, city, summary) {
+export function buildWeatherAccessRule(district, city, summary) {
   if (summary !== 'Heavy rain') return null;
   return {
     requiredBoardType: 'Mountain',
@@ -41,7 +41,7 @@ function buildWeatherAccessRule(district, city, summary) {
   };
 }
 
-function buildFallbackDistrictWeatherPayload() {
+export function buildFallbackDistrictWeatherPayload() {
   const generatedAt = new Date().toISOString();
   return {
     generatedAt,

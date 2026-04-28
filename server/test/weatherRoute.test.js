@@ -152,6 +152,40 @@ test('createDistrictWeatherService fetches live weather and reuses fresh cache',
   }
 });
 
+test('createDistrictWeatherService deduplicates concurrent cache-miss requests into a single upstream fetch', async () => {
+  const originalFetch = globalThis.fetch;
+  let fetchCallCount = 0;
+  let resolveFetch;
+  const fetchBlock = new Promise((resolve) => { resolveFetch = resolve; });
+
+  globalThis.fetch = async () => {
+    fetchCallCount += 1;
+    await fetchBlock;
+    return {
+      ok: true,
+      status: 200,
+      json: async () =>
+        Array.from({ length: 8 }, () => ({
+          current: { temperature_2m: 20, wind_speed_10m: 10, rain: 0, weather_code: 0 },
+        })),
+    };
+  };
+
+  try {
+    const service = createDistrictWeatherService();
+    const [first, second] = await Promise.all([
+      service.getDistrictWeatherPayload(),
+      (resolveFetch(), service.getDistrictWeatherPayload()),
+    ]);
+
+    assert.equal(fetchCallCount, 1, 'upstream fetch should be called exactly once');
+    assert.equal(first.source, 'live');
+    assert.equal(second.source, 'live');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('createDistrictWeatherService returns partial-live payload when one batch entry has no current data', async () => {
   const originalFetch = globalThis.fetch;
   const originalConsoleError = console.error;

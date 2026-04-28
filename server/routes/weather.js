@@ -164,6 +164,7 @@ export function createDistrictWeatherService() {
     payload: null,
     fetchedAt: 0,
   };
+  let inflightFetch = null;
 
   async function getDistrictWeatherPayload() {
     const now = Date.now();
@@ -179,25 +180,35 @@ export function createDistrictWeatherService() {
       };
     }
 
-    try {
-      const payload = await buildDistrictWeatherPayload();
-      districtWeatherCache = { payload, fetchedAt: now };
-      return payload;
-    } catch (err) {
-      console.error('District weather refresh failed:', err);
-
-      if (districtWeatherCache.payload) {
-        return {
-          ...districtWeatherCache.payload,
-          stale: true,
-          source: districtWeatherCache.payload.source === 'fallback' ? 'fallback' : 'cache',
-        };
-      }
-
-      const fallback = buildFallbackDistrictWeatherPayload();
-      districtWeatherCache = { payload: fallback, fetchedAt: now };
-      return fallback;
+    if (inflightFetch) {
+      return inflightFetch;
     }
+
+    inflightFetch = buildDistrictWeatherPayload()
+      .then((payload) => {
+        districtWeatherCache = { payload, fetchedAt: Date.now() };
+        return payload;
+      })
+      .catch((err) => {
+        console.error('District weather refresh failed:', err);
+
+        if (districtWeatherCache.payload) {
+          return {
+            ...districtWeatherCache.payload,
+            stale: true,
+            source: districtWeatherCache.payload.source === 'fallback' ? 'fallback' : 'cache',
+          };
+        }
+
+        const fallback = buildFallbackDistrictWeatherPayload();
+        districtWeatherCache = { payload: fallback, fetchedAt: Date.now() };
+        return fallback;
+      })
+      .finally(() => {
+        inflightFetch = null;
+      });
+
+    return inflightFetch;
   }
 
   return {

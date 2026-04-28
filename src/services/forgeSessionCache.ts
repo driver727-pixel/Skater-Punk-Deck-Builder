@@ -20,6 +20,69 @@ export interface ForgeSessionData {
   characterBlend: number;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === "object";
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === "string";
+}
+
+function isNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isRenderableForgeCard(value: unknown): value is CardPayload {
+  if (!isRecord(value)) return false;
+
+  return (
+    isString(value.id) &&
+    isString(value.seed) &&
+    isString(value.frameSeed) &&
+    isString(value.backgroundSeed) &&
+    isString(value.characterSeed) &&
+    isRecord(value.prompts) &&
+    isString(value.prompts.rarity) &&
+    isRecord(value.class) &&
+    isString(value.class.rarity) &&
+    isString(value.class.badgeLabel) &&
+    isRecord(value.identity) &&
+    isString(value.identity.name) &&
+    isString(value.identity.serialNumber) &&
+    isRecord(value.role) &&
+    isString(value.role.label) &&
+    isString(value.role.passiveName) &&
+    isString(value.role.passiveDescription) &&
+    isRecord(value.stats) &&
+    isNumber(value.stats.speed) &&
+    isNumber(value.stats.range) &&
+    isNumber(value.stats.rangeNm) &&
+    isNumber(value.stats.stealth) &&
+    isNumber(value.stats.grit) &&
+    isRecord(value.board) &&
+    isRecord(value.board.config) &&
+    isRecord(value.board.components) &&
+    isRecord(value.maintenance) &&
+    isString(value.maintenance.state) &&
+    isNumber(value.maintenance.chargePct) &&
+    isRecord(value.visuals) &&
+    isString(value.visuals.accentColor) &&
+    isRecord(value.front) &&
+    isRecord(value.back)
+  );
+}
+
+function isForgeSessionData(value: unknown): value is ForgeSessionData {
+  return (
+    isRecord(value) &&
+    isRenderableForgeCard(value.card) &&
+    isNumber(value.characterBlend) &&
+    (value.backgroundUrl == null || isString(value.backgroundUrl)) &&
+    (value.characterUrl == null || isString(value.characterUrl)) &&
+    (value.frameUrl == null || isString(value.frameUrl))
+  );
+}
+
 function buildSessionKey(ownerKey = "guest"): string {
   return `${SESSION_KEY_PREFIX}:${ownerKey}`;
 }
@@ -30,10 +93,14 @@ function buildSessionKey(ownerKey = "guest"): string {
  */
 export function loadForgeSession(ownerKey?: string): ForgeSessionData | null {
   try {
-    const raw = sessionStorage.getItem(buildSessionKey(ownerKey));
+    const sessionKey = buildSessionKey(ownerKey);
+    const raw = sessionStorage.getItem(sessionKey);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as ForgeSessionData;
-    if (!parsed.card || typeof parsed.card !== "object") return null;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!isForgeSessionData(parsed)) {
+      sessionStorage.removeItem(sessionKey);
+      return null;
+    }
     return parsed;
   } catch {
     return null;

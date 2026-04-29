@@ -1,7 +1,13 @@
 import type { Rarity } from "../lib/types";
-import type { BoardPlacement } from "../lib/types";
+import type { BoardPlacement, CharacterPlacement, CompositeLayerOrder } from "../lib/types";
 import { RARITY_COLORS, shouldRenderInsetNeonTube } from "../lib/cardRarityVisuals";
-import { getBoardPlacementBox, normalizeBoardPlacement } from "../lib/boardPlacement";
+import {
+  getBoardPlacementBox,
+  getCharacterPlacementBox,
+  normalizeBoardPlacement,
+  normalizeCharacterPlacement,
+  resolveBoardLayerOrder,
+} from "../lib/boardPlacement";
 import { resolveBoardPoseScene } from "../lib/boardPoseScenes";
 import { buildFrameSvgDataUrl } from "./frameSvg";
 import { getFrameBlendMode, shouldRenderSvgFrame } from "./staticAssets";
@@ -107,20 +113,24 @@ function drawImageCover(
   ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
 }
 
-function drawImageContainBottom(
+function drawCharacterImage(
   ctx: CanvasRenderingContext2D,
   img: CanvasImageSource & { width: number; height: number },
-  targetWidth: number,
-  targetHeight: number,
-  scale = 1,
+  placement?: CharacterPlacement,
 ): void {
-  const containScale = Math.min(targetWidth / img.width, targetHeight / img.height) * scale;
+  const normalized = normalizeCharacterPlacement(placement);
+  const box = getCharacterPlacementBox(normalized.scale);
+  const targetWidth = (box.widthPercent / 100) * CARD_WIDTH;
+  const targetHeight = (box.heightPercent / 100) * CARD_HEIGHT;
+  const containScale = Math.min(targetWidth / img.width, targetHeight / img.height) * CHARACTER_LAYER_SCALE;
   const drawWidth = img.width * containScale;
   const drawHeight = img.height * containScale;
-  const drawX = (targetWidth - drawWidth) / 2;
-  const drawY = targetHeight - drawHeight;
 
-  ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+  ctx.save();
+  ctx.translate((normalized.xPercent / 100) * CARD_WIDTH, (normalized.yPercent / 100) * CARD_HEIGHT);
+  ctx.rotate((normalized.rotationDeg * Math.PI) / 180);
+  ctx.drawImage(img, -drawWidth / 2, targetHeight / 2 - drawHeight, drawWidth, drawHeight);
+  ctx.restore();
 }
 
 function drawBoardImage(
@@ -177,6 +187,8 @@ export async function downloadCardAsJpg(
   boardUrl?: string,
   characterSeed?: string,
   boardPlacement?: BoardPlacement,
+  characterPlacement?: CharacterPlacement,
+  boardLayerOrder?: CompositeLayerOrder,
 ): Promise<void> {
   const canvas = document.createElement("canvas");
   canvas.width  = CARD_WIDTH;
@@ -194,24 +206,34 @@ export async function downloadCardAsJpg(
   }
   drawInsetNeonTube(ctx, rarity, accentColor);
 
-  // ── Layer 2: character (normal blend, user-controlled opacity) ─────────────
-  if (characterUrl) {
-    const img = await loadCrossOriginImage(characterUrl);
-    ctx.globalCompositeOperation = "source-over";
-    ctx.globalAlpha = Math.max(0, Math.min(1, characterBlend));
-    drawImageContainBottom(ctx, img, CARD_WIDTH, CARD_HEIGHT, CHARACTER_LAYER_SCALE);
-    ctx.globalAlpha = 1;
-  }
+  const resolvedBoardLayerOrder = resolveBoardLayerOrder(boardLayerOrder);
 
-  // ── Layer 3: exact generated board, with user placement ────────────────────
-  if (boardUrl && characterSeed) {
+  // ── Layer 2: exact generated board, with user placement (optional behind character) ─────────
+  if (resolvedBoardLayerOrder === "behind-character" && boardUrl && characterSeed) {
     const img = await loadCrossOriginImage(boardUrl);
     ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = 1;
     drawBoardImage(ctx, img, characterSeed, boardPlacement);
   }
 
-  // ── Layer 4: frame (screen blend — black frame interior becomes transparent) ─
+  // ── Layer 3: character (normal blend, user-controlled opacity) ─────────────
+  if (characterUrl) {
+    const img = await loadCrossOriginImage(characterUrl);
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = Math.max(0, Math.min(1, characterBlend));
+    drawCharacterImage(ctx, img, characterPlacement);
+    ctx.globalAlpha = 1;
+  }
+
+  // ── Layer 4: exact generated board in front of character ────────────────────
+  if (resolvedBoardLayerOrder === "in-front" && boardUrl && characterSeed) {
+    const img = await loadCrossOriginImage(boardUrl);
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = 1;
+    drawBoardImage(ctx, img, characterSeed, boardPlacement);
+  }
+
+  // ── Layer 5: frame (screen blend — black frame interior becomes transparent) ─
   if (frameUrl || shouldRenderSvgFrame(rarity, frameUrl)) {
     const resolvedFrameUrl = shouldRenderSvgFrame(rarity, frameUrl)
       ? buildFrameSvgDataUrl(rarity, frameSeed)

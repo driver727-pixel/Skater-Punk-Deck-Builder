@@ -20,8 +20,10 @@ export function CardForge() {
   const {
     boardConfig,
     boardImageLoading,
+    boardLayerOrder,
     boardPlacement,
     canForge,
+    characterPlacement,
     characterBlend,
     clearSavedCard,
     closeWelcome,
@@ -60,7 +62,12 @@ export function CardForge() {
     setBoardPlacement,
     setBoardScale,
     setBoardConfig,
+    setBoardLayerOrder,
     setPrompt,
+    setBoardRotation,
+    setCharacterPlacement,
+    setCharacterRotation,
+    setCharacterScale,
     showWelcome,
     tier,
     tierCanSave,
@@ -103,6 +110,8 @@ export function CardForge() {
           ageGroups={AGE_GROUPS}
           bodyTypes={BODY_TYPES}
           boardConfig={boardConfig}
+          boardLayerOrder={boardLayerOrder}
+          boardRotation={boardPlacement?.rotationDeg ?? 0}
           boardScale={boardPlacement?.scale ?? 1}
           canForge={canForge}
           canSaveToCollection={tierCanSave}
@@ -117,9 +126,15 @@ export function CardForge() {
           generated={generated}
           hairLengths={HAIR_LENGTHS}
           isAnyLayerLoading={isAnyLayerLoading}
+          characterRotation={characterPlacement?.rotationDeg ?? 0}
+          characterScale={characterPlacement?.scale ?? 1}
           onArchetypeChange={setArchetype}
+          onBoardLayerOrderChange={setBoardLayerOrder}
+          onBoardRotationChange={setBoardRotation}
           onBoardScaleChange={setBoardScale}
           onBoardConfigChange={setBoardConfig}
+          onCharacterRotationChange={setCharacterRotation}
+          onCharacterScaleChange={setCharacterScale}
           onDownloadJpg={handleDownloadJpg}
           onForge={handleForge}
           onOpen3D={handleOpen3D}
@@ -144,6 +159,7 @@ export function CardForge() {
           patchIdentity={patchIdentity}
           patchStats={patchStats}
           onBoardPlacementChange={setBoardPlacement}
+          onCharacterPlacementChange={setCharacterPlacement}
         />
       </div>
 

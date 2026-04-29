@@ -2397,7 +2397,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
  * Five composited art layers are stacked inside .card-art-composite:
  *   1. background  – district environment scene (normal blend)
  *   2. character   – courier portrait (transparent PNG from background removal; normal blend)
- *   3. exact board – generated board asset composited above the character so it stays readable
+ *   3. exact board – generated board asset that can sit in front of or behind the character
  *   4. frame       – ornate rarity border on black background (screen blend removes black BG)
  *   5. svg-frame   – deterministic frame overlay when static frame assets are used
  *
@@ -2500,14 +2500,13 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 .card-art-layer--character {
   /* Normal blend: character has a transparent background from background removal,
-     so it composites cleanly over the background layer without any masking.
-     Scaled down slightly from the bottom so the head clears the top border and the board has room. */
+     so it composites cleanly over the background layer without any masking. */
   z-index: 3;
+   inset: auto;
   mix-blend-mode: normal;
   object-fit: contain;
   object-position: center bottom;
-  transform: scale(0.8);
-  transform-origin: bottom center;
+   pointer-events: none;
 }
 .card-art-layer--board-exact {
   z-index: 4;
@@ -2591,6 +2590,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   pointer-events: none;
 }
 .card-art-layer--loading {
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5191,11 +5191,19 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 .print-art-layer--char  {
   z-index: 3;
+  inset: auto;
   mix-blend-mode: normal;
+  pointer-events: none;
+}
+.print-art-layer--char-image {
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   object-position: center bottom;
-  transform: scale(0.8);
-  transform-origin: bottom center;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 .print-art-layer--board-exact {
   z-index: 4;
@@ -5229,8 +5237,27 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   position: absolute;
   inset: -16px;
 }
+.print-art-layer--char-editable {
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: left, top, transform;
+}
+.print-art-layer--char-editable:active {
+  cursor: grabbing;
+}
+.print-art-layer--char-editable::before {
+  content: "";
+  position: absolute;
+  inset: -16px;
+}
 @media (hover: none), (pointer: coarse) {
   .print-art-layer--board-editable::before {
+    inset: -40px;
+  }
+  .print-art-layer--char-editable::before {
     inset: -40px;
   }
 }

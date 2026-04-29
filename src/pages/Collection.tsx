@@ -235,6 +235,12 @@ export function Collection() {
         selected.frameImageUrl,
         selected.frameSeed,
         selected.visuals.accentColor,
+        1,
+        selected.board.imageUrl,
+        selected.characterSeed,
+        selected.board.placement,
+        selected.characterPlacement,
+        selected.board.layerOrder,
       );
     } finally {
       setDownloading(false);

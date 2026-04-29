@@ -15,7 +15,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { PointerEvent } from "react";
-import type { BoardPlacement, CardPayload } from "../lib/types";
+import type { BoardPlacement, CardPayload, CharacterPlacement, LayerPlacement } from "../lib/types";
 import { CardArt } from "./CardArt";
 import { FrameOverlay } from "./FrameOverlay";
 import { StatBar } from "./StatBar";
@@ -32,7 +32,15 @@ import {
 } from "../services/staticAssets";
 import { computeFocalCrop } from "../lib/focalCrop";
 import { resolveBoardPoseScene } from "../lib/boardPoseScenes";
-import { buildBoardPlacementStyle, normalizeBoardPlacement } from "../lib/boardPlacement";
+import {
+  buildBoardPlacementStyle,
+  buildCharacterPlacementStyle,
+  CHARACTER_LAYER_Z_INDEX,
+  getBoardLayerZIndex,
+  normalizeBoardPlacement,
+  normalizeCharacterPlacement,
+  resolveBoardLayerOrder,
+} from "../lib/boardPlacement";
 import { BOARD_TYPE_OPTIONS, DRIVETRAIN_OPTIONS, MOTOR_OPTIONS, WHEEL_OPTIONS, BATTERY_OPTIONS } from "../lib/boardBuilder";
 
 // ── Rarity colour map used on the card-back header ───────────────────────────
@@ -54,6 +62,7 @@ export interface SkaterCardFaceProps {
   /** When true, name/bio/age (front) and stats (back) become editable inputs. */
   editable?: boolean;
   onBoardPlacementChange?: (placement: BoardPlacement) => void;
+  onCharacterPlacementChange?: (placement: CharacterPlacement) => void;
   onNameChange?: (value: string) => void;
   onBioChange?: (value: string) => void;
   onAgeChange?: (value: string) => void;
@@ -64,6 +73,135 @@ export interface SkaterCardFaceProps {
    * generateGouacheBoard() is in flight.
    */
   boardImageLoading?: boolean;
+}
+
+interface PointerPoint {
+  x: number;
+  y: number;
+}
+
+interface PlacementGestureOptions<TPlacement extends LayerPlacement> {
+  editable: boolean;
+  placement: TPlacement;
+  normalizePlacement: (placement: Partial<TPlacement>) => TPlacement;
+  onPlacementChange?: (placement: TPlacement) => void;
+}
+
+function getPointerCenter(points: PointerPoint[]): PointerPoint {
+  if (points.length === 0) return { x: 0, y: 0 };
+  const total = points.reduce((acc, point) => ({ x: acc.x + point.x, y: acc.y + point.y }), { x: 0, y: 0 });
+  return { x: total.x / points.length, y: total.y / points.length };
+}
+
+function getPointerDistance(first: PointerPoint, second: PointerPoint): number {
+  return Math.hypot(second.x - first.x, second.y - first.y);
+}
+
+function getPointerAngle(first: PointerPoint, second: PointerPoint): number {
+  return Math.atan2(second.y - first.y, second.x - first.x) * (180 / Math.PI);
+}
+
+function normalizeAngleDeltaTo180Range(angle: number): number {
+  if (angle > 180) return angle - 360;
+  if (angle < -180) return angle + 360;
+  return angle;
+}
+
+function usePlacementGesture<TPlacement extends LayerPlacement>({
+  editable,
+  placement,
+  normalizePlacement,
+  onPlacementChange,
+}: PlacementGestureOptions<TPlacement>) {
+  const activePointersRef = useRef(new Map<number, PointerPoint>());
+  const currentPlacementRef = useRef(placement);
+  const baselineRef = useRef<{
+    placement: TPlacement;
+    center: PointerPoint;
+    distance: number;
+    angle: number;
+  } | null>(null);
+  currentPlacementRef.current = placement;
+
+  const resetBaseline = useCallback(() => {
+    const points = [...activePointersRef.current.values()];
+    if (points.length === 0) {
+      baselineRef.current = null;
+      return;
+    }
+
+    const center = getPointerCenter(points);
+    const [firstPoint, secondPoint] = points;
+    baselineRef.current = {
+      placement: currentPlacementRef.current,
+      center,
+      distance: points.length >= 2 ? getPointerDistance(firstPoint, secondPoint) : 0,
+      angle: points.length >= 2 ? getPointerAngle(firstPoint, secondPoint) : currentPlacementRef.current.rotationDeg,
+    };
+  }, []);
+
+  const handlePointerDown = useCallback((event: PointerEvent<HTMLElement>) => {
+    if (!editable || !onPlacementChange || (event.pointerType === "mouse" && event.button !== 0)) {
+      return;
+    }
+
+    activePointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    event.currentTarget.setPointerCapture(event.pointerId);
+    event.preventDefault();
+    resetBaseline();
+  }, [editable, onPlacementChange, resetBaseline]);
+
+  const handlePointerMove = useCallback((event: PointerEvent<HTMLElement>) => {
+    if (!editable || !onPlacementChange || !activePointersRef.current.has(event.pointerId)) {
+      return;
+    }
+
+    activePointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const points = [...activePointersRef.current.values()];
+    const baseline = baselineRef.current;
+    const container = event.currentTarget.parentElement;
+    if (!baseline || !container || points.length === 0) return;
+
+    const rect = container.getBoundingClientRect();
+    const center = getPointerCenter(points);
+    const deltaXPercent = ((center.x - baseline.center.x) / rect.width) * 100;
+    const deltaYPercent = ((center.y - baseline.center.y) / rect.height) * 100;
+    const nextPlacement: Partial<TPlacement> = {
+      ...baseline.placement,
+      xPercent: baseline.placement.xPercent + deltaXPercent,
+      yPercent: baseline.placement.yPercent + deltaYPercent,
+    };
+
+    if (points.length >= 2) {
+      const [firstPoint, secondPoint] = points;
+      const distance = getPointerDistance(firstPoint, secondPoint);
+      const angle = getPointerAngle(firstPoint, secondPoint);
+      const scaleRatio = baseline.distance > 0 ? distance / baseline.distance : 1;
+      nextPlacement.scale = baseline.placement.scale * scaleRatio;
+      nextPlacement.rotationDeg = baseline.placement.rotationDeg + normalizeAngleDeltaTo180Range(angle - baseline.angle);
+    }
+
+    event.preventDefault();
+    const normalizedPlacement = normalizePlacement(nextPlacement);
+    currentPlacementRef.current = normalizedPlacement;
+    onPlacementChange(normalizedPlacement);
+  }, [editable, normalizePlacement, onPlacementChange]);
+
+  const handlePointerUp = useCallback((event: PointerEvent<HTMLElement>) => {
+    if (!activePointersRef.current.has(event.pointerId)) return;
+
+    activePointersRef.current.delete(event.pointerId);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    resetBaseline();
+  }, [resetBaseline]);
+
+  return {
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+  };
 }
 
 // ── Front face ────────────────────────────────────────────────────────────────
@@ -79,9 +217,9 @@ function CardFront({
   editable = false,
   onNameChange,
   onBoardPlacementChange,
+  onCharacterPlacementChange,
 }: Omit<SkaterCardFaceProps, "face" | "onStatChange" | "onBioChange" | "onAgeChange">) {
   const [boardImageFailed, setBoardImageFailed] = useState(false);
-  const boardDragPointerIdRef = useRef<number | null>(null);
   const hasAnyLayer = backgroundImageUrl || characterImageUrl || frameImageUrl;
   const bgClass = shouldInsetBackgroundForFrame(card.prompts.rarity, frameImageUrl)
     ? "print-art-layer print-art-layer--bg print-art-layer--bg-inset"
@@ -95,10 +233,33 @@ function CardFront({
     ? "print-art-layer print-art-layer--frame print-art-layer--frame-wrap"
     : "print-art-layer print-art-layer--frame";
   const boardPoseScene = resolveBoardPoseScene(card.characterSeed);
+  const boardLayerOrder = resolveBoardLayerOrder(card.board.layerOrder);
   const showExactBoardLayer = Boolean(card.board.imageUrl && (backgroundImageUrl || characterImageUrl));
   const boardPlacement = normalizeBoardPlacement(boardPoseScene.key, card.board.placement);
-  const boardPlacementStyle = buildBoardPlacementStyle(boardPoseScene.key, boardPlacement);
+  const boardPlacementStyle = {
+    ...buildBoardPlacementStyle(boardPoseScene.key, boardPlacement),
+    zIndex: getBoardLayerZIndex(boardLayerOrder),
+  };
+  const characterPlacement = normalizeCharacterPlacement(card.characterPlacement);
+  const characterPlacementStyle = {
+    ...buildCharacterPlacementStyle(characterPlacement),
+    opacity: characterBlend,
+    zIndex: CHARACTER_LAYER_Z_INDEX,
+  };
   const boardPlacementChangeHandler = editable ? onBoardPlacementChange : undefined;
+  const characterPlacementChangeHandler = editable ? onCharacterPlacementChange : undefined;
+  const boardGesture = usePlacementGesture({
+    editable,
+    placement: boardPlacement,
+    normalizePlacement: (nextPlacement) => normalizeBoardPlacement(boardPoseScene.key, nextPlacement),
+    onPlacementChange: boardPlacementChangeHandler,
+  });
+  const characterGesture = usePlacementGesture({
+    editable,
+    placement: characterPlacement,
+    normalizePlacement: normalizeCharacterPlacement,
+    onPlacementChange: characterPlacementChangeHandler,
+  });
 
   // Focal-crop background when the rarity has a dual-face PNG frame.
   const bgStyle: React.CSSProperties | undefined = (backgroundImageUrl && hasBackFrame)
@@ -119,55 +280,6 @@ function CardFront({
     <span className="print-front-name">{card.identity.name}</span>
   );
 
-  const updateBoardPlacementFromPointer = useCallback(
-    (event: PointerEvent<HTMLElement>) => {
-      if (!boardPlacementChangeHandler) return;
-      const container = event.currentTarget.parentElement;
-      if (!container) return;
-
-      const rect = container.getBoundingClientRect();
-      const nextPlacement = normalizeBoardPlacement(boardPoseScene.key, {
-        ...boardPlacement,
-        xPercent: ((event.clientX - rect.left) / rect.width) * 100,
-        yPercent: ((event.clientY - rect.top) / rect.height) * 100,
-      });
-      boardPlacementChangeHandler(nextPlacement);
-    },
-    [boardPlacement, boardPlacementChangeHandler, boardPoseScene.key],
-  );
-
-  const handleBoardPointerDown = useCallback(
-    (event: PointerEvent<HTMLElement>) => {
-      if (
-        !boardPlacementChangeHandler ||
-        !event.isPrimary ||
-        (event.pointerType === "mouse" && event.button !== 0)
-      ) {
-        return;
-      }
-      boardDragPointerIdRef.current = event.pointerId;
-      event.currentTarget.setPointerCapture(event.pointerId);
-      event.preventDefault();
-      updateBoardPlacementFromPointer(event);
-    },
-    [boardPlacementChangeHandler, updateBoardPlacementFromPointer],
-  );
-
-  const handleBoardPointerMove = useCallback(
-    (event: PointerEvent<HTMLElement>) => {
-      if (boardDragPointerIdRef.current !== event.pointerId) return;
-      event.preventDefault();
-      updateBoardPlacementFromPointer(event);
-    },
-    [updateBoardPlacementFromPointer],
-  );
-
-  const handleBoardPointerUp = useCallback((event: PointerEvent<HTMLElement>) => {
-    if (boardDragPointerIdRef.current !== event.pointerId) return;
-    boardDragPointerIdRef.current = null;
-    event.currentTarget.releasePointerCapture(event.pointerId);
-  }, []);
-
   return (
     <>
       {hasAnyLayer ? (
@@ -181,11 +293,11 @@ function CardFront({
               className={`print-art-layer print-art-layer--board-exact${boardPlacementChangeHandler ? " print-art-layer--board-editable" : ""}`}
               style={boardPlacementStyle}
               role={boardPlacementChangeHandler ? "img" : undefined}
-              aria-label={boardPlacementChangeHandler ? "Draggable skateboard. Press and drag to reposition it on the card." : undefined}
-              onPointerDown={handleBoardPointerDown}
-              onPointerMove={handleBoardPointerMove}
-              onPointerUp={handleBoardPointerUp}
-              onPointerCancel={handleBoardPointerUp}
+              aria-label={boardPlacementChangeHandler ? "Editable skateboard. Drag to reposition, or pinch and rotate on touch devices." : undefined}
+              onPointerDown={boardGesture.handlePointerDown}
+              onPointerMove={boardGesture.handlePointerMove}
+              onPointerUp={boardGesture.handlePointerUp}
+              onPointerCancel={boardGesture.handlePointerUp}
             >
               <img
                 src={card.board.imageUrl}
@@ -197,12 +309,22 @@ function CardFront({
             </div>
           )}
           {characterImageUrl && (
-            <img
-              src={characterImageUrl}
-              alt="character"
-              className="print-art-layer print-art-layer--char"
-              style={characterBlend !== undefined ? { opacity: characterBlend } : undefined}
-            />
+            <div
+              className={`print-art-layer print-art-layer--char${characterPlacementChangeHandler ? " print-art-layer--char-editable" : ""}`}
+              style={characterPlacementStyle}
+              role={characterPlacementChangeHandler ? "img" : undefined}
+              aria-label={characterPlacementChangeHandler ? "Editable character. Drag to reposition, or pinch and rotate on touch devices." : undefined}
+              onPointerDown={characterGesture.handlePointerDown}
+              onPointerMove={characterGesture.handlePointerMove}
+              onPointerUp={characterGesture.handlePointerUp}
+              onPointerCancel={characterGesture.handlePointerUp}
+            >
+              <img
+                src={characterImageUrl}
+                alt="character"
+                className="print-art-layer--char-image"
+              />
+            </div>
           )}
           {frameImageUrl && !showSvgFrame && (
             <img
@@ -456,6 +578,7 @@ export function SkaterCardFace({
   onAgeChange,
   onStatChange,
   onBoardPlacementChange,
+  onCharacterPlacementChange,
   boardImageLoading,
 }: SkaterCardFaceProps) {
   if (face === "front") {
@@ -471,6 +594,7 @@ export function SkaterCardFace({
         editable={editable}
         onNameChange={onNameChange}
         onBoardPlacementChange={onBoardPlacementChange}
+        onCharacterPlacementChange={onCharacterPlacementChange}
       />
     );
   }

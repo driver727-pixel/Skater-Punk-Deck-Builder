@@ -131,6 +131,19 @@ function drawScene({ ctx }: DrawArgs) {
   // nothing more to draw here.
 }
 
+/** Scale factor to convert raw timeline speed units to a rotateY tilt in degrees. */
+const SPEED_TO_TILT_SCALE = 3000;
+/** Maximum rotateY wobble applied to a racing card in degrees. */
+const MAX_TILT_Y_DEG = 8;
+
+/**
+ * Maps a raw timeline speed value to a ±MAX_TILT_Y_DEG rotateY wobble.
+ * A displayed speed of ~1.5 (raw ≈ 0.0015) maps to ~4.5°.
+ */
+function tiltYFromSpeed(speed: number): number {
+  return Math.max(-MAX_TILT_Y_DEG, Math.min(MAX_TILT_Y_DEG, speed * SPEED_TO_TILT_SCALE));
+}
+
 interface FloatingEvent {
   id: number;
   side: "challenger" | "defender";
@@ -272,13 +285,12 @@ export function RaceTrack() {
   const chLeftPct = (chPos.x / CANVAS_WIDTH) * 100;
   const chTopPct  = (chPos.y / CANVAS_HEIGHT) * 100;
   const chAngleDeg = (chPos.angle * 180) / Math.PI;
-  // Speed wobble: scale raw speed to ±8° — a displayed speed of ~1.5 maps to ~4.5°.
-  const chTiltY = Math.max(-8, Math.min(8, tk.challengerSpeed * 3000));
+  const chTiltY = tiltYFromSpeed(tk.challengerSpeed);
 
   const defLeftPct = (defPos.x / CANVAS_WIDTH) * 100;
   const defTopPct  = (defPos.y / CANVAS_HEIGHT) * 100;
   const defAngleDeg = (defPos.angle * 180) / Math.PI;
-  const defTiltY = Math.max(-8, Math.min(8, tk.defenderSpeed * 3000));
+  const defTiltY = tiltYFromSpeed(tk.defenderSpeed);
 
   const winnerSide = winner === race.challengerUid
     ? "challenger"

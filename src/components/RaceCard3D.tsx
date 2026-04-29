@@ -69,7 +69,7 @@ export function RaceCard3D({
       ) : (
         <div className="race-card-3d-placeholder" />
       )}
-      <span className="race-card-3d-label">{card.name.slice(0, 10)}</span>
+      <span className="race-card-3d-label">{card.name.slice(0, 8)}</span>
     </div>
   );
 }

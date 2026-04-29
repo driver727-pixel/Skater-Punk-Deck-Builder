@@ -86,6 +86,8 @@ export function useForgeSave({
         generated.board.imageUrl,
         generated.characterSeed,
         generated.board.placement,
+        generated.characterPlacement,
+        generated.board.layerOrder,
       );
     } catch (error) {
       console.error("Card JPG download failed:", error);

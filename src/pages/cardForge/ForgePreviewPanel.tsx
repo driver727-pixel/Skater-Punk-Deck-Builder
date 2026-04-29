@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { PrintedCardPreviewPair } from "../../components/PrintedCardFaces";
 import { CardContainer } from "../../components/CardContainer";
 import { buildCardVars } from "../../lib/cardVars";
-import type { BoardPlacement, CardPayload } from "../../lib/types";
+import type { BoardPlacement, CardPayload, CharacterPlacement } from "../../lib/types";
 import type { LayerState } from "./useForgeLayers";
 
 interface ForgePreviewPanelProps {
@@ -15,6 +15,7 @@ interface ForgePreviewPanelProps {
   patchIdentity: (updates: Partial<CardPayload["identity"]>) => void;
   patchStats: (updates: Partial<CardPayload["stats"]>) => void;
   onBoardPlacementChange: (placement: BoardPlacement) => void;
+  onCharacterPlacementChange: (placement: CharacterPlacement) => void;
 }
 
 export function ForgePreviewPanel({
@@ -27,6 +28,7 @@ export function ForgePreviewPanel({
   patchIdentity,
   patchStats,
   onBoardPlacementChange,
+  onCharacterPlacementChange,
 }: ForgePreviewPanelProps) {
   const cardVars = buildCardVars(card, "editor");
 
@@ -88,6 +90,7 @@ export function ForgePreviewPanel({
                   onAgeChange={handleAgeChange}
                   onStatChange={handleStatChange}
                   onBoardPlacementChange={onBoardPlacementChange}
+                  onCharacterPlacementChange={onCharacterPlacementChange}
                 />
               </CardContainer>
               <p className="forge-preview-hint">

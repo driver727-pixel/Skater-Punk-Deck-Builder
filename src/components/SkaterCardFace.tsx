@@ -88,6 +88,7 @@ interface PlacementGestureOptions<TPlacement extends LayerPlacement> {
 }
 
 function getPointerCenter(points: PointerPoint[]): PointerPoint {
+  if (points.length === 0) return { x: 0, y: 0 };
   const total = points.reduce((acc, point) => ({ x: acc.x + point.x, y: acc.y + point.y }), { x: 0, y: 0 });
   return { x: total.x / points.length, y: total.y / points.length };
 }
@@ -100,7 +101,7 @@ function getPointerAngle(first: PointerPoint, second: PointerPoint): number {
   return Math.atan2(second.y - first.y, second.x - first.x) * (180 / Math.PI);
 }
 
-function normalizeAngleDelta(angle: number): number {
+function normalizeAngleDeltaTo180Range(angle: number): number {
   if (angle > 180) return angle - 360;
   if (angle < -180) return angle + 360;
   return angle;
@@ -177,7 +178,7 @@ function usePlacementGesture<TPlacement extends LayerPlacement>({
       const angle = getPointerAngle(firstPoint, secondPoint);
       const scaleRatio = baseline.distance > 0 ? distance / baseline.distance : 1;
       nextPlacement.scale = baseline.placement.scale * scaleRatio;
-      nextPlacement.rotationDeg = baseline.placement.rotationDeg + normalizeAngleDelta(angle - baseline.angle);
+      nextPlacement.rotationDeg = baseline.placement.rotationDeg + normalizeAngleDeltaTo180Range(angle - baseline.angle);
     }
 
     event.preventDefault();

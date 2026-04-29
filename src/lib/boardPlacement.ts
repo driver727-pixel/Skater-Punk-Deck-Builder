@@ -9,6 +9,7 @@ export const CHARACTER_PLACEMENT_MIN_SCALE = 0.7;
 export const CHARACTER_PLACEMENT_MAX_SCALE = 1.2;
 export const CHARACTER_PLACEMENT_SCALE_STEP = 0.05;
 export const CHARACTER_LAYER_Z_INDEX = 3;
+const DEFAULT_CENTER_PERCENT = 50;
 
 interface PlacementBox {
   widthPercent: number;
@@ -61,10 +62,10 @@ function normalizePlacement<TPlacement extends LayerPlacement>(
   const xMaxRaw = 100 - xMinRaw;
   const yMinRaw = box.heightPercent / 2;
   const yMaxRaw = 100 - yMinRaw;
-  const xMin = xMinRaw <= xMaxRaw ? xMinRaw : 50;
-  const xMax = xMinRaw <= xMaxRaw ? xMaxRaw : 50;
-  const yMin = yMinRaw <= yMaxRaw ? yMinRaw : 50;
-  const yMax = yMinRaw <= yMaxRaw ? yMaxRaw : 50;
+  const xMin = xMinRaw <= xMaxRaw ? xMinRaw : DEFAULT_CENTER_PERCENT;
+  const xMax = xMinRaw <= xMaxRaw ? xMaxRaw : DEFAULT_CENTER_PERCENT;
+  const yMin = yMinRaw <= yMaxRaw ? yMinRaw : DEFAULT_CENTER_PERCENT;
+  const yMax = yMinRaw <= yMaxRaw ? yMaxRaw : DEFAULT_CENTER_PERCENT;
 
   return {
     ...preset,

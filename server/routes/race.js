@@ -479,46 +479,12 @@ export function registerRaceRoutes(app, {
     }
   });
 
-  // ── GET /api/race/:id ────────────────────────────────────────────────────
-  app.get('/api/race/:id', limiter, async (req, res) => {
-    if (!adminDb) {
-      res.status(503).json({ error: 'Race arena is not configured on this server.' });
-      return;
-    }
-    let caller;
-    try {
-      caller = await authenticateFirebaseUser(req);
-    } catch (error) {
-      res.status(error.statusCode ?? 500).json({ error: error.message ?? 'Authentication failed.' });
-      return;
-    }
-    const id = String(req.params?.id ?? '').trim();
-    if (!id) {
-      res.status(400).json({ error: 'Race id is required.' });
-      return;
-    }
-    try {
-      const snap = await adminDb.collection(RACES_COLLECTION).doc(id).get();
-      if (!snap.exists) {
-        res.status(404).json({ error: 'Race not found.' });
-        return;
-      }
-      const race = snap.data();
-      if (caller.uid !== race.challengerUid && caller.uid !== race.defenderUid) {
-        res.status(403).json({ error: 'You are not a participant in this race.' });
-        return;
-      }
-      res.status(200).json(race);
-    } catch (error) {
-      console.error('Race fetch error:', error);
-      res.status(500).json({ error: 'Failed to fetch race.' });
-    }
-  });
-
   // ── GET /api/race/arena ──────────────────────────────────────────────────
   // Returns a paginated list of other players' primary-deck cards so the
   // viewer can pick an opponent + opponent card. Public reads are intentionally
   // limited to the small set of fields needed to render a starting grid.
+  // NOTE: must be registered before GET /api/race/:id so Express does not
+  // treat the literal path segment "arena" as a dynamic :id parameter.
   app.get('/api/race/arena', limiter, async (req, res) => {
     if (!adminDb) {
       res.status(503).json({ error: 'Race arena is not configured on this server.' });
@@ -559,6 +525,42 @@ export function registerRaceRoutes(app, {
     } catch (error) {
       console.error('Race arena listing error:', error);
       res.status(500).json({ error: 'Failed to load Race Arena.' });
+    }
+  });
+
+  // ── GET /api/race/:id ────────────────────────────────────────────────────
+  app.get('/api/race/:id', limiter, async (req, res) => {
+    if (!adminDb) {
+      res.status(503).json({ error: 'Race arena is not configured on this server.' });
+      return;
+    }
+    let caller;
+    try {
+      caller = await authenticateFirebaseUser(req);
+    } catch (error) {
+      res.status(error.statusCode ?? 500).json({ error: error.message ?? 'Authentication failed.' });
+      return;
+    }
+    const id = String(req.params?.id ?? '').trim();
+    if (!id) {
+      res.status(400).json({ error: 'Race id is required.' });
+      return;
+    }
+    try {
+      const snap = await adminDb.collection(RACES_COLLECTION).doc(id).get();
+      if (!snap.exists) {
+        res.status(404).json({ error: 'Race not found.' });
+        return;
+      }
+      const race = snap.data();
+      if (caller.uid !== race.challengerUid && caller.uid !== race.defenderUid) {
+        res.status(403).json({ error: 'You are not a participant in this race.' });
+        return;
+      }
+      res.status(200).json(race);
+    } catch (error) {
+      console.error('Race fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch race.' });
     }
   });
 }

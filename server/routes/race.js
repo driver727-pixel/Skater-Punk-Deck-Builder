@@ -100,12 +100,12 @@ function buildNotification({ uid, type, title, body, link, data, randomUUID }) {
 }
 
 /**
- * Apply the per-card delta (XP + Ozzies) inside a transaction.
- * Mutates user's `cards/{cardId}` and any deck docs containing that card.
+ * Apply the per-card delta (XP + Ozzies) inside a transaction using a
+ * pre-fetched snapshot.  The caller must have already called tx.get() for
+ * `cardRef` before issuing any writes in the same transaction — Firestore
+ * requires all reads to precede all writes.
  */
-async function applyCardDelta(tx, adminDb, uid, cardId, delta, statBoost) {
-  const cardRef = adminDb.collection('users').doc(uid).collection('cards').doc(cardId);
-  const cardSnap = await tx.get(cardRef);
+function applyCardDelta(tx, cardRef, cardSnap, delta, statBoost) {
   if (!cardSnap.exists) return;
   const card = cardSnap.data();
   const nextCard = { ...card };
@@ -378,9 +378,18 @@ export function registerRaceRoutes(app, {
           throw badRequest('One of the racing cards is no longer available — challenge cancelled.', 409);
         }
 
+        // ── All tx reads must happen before any tx writes ──────────────────
+        // Pre-fetch card docs for the post-race delta writes, and the
+        // defender's profile if a wager needs to be validated.
+        const challengerCardRef = adminDb.collection('users').doc(ch.challengerUid).collection('cards').doc(ch.challengerCardId);
+        const defenderCardRef = adminDb.collection('users').doc(ch.defenderUid).collection('cards').doc(ch.defenderCardId);
+        const defProfileRef = adminDb.collection(PROFILE_COLLECTION).doc(ch.defenderUid);
+
+        const readsToFetch = [tx.get(challengerCardRef), tx.get(defenderCardRef)];
+        if (ch.ozzyWager > 0) readsToFetch.push(tx.get(defProfileRef));
+        const [challengerCardSnap, defenderCardSnap, defProfileSnap] = await Promise.all(readsToFetch);
+
         if (ch.ozzyWager > 0) {
-          const defProfileRef = adminDb.collection(PROFILE_COLLECTION).doc(ch.defenderUid);
-          const defProfileSnap = await tx.get(defProfileRef);
           const balance = readOzzies(defProfileSnap.data());
           if (balance < ch.ozzyWager) {
             throw badRequest(`You only have ${balance} Ozzies — not enough to match the ${ch.ozzyWager} wager.`, 402);
@@ -441,10 +450,11 @@ export function registerRaceRoutes(app, {
             { ozzies: FieldValue.increment(ch.ozzyWager), updatedAt: nowIso() }, { merge: true });
         }
 
-        // Apply per-card deltas (XP/ozzies/stat boost) on the actual cards.
-        await applyCardDelta(tx, adminDb, ch.challengerUid, ch.challengerCardId,
+        // Apply per-card deltas (XP/ozzies/stat boost) on the actual cards
+        // using the snapshots already fetched above (reads before writes).
+        applyCardDelta(tx, challengerCardRef, challengerCardSnap,
           raw.cardDeltas.challenger, raw.winnerSide === 'challenger' ? raw.winnerStatBoost : null);
-        await applyCardDelta(tx, adminDb, ch.defenderUid, ch.defenderCardId,
+        applyCardDelta(tx, defenderCardRef, defenderCardSnap,
           raw.cardDeltas.defender, raw.winnerSide === 'defender' ? raw.winnerStatBoost : null);
 
         // Mark the challenge resolved.

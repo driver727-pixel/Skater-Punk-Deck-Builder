@@ -112,6 +112,44 @@ test('registerWeatherRoutes serves district weather through rate limit middlewar
   assert.deepEqual(res.body, expectedPayload);
 });
 
+test('createDistrictWeatherService deduplicates concurrent cache-miss requests to a single upstream fetch', async () => {
+  const originalFetch = globalThis.fetch;
+  let fetchCallCount = 0;
+  let resolveUpstream;
+  globalThis.fetch = async () => {
+    fetchCallCount += 1;
+    await new Promise((resolve) => {
+      resolveUpstream = resolve;
+    });
+    return {
+      ok: true,
+      status: 200,
+      json: async () =>
+        Array.from({ length: 8 }, () => ({
+          current: { temperature_2m: 20, wind_speed_10m: 5, rain: 0, weather_code: 0 },
+        })),
+    };
+  };
+
+  try {
+    const service = createDistrictWeatherService();
+    const [p1, p2, p3] = [
+      service.getDistrictWeatherPayload(),
+      service.getDistrictWeatherPayload(),
+      service.getDistrictWeatherPayload(),
+    ];
+    resolveUpstream();
+    const [r1, r2, r3] = await Promise.all([p1, p2, p3]);
+
+    assert.equal(fetchCallCount, 1, 'Only one upstream fetch should be made for concurrent cache-miss requests');
+    assert.equal(r1.source, 'live');
+    assert.deepEqual(r2.districts, r1.districts);
+    assert.deepEqual(r3.districts, r1.districts);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('createDistrictWeatherService fetches live weather and reuses fresh cache', async () => {
   const originalFetch = globalThis.fetch;
   const fetchCalls = [];

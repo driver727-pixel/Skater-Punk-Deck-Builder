@@ -1,7 +1,7 @@
 import type { CardPayload } from "./types";
 
 export function getDisplayedArchetype(card: CardPayload): string {
-  return card.role.label;
+  return card.role?.label ?? card.prompts?.archetype ?? "";
 }
 
 export function getDisplayedCrew(card: CardPayload): string {

@@ -128,9 +128,9 @@ export interface LayerPlacement {
   rotationDeg: number;
 }
 
-export interface BoardPlacement extends LayerPlacement {}
+export type BoardPlacement = LayerPlacement;
 
-export interface CharacterPlacement extends LayerPlacement {}
+export type CharacterPlacement = LayerPlacement;
 
 export type CompositeLayerOrder = "behind-character" | "in-front";
 

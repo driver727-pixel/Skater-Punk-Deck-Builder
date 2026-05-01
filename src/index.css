@@ -2397,7 +2397,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
  * Five composited art layers are stacked inside .card-art-composite:
  *   1. background  – district environment scene (normal blend)
  *   2. character   – courier portrait (transparent PNG from background removal; normal blend)
- *   3. exact board – generated board asset composited above the character so it stays readable
+ *   3. exact board – generated board asset that can sit in front of or behind the character
  *   4. frame       – ornate rarity border on black background (screen blend removes black BG)
  *   5. svg-frame   – deterministic frame overlay when static frame assets are used
  *
@@ -2500,14 +2500,13 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 .card-art-layer--character {
   /* Normal blend: character has a transparent background from background removal,
-     so it composites cleanly over the background layer without any masking.
-     Scaled down slightly from the bottom so the head clears the top border and the board has room. */
+     so it composites cleanly over the background layer without any masking. */
   z-index: 3;
+   inset: auto;
   mix-blend-mode: normal;
   object-fit: contain;
   object-position: center bottom;
-  transform: scale(0.8);
-  transform-origin: bottom center;
+   pointer-events: none;
 }
 .card-art-layer--board-exact {
   z-index: 4;
@@ -2591,6 +2590,7 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   pointer-events: none;
 }
 .card-art-layer--loading {
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5191,11 +5191,19 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 }
 .print-art-layer--char  {
   z-index: 3;
+  inset: auto;
   mix-blend-mode: normal;
+  pointer-events: none;
+}
+.print-art-layer--char-image {
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   object-position: center bottom;
-  transform: scale(0.8);
-  transform-origin: bottom center;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 .print-art-layer--board-exact {
   z-index: 4;
@@ -5229,8 +5237,27 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   position: absolute;
   inset: -16px;
 }
+.print-art-layer--char-editable {
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: left, top, transform;
+}
+.print-art-layer--char-editable:active {
+  cursor: grabbing;
+}
+.print-art-layer--char-editable::before {
+  content: "";
+  position: absolute;
+  inset: -16px;
+}
 @media (hover: none), (pointer: coarse) {
   .print-art-layer--board-editable::before {
+    inset: -40px;
+  }
+  .print-art-layer--char-editable::before {
     inset: -40px;
   }
 }
@@ -10270,9 +10297,18 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 /* Race Track replay page */
 .race-track-page { max-width: 820px; margin: 0 auto; padding: 1.25rem; }
 .race-track-header { margin-bottom: 0.75rem; text-align: center; }
-.race-track-canvas-wrap { position: relative; display: flex; justify-content: center; }
+.race-track-canvas-wrap { display: flex; justify-content: center; }
+/* Inner container is the CSS 3D perspective root and absolute-positioning
+   ancestor for both the canvas and the card overlays. */
+.race-track-canvas-inner {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  perspective: 900px;
+  perspective-origin: 50% 50%;
+}
 .race-track-canvas {
-  width: 100%; max-width: 720px; height: auto; display: block;
+  width: 100%; height: auto; display: block;
   border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
 }
 .race-event-toast {
@@ -10323,3 +10359,55 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .race-result-list { list-style: none; padding: 0; margin: 0; text-align: left; }
 .race-result-list li { padding: 0.35rem 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
 .race-result-spectator { margin: 0.6rem 0 0; opacity: 0.7; font-style: italic; }
+
+/* ── CSS 3D racing cards ─────────────────────────────────────────────────────
+   Positioned absolutely over .race-track-canvas-inner (which carries the CSS
+   perspective). The parent drives all transforms; this component is inert.
+   Card size mirrors the original canvas card: ≈5.5% × 7.7% of canvas width,
+   scaling automatically as the canvas responsive-resizes.                   */
+.race-card-3d {
+  position: absolute;
+  /* 5.5% of container width; aspect-ratio makes height 7.7% of container width */
+  width: 5.5%;
+  aspect-ratio: 5 / 7;
+  /* Center the card on its left/top anchor point (margin-% is relative to width) */
+  margin-left: -2.75%;
+  margin-top: -3.85%;
+  border-radius: 3px;
+  overflow: hidden;
+  pointer-events: none;
+  will-change: transform;
+  /* Smooth interpolation between timeline ticks */
+  transition: transform 80ms linear, box-shadow 80ms linear;
+}
+.race-card-3d--challenger {
+  box-shadow: 0 0 10px #ff4488, 0 0 22px rgba(255, 68, 136, 0.45);
+}
+.race-card-3d--defender {
+  box-shadow: 0 0 10px #44ddff, 0 0 22px rgba(68, 221, 255, 0.45);
+}
+.race-card-3d-image {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  pointer-events: none; -webkit-user-drag: none; user-select: none;
+}
+/* Colored fallback shown when the card has no imageUrl. */
+.race-card-3d-placeholder {
+  width: 100%; height: 100%;
+}
+.race-card-3d--challenger .race-card-3d-placeholder {
+  background: linear-gradient(135deg, #ff4488 0%, #882244 100%);
+}
+.race-card-3d--defender .race-card-3d-placeholder {
+  background: linear-gradient(135deg, #44ddff 0%, #2288aa 100%);
+}
+/* Name badge at the bottom of the card face. */
+.race-card-3d-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 1px 2px; text-align: center;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff; font-weight: 700;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 6px; line-height: 1.4;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  pointer-events: none;
+}

@@ -19,23 +19,37 @@ const BOARD_IMAGE_BASE_CONCEPT =
   "Placing any drive hardware at the nose on a non-4WD board is a critical error that must never happen.";
 
 const BOARD_TYPE_IMAGE_DESCRIPTIONS: Record<BoardType, string> = {
-  Street: "A Street style electric skateboard with a low-profile urban deck built for pavement.",
-  AT: "An all-terrain electric skateboard with a rugged top-mount deck and extra ground clearance.",
-  Mountain: "A mountain-board style electric skateboard with an aggressive deck built for steep rough terrain.",
-  Surf: "A surf-skate inspired electric skateboard with a wide swallowtail cruiser deck and flowing stance.",
+  Street:
+    "A Street style electric skateboard with a flat matte black carbon-fiber deck — no wood, no maple, no bamboo, no wood grain anywhere on the deck surface. " +
+    "The deck has NO kicktail at the nose or the rear; instead it has a subtle drop-down camber between the front and rear axles for better handling and a lower center of gravity.",
+  AT:
+    "An all-terrain electric skateboard with a rugged top-mount deck. " +
+    "The deck has NO kicktail at the nose or the rear; instead it has a subtle drop-down profile between the front and rear axles for improved handling.",
+  Mountain:
+    "A mountain-board style electric skateboard with an aggressive deck built for steep rough terrain. " +
+    "The deck has NO kicktail at the nose or the rear; instead it has a subtle drop-down profile between the front and rear axles.",
+  Surf: "A surf-skate inspired electric skateboard with a wide swallowtail cruiser deck, a prominent upward rear kicktail, and a flowing stance.",
   Slider: "A slider style electric skateboard built around a low, compact deck for tight technical movement.",
 };
 
 const DRIVETRAIN_IMAGE_DESCRIPTIONS: Record<Drivetrain, string> = {
-  Belt: "It has belt driven rear wheels only, with exposed belts, pulleys, and rear motor mounts on the TAIL truck only; the NOSE truck has bare axles with no belts, no pulleys, and no motor mounts.",
-  Hub: "It has hub driven rear wheels only, with the motors hidden inside the REAR wheel cores only; the NOSE wheels are plain unpowered urethane with no hub-motor casings and no internal motors.",
+  Belt:
+    "It has belt driven rear wheels only, with exposed belts, pulleys, rear motor mounts, and one external electric motor mounted behind each rear wheel on the TAIL truck only. " +
+    "There are NO hub-motor casings inside any wheel — all motors are external. " +
+    "The NOSE truck has bare axles with no belts, no pulleys, and no motor mounts.",
+  Hub:
+    "It has hub driven rear wheels only, with the motors hidden inside the REAR wheel cores only. " +
+    "There are NO external belts, NO exposed pulleys, NO external motor mounts, and NO external motors anywhere on the board — this is NOT a belt drive. " +
+    "The NOSE wheels are plain unpowered urethane with no hub-motor casings and no internal motors.",
   Gear: "It has gear driven rear wheels only, with sealed enclosed gearboxes on the TAIL truck only; the NOSE truck has no gearboxes and no drive hardware.",
   "4WD": "It has powered front and rear trucks in a true four-wheel-drive setup with all four wheels driven.",
 };
 
 const WHEEL_IMAGE_DESCRIPTIONS: Record<WheelType, string> = {
   Urethane: "It has 4 poly-urethane wheels, each 97 mm in diameter, the smallest wheel option and a scale anchor for the skateboard beside an adult rider.",
-  Pneumatic: "It has 4 large pneumatic all-terrain tires, each 150 mm in diameter, with visible tread and a taller stance than vapor or polyurethane wheels.",
+  Pneumatic:
+    "It has 4 large chunky pneumatic all-terrain tires, each 150 mm in diameter, with thick air-filled rubber construction, chunky knobby tread, and tall visible sidewalls. " +
+    "These tires are clearly inflated rubber — NOT polyurethane, NOT hard plastic, NOT hub-motor shells. The taller stance is clearly visible compared to polyurethane wheels.",
   Rubber: "It has 4 solid rubber all-terrain wheels, each 175 mm in diameter, with thick puncture-proof sidewalls; these are the largest wheel option and make the board visibly taller beside an adult rider.",
   Cloud: "It has 4 oversized vapor wheels, each 107 mm in diameter, with a soft semi-transparent cushioned look; they are slightly larger than 97 mm polyurethane wheels but much smaller than 150 mm pneumatic tires.",
 };

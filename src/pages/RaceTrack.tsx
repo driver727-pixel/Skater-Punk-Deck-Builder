@@ -1,21 +1,26 @@
 /**
- * RaceTrack — 2D canvas-based race replay page at `/race/:raceId`.
+ * RaceTrack — race replay page at `/race/:raceId`.
  *
  * Loads the precomputed `Race` from the server, then renders a top-down
  * courier circuit drawn with HTML5 canvas. Each tick of the timeline maps
- * to a curve parameter `u ∈ [0, 1]` along an oval circuit; cards (rendered
- * as labeled "card meshes") follow the curve, speeding up and slowing
- * down exactly as the precomputed timeline dictates.
+ * to a curve parameter `u ∈ [0, 1]` along an oval circuit; CSS 3D card
+ * elements follow the curve, speeding up and slowing down exactly as the
+ * precomputed timeline dictates.
  *
  * Both players see the same playback because the timeline is precomputed
  * server-side and seeded.
  *
  * Design notes:
- *   - A 2D canvas keeps the dependency footprint zero; the plan offered a 2D
- *     fallback as the lighter alternative to three.js and we picked it.
+ *   - The HTML5 canvas draws only the static track surface (background,
+ *     grid, oval ring, lane markers, start/finish line). It renders once
+ *     when the race loads and never again.
+ *   - The two racing cards are CSS 3D elements (`RaceCard3D`) absolutely
+ *     positioned over the canvas. Their position and orientation are driven
+ *     per-tick by the precomputed timeline so they follow the oval with
+ *     realistic lean and speed wobble.
  *   - The HUD (lap progress bars, names, current Ozzy wager, speed needle)
- *     overlays the canvas using regular DOM elements so screen-readers and
- *     keyboard users still get the result via the result panel.
+ *     overlays using regular DOM elements so screen-readers and keyboard
+ *     users still get the result via the result panel.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -23,12 +28,11 @@ import { useAuth } from "../context/AuthContext";
 import { fetchRace } from "../services/race";
 import { spawnCelebrationBurst } from "../lib/celebration";
 import { sfxBattleClash, sfxBattleWin, sfxBattleLose, sfxClick } from "../lib/sfx";
-import type { Race, RaceCardSnapshot, RaceTimelineTick } from "../lib/types";
+import type { Race } from "../lib/types";
+import { RaceCard3D } from "../components/RaceCard3D";
 
 const CANVAS_WIDTH = 720;
 const CANVAS_HEIGHT = 360;
-const CARD_W = 40;
-const CARD_H = 56;
 const PADDING = 60;
 
 /** Parametric oval circuit: returns {x, y, tangentAngle} for u ∈ [0, 1]. */
@@ -58,14 +62,10 @@ function offsetTrackPoint(u: number, lateral: number) {
 
 interface DrawArgs {
   ctx: CanvasRenderingContext2D;
-  tick: RaceTimelineTick;
-  challenger: RaceCardSnapshot;
-  defender: RaceCardSnapshot;
-  challengerColor: string;
-  defenderColor: string;
 }
 
-function drawScene({ ctx, tick, challenger, defender, challengerColor, defenderColor }: DrawArgs) {
+/** Draw the static track surface onto the canvas. Called once per race load. */
+function drawScene({ ctx }: DrawArgs) {
   ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
   // Backdrop — Sk8rpunk dusk gradient.
@@ -127,37 +127,21 @@ function drawScene({ ctx, tick, challenger, defender, challengerColor, defenderC
     ctx.fillRect(c.x - 4, c.y - 4, 8, 8);
   }
 
-  // Cards.
-  const drawCard = (
-    progress: number,
-    lateral: number,
-    label: string,
-    color: string,
-  ) => {
-    const u = progress % 1;
-    const { x, y, angle } = offsetTrackPoint(u, lateral);
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(angle + Math.PI / 2);
-    // Slight forward tilt simulated as scaleY.
-    ctx.scale(1, 0.8);
-    // Card glow.
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 16;
-    ctx.fillStyle = color;
-    ctx.fillRect(-CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H);
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
-    ctx.fillRect(-CARD_W / 2 + 3, -CARD_H / 2 + 3, CARD_W - 6, CARD_H - 6);
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 9px ui-sans-serif, system-ui, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(label.slice(0, 8), 0, 4);
-    ctx.restore();
-  };
+  // Cards are rendered as CSS 3D elements (RaceCard3D) in the DOM overlay —
+  // nothing more to draw here.
+}
 
-  drawCard(tick.challengerProgress, -10, challenger.name, challengerColor);
-  drawCard(tick.defenderProgress, 10, defender.name, defenderColor);
+/** Scale factor to convert raw timeline speed units to a rotateY tilt in degrees. */
+const SPEED_TO_TILT_SCALE = 3000;
+/** Maximum rotateY wobble applied to a racing card in degrees. */
+const MAX_TILT_Y_DEG = 8;
+
+/**
+ * Maps a raw timeline speed value to a ±MAX_TILT_Y_DEG rotateY wobble.
+ * A displayed speed of ~1.5 (raw ≈ 0.0015) maps to ~4.5°.
+ */
+function tiltYFromSpeed(speed: number): number {
+  return Math.max(-MAX_TILT_Y_DEG, Math.min(MAX_TILT_Y_DEG, speed * SPEED_TO_TILT_SCALE));
 }
 
 interface FloatingEvent {
@@ -260,20 +244,13 @@ export function RaceTrack() {
     return () => clearTimeout(t);
   }, [floatingEvents]);
 
-  // Draw current tick.
+  // Draw the static track surface once when the race loads.
   useEffect(() => {
     if (!race || !canvasRef.current) return;
     const ctx = canvasRef.current.getContext("2d");
     if (!ctx) return;
-    drawScene({
-      ctx,
-      tick: race.timeline[tickIndex],
-      challenger: race.challenger,
-      defender: race.defender,
-      challengerColor: "#ff4488",
-      defenderColor: "#44ddff",
-    });
-  }, [race, tickIndex]);
+    drawScene({ ctx });
+  }, [race]);
 
   // Finish-line celebration when the race completes.
   useEffect(() => {
@@ -301,6 +278,20 @@ export function RaceTrack() {
 
   const tk = race.timeline[tickIndex];
   const winner = race.result.winnerUid;
+
+  // Compute 3D card positions for this tick.
+  const chPos = offsetTrackPoint(tk.challengerProgress % 1, -10);
+  const defPos = offsetTrackPoint(tk.defenderProgress % 1, 10);
+  const chLeftPct = (chPos.x / CANVAS_WIDTH) * 100;
+  const chTopPct  = (chPos.y / CANVAS_HEIGHT) * 100;
+  const chAngleDeg = (chPos.angle * 180) / Math.PI;
+  const chTiltY = tiltYFromSpeed(tk.challengerSpeed);
+
+  const defLeftPct = (defPos.x / CANVAS_WIDTH) * 100;
+  const defTopPct  = (defPos.y / CANVAS_HEIGHT) * 100;
+  const defAngleDeg = (defPos.angle * 180) / Math.PI;
+  const defTiltY = tiltYFromSpeed(tk.defenderSpeed);
+
   const winnerSide = winner === race.challengerUid
     ? "challenger"
     : winner === race.defenderUid
@@ -318,23 +309,44 @@ export function RaceTrack() {
       </header>
 
       <div className="race-track-canvas-wrap">
-        <canvas
-          ref={canvasRef}
-          width={CANVAS_WIDTH}
-          height={CANVAS_HEIGHT}
-          className="race-track-canvas"
-          aria-label={`Race track: ${race.challenger.name} versus ${race.defender.name}`}
-        />
-        {/* Floating event overlays. */}
-        {floatingEvents.map((ev) => (
-          <span
-            key={ev.id}
-            className={`race-event-toast race-event-toast--${ev.side}`}
-            aria-hidden="true"
-          >
-            {ev.text}
-          </span>
-        ))}
+        <div className="race-track-canvas-inner">
+          <canvas
+            ref={canvasRef}
+            width={CANVAS_WIDTH}
+            height={CANVAS_HEIGHT}
+            className="race-track-canvas"
+            aria-label={`Race track: ${race.challenger.name} versus ${race.defender.name}`}
+          />
+          {/* CSS 3D card racers — positioned over the canvas in perspective space. */}
+          <RaceCard3D
+            card={race.challenger}
+            leftPct={chLeftPct}
+            topPct={chTopPct}
+            angleDeg={chAngleDeg}
+            tiltX={20}
+            tiltY={chTiltY}
+            variant="challenger"
+          />
+          <RaceCard3D
+            card={race.defender}
+            leftPct={defLeftPct}
+            topPct={defTopPct}
+            angleDeg={defAngleDeg}
+            tiltX={20}
+            tiltY={defTiltY}
+            variant="defender"
+          />
+          {/* Floating event overlays. */}
+          {floatingEvents.map((ev) => (
+            <span
+              key={ev.id}
+              className={`race-event-toast race-event-toast--${ev.side}`}
+              aria-hidden="true"
+            >
+              {ev.text}
+            </span>
+          ))}
+        </div>
       </div>
 
       <div className="race-track-hud">

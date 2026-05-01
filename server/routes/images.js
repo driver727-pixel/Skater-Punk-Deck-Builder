@@ -1,3 +1,6 @@
+import { randomUUID } from 'node:crypto';
+import { persistImageToStorage } from '../lib/imageStorage.js';
+
 const BOARD_IMAGE_SIZE = { width: 512, height: 512 };
 const FAL_PROXY_TIMEOUT_MS = 300_000; // 5 minutes — AI generation can be slow
 
@@ -34,6 +37,8 @@ export function registerImageRoutes(app, {
   resolveFalProfile,
   boardImageJobs,
   pruneBoardImageJobs,
+  adminStorage = null,
+  storageBucket = '',
 }) {
   app.post('/api/generate-image', imageRateLimit, async (req, res) => {
     try {
@@ -64,6 +69,20 @@ export function registerImageRoutes(app, {
       }
 
       const data = await upstream.json();
+
+      // Persist each image URL to Firebase Storage so clients receive permanent
+      // URLs instead of temporary fal.ai CDN links that expire after ~24 hours.
+      if (adminStorage && storageBucket && Array.isArray(data?.images)) {
+        data.images = await Promise.all(
+          data.images.map(async (img, index) => {
+            if (typeof img?.url !== 'string') return img;
+            const storagePath = `generatedImages/generated/${randomUUID()}-${index}.png`;
+            const persistedUrl = await persistImageToStorage(adminStorage, img.url, storageBucket, storagePath);
+            return { ...img, url: persistedUrl };
+          }),
+        );
+      }
+
       res.json(data);
     } catch (err) {
       console.error('Proxy error:', err);
@@ -135,12 +154,17 @@ export function registerImageRoutes(app, {
 
       if (status.status === 'COMPLETED') {
         const result = await fal.queue.result('fal-ai/nano-banana-2', { requestId: jobId });
-        const imageUrl = extractBoardImageUrl(result);
-        if (!imageUrl) {
+        const falImageUrl = extractBoardImageUrl(result);
+        if (!falImageUrl) {
           res.status(502).json({ error: 'Fal.ai did not return a board image URL.' });
           return;
         }
         boardImageJobs.delete(jobId);
+
+        // Persist to Firebase Storage so the stored URL never expires.
+        const storagePath = `generatedImages/boards/${jobId}.png`;
+        const imageUrl = await persistImageToStorage(adminStorage, falImageUrl, storageBucket, storagePath);
+
         res.json({ status: 'completed', imageUrl, requestId: jobId });
         return;
       }
@@ -186,6 +210,16 @@ export function registerImageRoutes(app, {
       }
 
       const data = await upstream.json();
+
+      // Persist the background-removed image to Firebase Storage for a permanent URL.
+      if (adminStorage && storageBucket && typeof data?.image?.url === 'string') {
+        const storagePath = `generatedImages/characters/${randomUUID()}.png`;
+        data.image = {
+          ...data.image,
+          url: await persistImageToStorage(adminStorage, data.image.url, storageBucket, storagePath),
+        };
+      }
+
       res.json(data);
     } catch (err) {
       console.error('Background removal proxy error:', err);

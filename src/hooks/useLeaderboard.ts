@@ -5,7 +5,6 @@ import {
   setDoc,
   onSnapshot,
   query,
-  orderBy,
   limit,
 } from "firebase/firestore";
 import type { DeckPayload, LeaderboardEntry } from "../lib/types";
@@ -29,12 +28,12 @@ export function useLeaderboard() {
     if (!db) return;
     const q = query(
       collection(db, "leaderboard"),
-      orderBy("deckPower", "desc"),
-      orderBy("ozzies", "desc"),
       limit(LEADERBOARD_LIMIT),
     );
     const unsub = onSnapshot(q, (snap) => {
-      setEntries(snap.docs.map((d) => d.data() as LeaderboardEntry));
+      const data = snap.docs.map((d) => d.data() as LeaderboardEntry);
+      data.sort((a, b) => b.deckPower - a.deckPower || b.ozzies - a.ozzies);
+      setEntries(data);
     });
     return unsub;
   }, []);

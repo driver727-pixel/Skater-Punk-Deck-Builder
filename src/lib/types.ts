@@ -117,7 +117,7 @@ export interface ForgedBoardComponents {
   battery: string;
 }
 
-export interface BoardPlacement {
+export interface LayerPlacement {
   /** Center X position on the front artwork, as a percentage of card width. */
   xPercent: number;
   /** Center Y position on the front artwork, as a percentage of card height. */
@@ -128,11 +128,18 @@ export interface BoardPlacement {
   rotationDeg: number;
 }
 
+export type BoardPlacement = LayerPlacement;
+
+export type CharacterPlacement = LayerPlacement;
+
+export type CompositeLayerOrder = "behind-character" | "in-front";
+
 export interface ForgedBoardData {
   config: import("./boardBuilder").BoardConfig;
   loadout?: import("./boardBuilder").BoardLoadout;
   imageUrl?: string;
   placement?: BoardPlacement;
+  layerOrder?: CompositeLayerOrder;
   totalWeight: number;
   tuned: boolean;
   components: ForgedBoardComponents;
@@ -208,6 +215,7 @@ export interface CardPayload {
   backgroundImageUrl?: string;
   characterImageUrl?: string;
   frameImageUrl?: string;
+  characterPlacement?: CharacterPlacement;
 
   /**
    * Accumulated gameplay experience for this card.

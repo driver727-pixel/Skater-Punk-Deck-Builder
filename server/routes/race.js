@@ -100,12 +100,12 @@ function buildNotification({ uid, type, title, body, link, data, randomUUID }) {
 }
 
 /**
- * Apply the per-card delta (XP + Ozzies) inside a transaction.
- * Mutates user's `cards/{cardId}` and any deck docs containing that card.
+ * Apply the per-card delta (XP + Ozzies) inside a transaction using a
+ * pre-fetched snapshot.  The caller must have already called tx.get() for
+ * `cardRef` before issuing any writes in the same transaction — Firestore
+ * requires all reads to precede all writes.
  */
-async function applyCardDelta(tx, adminDb, uid, cardId, delta, statBoost) {
-  const cardRef = adminDb.collection('users').doc(uid).collection('cards').doc(cardId);
-  const cardSnap = await tx.get(cardRef);
+function applyCardDelta(tx, cardRef, cardSnap, delta, statBoost) {
   if (!cardSnap.exists) return;
   const card = cardSnap.data();
   const nextCard = { ...card };
@@ -378,9 +378,18 @@ export function registerRaceRoutes(app, {
           throw badRequest('One of the racing cards is no longer available — challenge cancelled.', 409);
         }
 
+        // ── All tx reads must happen before any tx writes ──────────────────
+        // Pre-fetch card docs for the post-race delta writes, and the
+        // defender's profile if a wager needs to be validated.
+        const challengerCardRef = adminDb.collection('users').doc(ch.challengerUid).collection('cards').doc(ch.challengerCardId);
+        const defenderCardRef = adminDb.collection('users').doc(ch.defenderUid).collection('cards').doc(ch.defenderCardId);
+        const defProfileRef = adminDb.collection(PROFILE_COLLECTION).doc(ch.defenderUid);
+
+        const readsToFetch = [tx.get(challengerCardRef), tx.get(defenderCardRef)];
+        if (ch.ozzyWager > 0) readsToFetch.push(tx.get(defProfileRef));
+        const [challengerCardSnap, defenderCardSnap, defProfileSnap] = await Promise.all(readsToFetch);
+
         if (ch.ozzyWager > 0) {
-          const defProfileRef = adminDb.collection(PROFILE_COLLECTION).doc(ch.defenderUid);
-          const defProfileSnap = await tx.get(defProfileRef);
           const balance = readOzzies(defProfileSnap.data());
           if (balance < ch.ozzyWager) {
             throw badRequest(`You only have ${balance} Ozzies — not enough to match the ${ch.ozzyWager} wager.`, 402);
@@ -441,10 +450,11 @@ export function registerRaceRoutes(app, {
             { ozzies: FieldValue.increment(ch.ozzyWager), updatedAt: nowIso() }, { merge: true });
         }
 
-        // Apply per-card deltas (XP/ozzies/stat boost) on the actual cards.
-        await applyCardDelta(tx, adminDb, ch.challengerUid, ch.challengerCardId,
+        // Apply per-card deltas (XP/ozzies/stat boost) on the actual cards
+        // using the snapshots already fetched above (reads before writes).
+        applyCardDelta(tx, challengerCardRef, challengerCardSnap,
           raw.cardDeltas.challenger, raw.winnerSide === 'challenger' ? raw.winnerStatBoost : null);
-        await applyCardDelta(tx, adminDb, ch.defenderUid, ch.defenderCardId,
+        applyCardDelta(tx, defenderCardRef, defenderCardSnap,
           raw.cardDeltas.defender, raw.winnerSide === 'defender' ? raw.winnerStatBoost : null);
 
         // Mark the challenge resolved.
@@ -479,46 +489,12 @@ export function registerRaceRoutes(app, {
     }
   });
 
-  // ── GET /api/race/:id ────────────────────────────────────────────────────
-  app.get('/api/race/:id', limiter, async (req, res) => {
-    if (!adminDb) {
-      res.status(503).json({ error: 'Race arena is not configured on this server.' });
-      return;
-    }
-    let caller;
-    try {
-      caller = await authenticateFirebaseUser(req);
-    } catch (error) {
-      res.status(error.statusCode ?? 500).json({ error: error.message ?? 'Authentication failed.' });
-      return;
-    }
-    const id = String(req.params?.id ?? '').trim();
-    if (!id) {
-      res.status(400).json({ error: 'Race id is required.' });
-      return;
-    }
-    try {
-      const snap = await adminDb.collection(RACES_COLLECTION).doc(id).get();
-      if (!snap.exists) {
-        res.status(404).json({ error: 'Race not found.' });
-        return;
-      }
-      const race = snap.data();
-      if (caller.uid !== race.challengerUid && caller.uid !== race.defenderUid) {
-        res.status(403).json({ error: 'You are not a participant in this race.' });
-        return;
-      }
-      res.status(200).json(race);
-    } catch (error) {
-      console.error('Race fetch error:', error);
-      res.status(500).json({ error: 'Failed to fetch race.' });
-    }
-  });
-
   // ── GET /api/race/arena ──────────────────────────────────────────────────
   // Returns a paginated list of other players' primary-deck cards so the
   // viewer can pick an opponent + opponent card. Public reads are intentionally
   // limited to the small set of fields needed to render a starting grid.
+  // NOTE: must be registered before GET /api/race/:id so Express does not
+  // treat the literal path segment "arena" as a dynamic :id parameter.
   app.get('/api/race/arena', limiter, async (req, res) => {
     if (!adminDb) {
       res.status(503).json({ error: 'Race arena is not configured on this server.' });
@@ -559,6 +535,42 @@ export function registerRaceRoutes(app, {
     } catch (error) {
       console.error('Race arena listing error:', error);
       res.status(500).json({ error: 'Failed to load Race Arena.' });
+    }
+  });
+
+  // ── GET /api/race/:id ────────────────────────────────────────────────────
+  app.get('/api/race/:id', limiter, async (req, res) => {
+    if (!adminDb) {
+      res.status(503).json({ error: 'Race arena is not configured on this server.' });
+      return;
+    }
+    let caller;
+    try {
+      caller = await authenticateFirebaseUser(req);
+    } catch (error) {
+      res.status(error.statusCode ?? 500).json({ error: error.message ?? 'Authentication failed.' });
+      return;
+    }
+    const id = String(req.params?.id ?? '').trim();
+    if (!id) {
+      res.status(400).json({ error: 'Race id is required.' });
+      return;
+    }
+    try {
+      const snap = await adminDb.collection(RACES_COLLECTION).doc(id).get();
+      if (!snap.exists) {
+        res.status(404).json({ error: 'Race not found.' });
+        return;
+      }
+      const race = snap.data();
+      if (caller.uid !== race.challengerUid && caller.uid !== race.defenderUid) {
+        res.status(403).json({ error: 'You are not a participant in this race.' });
+        return;
+      }
+      res.status(200).json(race);
+    } catch (error) {
+      console.error('Race fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch race.' });
     }
   });
 }

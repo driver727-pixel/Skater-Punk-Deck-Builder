@@ -20,7 +20,12 @@ import {
   shouldRenderSvgFrame,
 } from "../services/staticAssets";
 import { resolveBoardPoseScene } from "../lib/boardPoseScenes";
-import { buildBoardPlacementStyle } from "../lib/boardPlacement";
+import {
+  buildBoardPlacementStyle,
+  buildCharacterPlacementStyle,
+  CHARACTER_LAYER_Z_INDEX,
+  getBoardLayerZIndex,
+} from "../lib/boardPlacement";
 
 interface LayerLoading {
   background: boolean;
@@ -99,8 +104,10 @@ function areCardsEqual(previous: CardPayload, next: CardPayload): boolean {
     shallowEqualObject(previous.front as unknown as Record<string, unknown>, next.front as unknown as Record<string, unknown>) &&
     shallowEqualObject(previous.back as unknown as Record<string, unknown>, next.back as unknown as Record<string, unknown>) &&
     shallowEqualObject(previous.maintenance as unknown as Record<string, unknown>, next.maintenance as unknown as Record<string, unknown>) &&
+    shallowEqualObject(previous.characterPlacement as unknown as Record<string, unknown>, next.characterPlacement as unknown as Record<string, unknown>) &&
     previous.board.imageUrl === next.board.imageUrl &&
     previous.board.tuned === next.board.tuned &&
+    previous.board.layerOrder === next.board.layerOrder &&
     shallowEqualObject(previous.board.placement as unknown as Record<string, unknown>, next.board.placement as unknown as Record<string, unknown>)
   );
 }
@@ -167,6 +174,7 @@ function CompositeArt({
   fullSize = false,
   onLayerError,
 }: CompositeArtProps) {
+  const [boardFrontImageFailed, setBoardFrontImageFailed] = useState(false);
   const hasAnyLayer =
     backgroundImageUrl || characterImageUrl || frameImageUrl ||
     layerLoading?.background || layerLoading?.character || layerLoading?.frame;
@@ -183,8 +191,15 @@ function CompositeArt({
     : "card-art-layer card-art-layer--frame";
   const boardPoseScene = resolveBoardPoseScene(card.characterSeed);
   const showExactBoardLayer = Boolean(card.board.imageUrl && (backgroundImageUrl || characterImageUrl));
-  const boardPlacementStyle = buildBoardPlacementStyle(boardPoseScene.key, card.board.placement);
-
+  const boardPlacementStyle = {
+    ...buildBoardPlacementStyle(boardPoseScene.key, card.board.placement),
+    zIndex: getBoardLayerZIndex(card.board.layerOrder),
+  };
+  const characterPlacementStyle = {
+    ...buildCharacterPlacementStyle(card.characterPlacement),
+    ...(characterBlend !== undefined ? { opacity: characterBlend } : {}),
+    zIndex: CHARACTER_LAYER_Z_INDEX,
+  };
   // No AI layer data at all — render SVG fallback
   if (!hasAnyLayer) {
     return <CardArt card={card} width={width} height={height} />;
@@ -208,12 +223,13 @@ function CompositeArt({
       <InsetNeonTube rarity={card.prompts.rarity} accentColor={card.visuals.accentColor} />
 
       {/* Layer 2 – Exact generated board asset (never redrawn by the character model) */}
-      {showExactBoardLayer && card.board.imageUrl ? (
+      {showExactBoardLayer && card.board.imageUrl && !boardFrontImageFailed ? (
         <img
           src={card.board.imageUrl}
           alt="exact generated skateboard"
           className="card-art-layer card-art-layer--board-exact"
           style={boardPlacementStyle}
+          onError={() => setBoardFrontImageFailed(true)}
         />
       ) : null}
 
@@ -223,7 +239,7 @@ function CompositeArt({
           src={characterImageUrl}
           alt="character"
           className="card-art-layer card-art-layer--character"
-          style={characterBlend !== undefined ? { opacity: characterBlend } : undefined}
+          style={characterPlacementStyle}
           onError={() => onLayerError?.("character")}
         />
       ) : layerLoading?.character ? (
@@ -284,6 +300,7 @@ function CardDisplayComponent({
   const [sharing, setSharing] = useState(false);
   const [viewing3D, setViewing3D] = useState(false);
   const [printing, setPrinting] = useState(false);
+  const [boardBackImageFailed, setBoardBackImageFailed] = useState(false);
 
   // ── Inline editable name, age & bio ──────────────────────────────────────
   const [localName, setLocalName] = useState(card.identity.name);
@@ -542,11 +559,12 @@ function CardDisplayComponent({
 
           <div className="card-board">
             <span className="card-board__label">BOARD</span>
-            {card.board.imageUrl ? (
+            {card.board.imageUrl && !boardBackImageFailed ? (
               <img
                 src={card.board.imageUrl}
                 alt="Electric skateboard"
                 className="card-board__generated-img"
+                onError={() => setBoardBackImageFailed(true)}
               />
             ) : (
               <div className="card-board__placeholder">🛹</div>

@@ -164,7 +164,10 @@ export function createDistrictWeatherService() {
     payload: null,
     fetchedAt: 0,
   };
-  let inflightFetch = null;
+  // Deduplicates concurrent cache-miss requests: if a fetch is already in
+  // progress, all subsequent callers await the same Promise instead of each
+  // making their own upstream request (which would trigger rate limiting).
+  let inFlightFetch = null;
 
   async function getDistrictWeatherPayload() {
     const now = Date.now();
@@ -180,11 +183,11 @@ export function createDistrictWeatherService() {
       };
     }
 
-    if (inflightFetch) {
-      return inflightFetch;
+    if (inFlightFetch) {
+      return inFlightFetch;
     }
 
-    inflightFetch = buildDistrictWeatherPayload()
+    inFlightFetch = buildDistrictWeatherPayload()
       .then((payload) => {
         districtWeatherCache = { payload, fetchedAt: Date.now() };
         return payload;
@@ -205,10 +208,10 @@ export function createDistrictWeatherService() {
         return fallback;
       })
       .finally(() => {
-        inflightFetch = null;
+        inFlightFetch = null;
       });
 
-    return inflightFetch;
+    return inFlightFetch;
   }
 
   return {

@@ -2,21 +2,33 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Punch Skater is a continuously deployed web application. Only the latest
+production release at [punchskater.com](https://punchskater.com) receives
+security updates.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| Channel    | Supported          |
+| ---------- | ------------------ |
+| Production | :white_check_mark: |
+| Older tags | :x:                |
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+**Please do not open a public GitHub issue for security vulnerabilities.**
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
-Contact driver727@gmail.com for quickest response. Include Punchskater in the subject line. 
+Email **driver727@gmail.com** with the subject line `[Punch Skater] Security
+Vulnerability`. Include:
+
+- A description of the vulnerability and its potential impact
+- Steps to reproduce or a proof-of-concept
+- Any suggested remediation (optional)
+
+You can expect an acknowledgement within **48 hours** and a status update
+within **7 days**. If the vulnerability is confirmed, a fix will be released
+as soon as reasonably possible and you will be credited (unless you prefer
+otherwise).
+
+## Security Contact
+
+A machine-readable security contact is published at:
+[https://punchskater.com/.well-known/security.txt](https://punchskater.com/.well-known/security.txt)
+

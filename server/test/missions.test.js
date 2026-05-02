@@ -32,7 +32,7 @@ function buildCard(overrides = {}) {
 
 test('createMissionBoardEntries seeds one entry per mission definition', () => {
   const missions = createMissionBoardEntries('user-123', '2026-04-26T00:00:00.000Z');
-  assert.equal(missions.length, 6);
+  assert.equal(missions.length, 10);
   assert.equal(missions[0].uid, 'user-123');
   assert.equal(missions[0].system, 'mission_board');
   assert.equal(missions[0].schemaVersion, 2);
@@ -74,6 +74,13 @@ test('mission board entries seed fork choices on restored missions', () => {
   assert.equal(mission.fork.badge, 'Fork in the road');
   assert.equal(mission.fork.options.length, 2);
   assert.equal(mission.fork.options[0].id, 'crusher-lane');
+});
+
+test('new lore missions can seed three-way fork choices', () => {
+  const mission = createMissionBoardEntries('user-123').find((entry) => entry.definitionId === 'grid-parent-trace');
+  assert.equal(mission.fork.badge, 'Archive fracture');
+  assert.equal(mission.fork.options.length, 3);
+  assert.equal(mission.fork.options[2].id, 'worker-trace');
 });
 
 test('evaluateMissionDeck applies selected fork requirements', () => {

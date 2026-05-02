@@ -8910,6 +8910,191 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   text-transform: uppercase;
   color: var(--text-dim);
 }
+.mission-transit {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background:
+    radial-gradient(circle at top left, var(--mission-glow, rgba(0,255,136,0.22)), transparent 52%),
+    linear-gradient(135deg, rgba(255,255,255,0.04), rgba(0,0,0,0.26));
+}
+.mission-transit__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(220px, 0.8fr);
+  gap: 16px;
+}
+.mission-transit__copy,
+.mission-transit__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mission-transit__meta {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.2);
+}
+.mission-transit__meta-copy {
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+.mission-transit__map {
+  position: relative;
+  overflow: hidden;
+  min-height: 320px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background:
+    radial-gradient(circle at top left, rgba(255,255,255,0.08), transparent 42%),
+    linear-gradient(180deg, rgba(5,10,16,0.84), rgba(2,4,8,0.96));
+}
+.mission-transit__grid {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(circle at center, #000 64%, transparent 100%);
+}
+.mission-transit__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.mission-transit__block {
+  fill: rgba(255,255,255,0.04);
+  stroke: rgba(255,255,255,0.08);
+  stroke-width: 0.4;
+}
+.mission-transit__rail {
+  fill: none;
+  stroke: rgba(255,255,255,0.2);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 8px var(--mission-glow, rgba(0,255,136,0.2)));
+}
+.mission-transit__rail--base {
+  stroke: rgba(255,255,255,0.26);
+}
+.mission-transit__rail--active {
+  stroke: var(--mission-accent, var(--accent));
+  stroke-width: 2.2;
+}
+.mission-transit__hub {
+  fill: rgba(255,255,255,0.24);
+  stroke: rgba(255,255,255,0.35);
+  stroke-width: 0.8;
+}
+.mission-transit__hub--locale {
+  fill: var(--mission-accent, var(--accent));
+  stroke: rgba(255,255,255,0.7);
+}
+.mission-transit__scanline {
+  fill: none;
+  stroke: var(--mission-accent, var(--accent));
+  stroke-width: 0.6;
+  stroke-dasharray: 8 6;
+  opacity: 0.45;
+  animation: mission-scanline 5.2s linear infinite;
+}
+.mission-transit__labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.mission-transit__label,
+.mission-transit__branch-label {
+  position: absolute;
+  display: inline-flex;
+  padding: 5px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(4,8,16,0.86);
+  color: var(--text-dim);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.mission-transit__label--depot {
+  left: 8%;
+  top: 76%;
+}
+.mission-transit__label--fork {
+  left: 49%;
+  top: 49%;
+}
+.mission-transit__label--locale {
+  right: 6%;
+  top: 56%;
+  color: var(--mission-accent, var(--accent));
+}
+.mission-transit__branch-label {
+  transform: translate(-50%, -50%);
+}
+.mission-transit__branch-label--active {
+  border-color: rgba(255,255,255,0.18);
+  color: var(--mission-accent, var(--accent));
+  box-shadow: 0 0 16px var(--mission-glow, rgba(0,255,136,0.2));
+}
+.mission-transit__deck {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.mission-transit__deck-car {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 120px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.12), rgba(0,0,0,0.5)),
+    rgba(4,8,16,0.92);
+  box-shadow:
+    0 8px 24px rgba(0,0,0,0.35),
+    0 0 24px var(--mission-glow, rgba(0,255,136,0.18));
+  transform: translate(-50%, -50%) rotateX(70deg) rotateY(14deg);
+}
+.mission-transit__deck-glow {
+  position: absolute;
+  inset: auto 10% -12px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--mission-glow, rgba(0,255,136,0.2));
+  filter: blur(10px);
+}
+.mission-transit__deck-name,
+.mission-transit__deck-route {
+  position: relative;
+  z-index: 1;
+}
+.mission-transit__deck-name {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.mission-transit__deck-route {
+  color: var(--mission-accent, var(--accent));
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 .mission-intel-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -9370,10 +9555,23 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
     grid-template-columns: 1fr;
   }
   .mission-cinematic,
+  .mission-transit__header,
   .mission-intel-grid,
   .mission-outcome-grid,
   .mission-result-popup__grid {
     grid-template-columns: 1fr;
+  }
+  .mission-transit__map {
+    min-height: 280px;
+  }
+  .mission-transit__deck-car {
+    min-width: 104px;
+    padding: 9px 10px;
+  }
+  .mission-transit__branch-label {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .mission-result__hero {
     flex-direction: column;

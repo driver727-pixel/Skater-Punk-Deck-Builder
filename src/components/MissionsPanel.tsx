@@ -285,6 +285,9 @@ function getRequirementTip(
   weather: DistrictWeatherSnapshot | null,
 ): string {
   const currentAccessSummary = `${mission.district} currently allows ${getMissionDistrictAccessSummary(mission, weather)}.`;
+  const requiredWheelTypes = result.requirement.wheelTypes?.length
+    ? result.requirement.wheelTypes.join(" / ")
+    : "the required wheel setup";
   switch (result.requirement.type) {
     case "min_cards":
       return "Mission decks need all six slots filled before the run can launch.";
@@ -293,7 +296,7 @@ function getRequirementTip(
         ? `${currentAccessSummary} Weather is adding a board-type lock on top of the normal wheel rules.`
         : `${currentAccessSummary} Only couriers whose board setup matches that access rule count here.`;
     case "wheel_type":
-      return `This checks each courier's equipped wheels. Only ${result.requirement.wheelTypes?.join(" / ") ?? "the required wheel type"} count.`;
+      return `This checks each courier's equipped wheels. Only ${requiredWheelTypes} count.`;
     case "stat_total":
       return `This is the combined ${result.requirement.stat} from the whole deck, not a single courier.`;
     case "district_card":
@@ -302,6 +305,8 @@ function getRequirementTip(
       return `Any courier with the ${result.requirement.archetype} archetype counts toward this route.`;
     case "faction":
       return `Any courier from the ${result.requirement.faction} crew counts toward this route.`;
+    default:
+      return "This check must pass before the mission can launch.";
   }
 }
 

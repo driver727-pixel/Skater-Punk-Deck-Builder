@@ -335,7 +335,7 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
     ? "Route Cleared"
     : selectedEvaluation?.eligible
       ? "Deck Ready"
-      : "Needs deck";
+      : "Needs work";
   const selectedOutcomeBadgeClass = selectedMission?.status === "completed" || selectedEvaluation?.eligible
     ? "mission-result__badge mission-result__badge--success"
     : "mission-result__badge mission-result__badge--fail";
@@ -537,7 +537,7 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
                       <span className="mission-deck-focus__label">Current pick</span>
                       <strong className="mission-deck-focus__name">{selectedDeck?.name ?? "No deck selected"}</strong>
                       <span className="mission-deck-focus__meta">
-                        {selectedDeckCardCount} cards · {selectedDeckReadyCount} route-ready · {selectedRouteLabel}
+                        {selectedDeckCardCount} cards · {selectedDeckReadyCount} mission-ready · {selectedRouteLabel}
                       </span>
                     </div>
                   </div>
@@ -553,7 +553,7 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
                         >
                           <strong>{evaluation.deckName}</strong>
                           <span className="mission-selector-card__tagline">
-                            {deck?.cards.length ?? 0} cards · {evaluation.eligibleCardCount} route-ready
+                            {deck?.cards.length ?? 0} cards · {evaluation.eligibleCardCount} mission-ready
                           </span>
                           <span
                             className={`mission-result__badge ${evaluation.eligible ? "mission-result__badge--success" : "mission-result__badge--fail"}`}

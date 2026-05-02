@@ -243,6 +243,226 @@ export const MISSION_BOARD_DEFINITIONS: MissionTemplate[] = [
       ],
     },
   },
+  {
+    definitionId: "batteryville-switchyard-uprising",
+    sortOrder: 6,
+    title: "Switchyard Uprising",
+    tagline: "Smuggle strike pay through Batteryville before HexChain shuts every switch.",
+    description:
+      "Batteryville's recycler crews are moving against HexChain. Load a deck that can carry money, proof drives, and enough grit to keep the switchyard open long enough for the workers to disappear.",
+    district: "Batteryville",
+    rewardXp: 250,
+    rewardOzzies: 145,
+    requirements: [
+      { type: "min_cards", label: "Bring a full six-card deck.", count: 6 },
+      { type: "district_access", label: "At least 3 couriers can enter Batteryville.", count: 3, district: "Batteryville" },
+      { type: "district_card", label: "Include 2 Batteryville locals in the deck.", count: 2, district: "Batteryville" },
+      { type: "stat_total", label: "Reach 30 total Grit across the deck.", count: 30, stat: "grit" },
+      { type: "stat_total", label: "Reach 24 total Range across the deck.", count: 24, stat: "range" },
+    ],
+    fork: {
+      badge: "Pressure point",
+      prompt: "Back the recycler line, bribe a yard boss for a fast payout, or carry the proof drives to a Grid vault for a split reward?",
+      options: [
+        {
+          id: "recycler-line",
+          label: "Recycler line",
+          description: "Protect the workers and bank extra mission XP with a local-heavy deck.",
+          rewardXpDelta: 40,
+          requirements: [
+            { type: "district_card", label: "Include 3 Batteryville locals in the deck.", count: 3, district: "Batteryville" },
+            { type: "wheel_type", label: "Run at least 2 shock-proof wheel setups.", count: 2, wheelTypes: ["Rubber", "Cloud"] },
+          ],
+        },
+        {
+          id: "yard-boss-bribe",
+          label: "Yard boss bribe",
+          description: "Push the hard cash route through the loudest lanes before the bosses change sides.",
+          rewardOzziesDelta: 55,
+          requirements: [
+            { type: "stat_total", label: "Reach 34 total Grit across the deck.", count: 34, stat: "grit" },
+            { type: "stat_total", label: "Reach 28 total Range across the deck.", count: 28, stat: "range" },
+          ],
+        },
+        {
+          id: "proof-vault",
+          label: "Proof vault",
+          description: "Escort the drives to a trusted Grid vault for a split payout and cleaner story ending.",
+          rewardXpDelta: 20,
+          rewardOzziesDelta: 20,
+          requirements: [
+            { type: "archetype", label: "Include 1 Knights Technarchy courier.", count: 1, archetype: "The Knights Technarchy" },
+            { type: "stat_total", label: "Reach 26 total Speed across the deck.", count: 26, stat: "speed" },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    definitionId: "nightshade-moonrise-echo",
+    sortOrder: 7,
+    title: "Moonrise Echo Run",
+    tagline: "Carry the rave signal through the Murk before the booth goes dark.",
+    description:
+      "The Moonrisers are replaying the night Skids first got noticed, and every crew in Nightshade wants control of the broadcast. Build a deck that can move fast, stay quiet, and survive a crowded tunnel.",
+    district: "Nightshade",
+    rewardXp: 275,
+    rewardOzzies: 105,
+    requirements: [
+      { type: "min_cards", label: "Bring a full six-card deck.", count: 6 },
+      { type: "district_access", label: "At least 3 couriers can enter Nightshade.", count: 3, district: "Nightshade" },
+      { type: "district_card", label: "Include 2 Nightshade locals in the deck.", count: 2, district: "Nightshade" },
+      { type: "stat_total", label: "Reach 30 total Stealth across the deck.", count: 30, stat: "stealth" },
+      { type: "stat_total", label: "Reach 24 total Speed across the deck.", count: 24, stat: "speed" },
+    ],
+    fork: {
+      badge: "Rave split",
+      prompt: "Ride the strobe rush for more XP, take the hush route for cash, or broker a crew handshake for a balanced return?",
+      options: [
+        {
+          id: "strobe-rush",
+          label: "Strobe rush",
+          description: "Keep the signal loud, outrun the heat, and leave with a bigger reputation payout.",
+          rewardXpDelta: 45,
+          requirements: [
+            { type: "stat_total", label: "Reach 30 total Speed across the deck.", count: 30, stat: "speed" },
+            { type: "wheel_type", label: "Run at least 2 tunnel-tuned wheel setups.", count: 2, wheelTypes: ["Rubber", "Cloud", "Pneumatic"] },
+          ],
+        },
+        {
+          id: "hush-route",
+          label: "Hush route",
+          description: "Cut the lights, keep the rave alive, and collect the bigger Ozzy bag from the back room.",
+          rewardOzziesDelta: 45,
+          requirements: [
+            { type: "stat_total", label: "Reach 34 total Stealth across the deck.", count: 34, stat: "stealth" },
+            { type: "district_card", label: "Include 3 Nightshade locals in the deck.", count: 3, district: "Nightshade" },
+          ],
+        },
+        {
+          id: "crew-handshake",
+          label: "Crew handshake",
+          description: "Split the route with friendly fixers for a steadier payout and cleaner exit.",
+          rewardXpDelta: 20,
+          rewardOzziesDelta: 20,
+          requirements: [
+            { type: "archetype", label: "Include 1 Qu111s courier.", count: 1, archetype: "Qu111s" },
+            { type: "stat_total", label: "Reach 26 total Range across the deck.", count: 26, stat: "range" },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    definitionId: "airaway-coldchain-pass",
+    sortOrder: 8,
+    title: "Coldchain Contractor Pass",
+    tagline: "Lift a sealed med-crate through Airaway before the cloned badge fails.",
+    description:
+      "A black-clinic buyer wants a coldchain med-crate lifted through Airaway's private corridors. You need clean wheels, a quiet deck, and a backup route for the moment the contractor pass burns out.",
+    district: "Airaway",
+    rewardXp: 215,
+    rewardOzzies: 150,
+    requirements: [
+      { type: "min_cards", label: "Bring a full six-card deck.", count: 6 },
+      { type: "wheel_type", label: "Run at least 2 street-wheel couriers.", count: 2, wheelTypes: ["Urethane"] },
+      { type: "district_access", label: "At least 2 couriers can enter Airaway.", count: 2, district: "Airaway" },
+      { type: "stat_total", label: "Reach 28 total Speed across the deck.", count: 28, stat: "speed" },
+      { type: "stat_total", label: "Reach 22 total Stealth across the deck.", count: 22, stat: "stealth" },
+    ],
+    fork: {
+      badge: "Corp breach",
+      prompt: "Do you keep the badge clone stable for XP, make an executive drop for cash, or dive a maintenance chute for a split reward?",
+      options: [
+        {
+          id: "badge-clone",
+          label: "Badge clone",
+          description: "Keep the fake credentials live long enough to deliver clean and leave smarter.",
+          rewardXpDelta: 35,
+          requirements: [
+            { type: "wheel_type", label: "Run at least 3 street-wheel couriers.", count: 3, wheelTypes: ["Urethane"] },
+            { type: "stat_total", label: "Reach 26 total Stealth across the deck.", count: 26, stat: "stealth" },
+          ],
+        },
+        {
+          id: "executive-drop",
+          label: "Executive drop",
+          description: "Hit the richer tower route and cash out before the glass bridges lock.",
+          rewardOzziesDelta: 60,
+          requirements: [
+            { type: "stat_total", label: "Reach 32 total Speed across the deck.", count: 32, stat: "speed" },
+            { type: "stat_total", label: "Reach 26 total Range across the deck.", count: 26, stat: "range" },
+          ],
+        },
+        {
+          id: "maintenance-chute",
+          label: "Maintenance chute",
+          description: "Use the worker shafts for a split payout that rewards utility over flash.",
+          rewardXpDelta: 20,
+          rewardOzziesDelta: 25,
+          requirements: [
+            { type: "district_card", label: "Include 2 Airaway locals in the deck.", count: 2, district: "Airaway" },
+            { type: "stat_total", label: "Reach 24 total Grit across the deck.", count: 24, stat: "grit" },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    definitionId: "grid-parent-trace",
+    sortOrder: 9,
+    title: "Parent Trace Protocol",
+    tagline: "Follow the vanished worker IDs before Cascade purges the trail.",
+    description:
+      "A buried Grid archive has surfaced with the same worker signatures tied to Skids' missing parents. This run is part heist, part memorial, and part proof that Cascade never really deletes anything.",
+    district: "The Grid",
+    rewardXp: 320,
+    rewardOzzies: 95,
+    requirements: [
+      { type: "min_cards", label: "Bring a full six-card deck.", count: 6 },
+      { type: "district_access", label: "At least 3 couriers can enter The Grid.", count: 3, district: "The Grid" },
+      { type: "archetype", label: "Include 1 Knights Technarchy courier.", count: 1, archetype: "The Knights Technarchy" },
+      { type: "stat_total", label: "Reach 30 total Speed across the deck.", count: 30, stat: "speed" },
+      { type: "stat_total", label: "Reach 24 total Stealth across the deck.", count: 24, stat: "stealth" },
+    ],
+    fork: {
+      badge: "Archive fracture",
+      prompt: "Rip the archive for cash, ghost-query it for lore-heavy XP, or trace the worker line back through Batteryville for a split payout?",
+      options: [
+        {
+          id: "archive-heist",
+          label: "Archive heist",
+          description: "Steal the saleable pieces of the archive and leave the rest smoking behind you.",
+          rewardOzziesDelta: 45,
+          requirements: [
+            { type: "archetype", label: "Include 2 Knights Technarchy couriers.", count: 2, archetype: "The Knights Technarchy" },
+            { type: "stat_total", label: "Reach 30 total Range across the deck.", count: 30, stat: "range" },
+          ],
+        },
+        {
+          id: "ghost-query",
+          label: "Ghost query",
+          description: "Stay quiet, pull the buried worker story intact, and come back with the bigger XP reward.",
+          rewardXpDelta: 50,
+          requirements: [
+            { type: "stat_total", label: "Reach 34 total Stealth across the deck.", count: 34, stat: "stealth" },
+            { type: "district_card", label: "Include 1 Nightshade local in the deck.", count: 1, district: "Nightshade" },
+          ],
+        },
+        {
+          id: "worker-trace",
+          label: "Worker trace",
+          description: "Follow the IDs back to the Batteryville yards for a split reward and a cleaner answer.",
+          rewardXpDelta: 20,
+          rewardOzziesDelta: 25,
+          requirements: [
+            { type: "district_card", label: "Include 2 Batteryville locals in the deck.", count: 2, district: "Batteryville" },
+            { type: "stat_total", label: "Reach 28 total Grit across the deck.", count: 28, stat: "grit" },
+          ],
+        },
+      ],
+    },
+  },
 ];
 
 function getRequirementTarget(requirement: MissionRequirement): number {

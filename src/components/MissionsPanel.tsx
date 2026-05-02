@@ -328,6 +328,17 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
     () => (missionResult ? getMissionResultLog(missionResult) : []),
     [missionResult],
   );
+  const selectedDeckCardCount = selectedDeck?.cards.length ?? 0;
+  const selectedDeckReadyCount = selectedEvaluation?.eligibleCardCount ?? 0;
+  const selectedRouteLabel = selectedForkOption?.label ?? "Main line";
+  const selectedOutcomeLabel = selectedMission?.status === "completed"
+    ? "Route Cleared"
+    : selectedEvaluation?.eligible
+      ? "Deck Ready"
+      : "Needs work";
+  const selectedOutcomeBadgeClass = selectedMission?.status === "completed" || selectedEvaluation?.eligible
+    ? "mission-result__badge mission-result__badge--success"
+    : "mission-result__badge mission-result__badge--fail";
 
   const handleRunMission = useCallback(async () => {
     if (!selectedMission || !selectedDeck) return;
@@ -439,24 +450,6 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
                   <h3 className="mission-selector-card__name">{selectedMission.title}</h3>
                   <p className="mission-selector-card__tagline">{selectedMission.description}</p>
                 </div>
-                <div className="mission-panel__actions">
-                  <button
-                    className="btn-primary"
-                    onClick={handleRunMission}
-                    disabled={
-                      runningMissionId === selectedMission.id ||
-                      selectedMission.status === "completed" ||
-                      !selectedDeck ||
-                      !selectedEvaluation?.eligible
-                    }
-                  >
-                    {selectedMission.status === "completed"
-                      ? "Mission Cleared"
-                      : runningMissionId === selectedMission.id
-                        ? "Running…"
-                        : "Launch Run"}
-                  </button>
-                </div>
               </div>
 
               <div className="mission-cinematic">
@@ -484,6 +477,206 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
                 </div>
               </div>
 
+              <div className="mission-flow">
+                {selectedMission.fork && (
+                  <section className="mission-stage mission-panel mission-fork">
+                    <div className="mission-stage__header">
+                      <div>
+                        <span className="mission-stage__eyebrow">Route choice</span>
+                        <h4 className="mission-stage__title">Choose the line you want to push</h4>
+                        <p className="mission-stage__summary">
+                          Different paths shift the payout and the pressure on your crew.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mission-fork__header">
+                      <span className="mission-fork__badge">{selectedMission.fork.badge}</span>
+                      <p className="mission-fork__prompt">{selectedMission.fork.prompt}</p>
+                    </div>
+                    <div className="mission-fork__options">
+                      {selectedMission.fork.options.map((option) => (
+                        <button
+                          key={`${selectedMission.id}-${option.id}`}
+                          type="button"
+                          className={`mission-fork__option${selectedForkOption?.id === option.id ? " mission-fork__option--active" : ""}`}
+                          onClick={() => setSelectedForkOptionId(option.id)}
+                          aria-pressed={selectedForkOption?.id === option.id}
+                        >
+                          <span className="mission-fork__option-label">{option.label}</span>
+                          <span className="mission-fork__option-meta">
+                            {option.rewardOzziesDelta && option.rewardXpDelta
+                              ? "Split reward route"
+                              : option.rewardOzziesDelta
+                                ? "Cash pressure route"
+                                : "XP pressure route"}
+                          </span>
+                          <span className="mission-fork__option-desc">{option.description}</span>
+                          {(option.rewardXpDelta || option.rewardOzziesDelta) && (
+                            <span className="mission-fork__option-desc">
+                              {option.rewardXpDelta ? `${formatForkRewardDelta(option.rewardXpDelta)} XP` : null}
+                              {option.rewardXpDelta && option.rewardOzziesDelta ? " · " : null}
+                              {option.rewardOzziesDelta ? `${formatForkRewardDelta(option.rewardOzziesDelta)} Oz` : null}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                <section className="mission-stage mission-panel">
+                  <div className="mission-stage__header">
+                    <div>
+                      <span className="mission-stage__eyebrow">Deck selection</span>
+                      <h4 className="mission-stage__title">Pick the crew taking the run</h4>
+                      <p className="mission-stage__summary">
+                        Lock in a deck first, then use the outcome panel to confirm the route is worth launching.
+                      </p>
+                    </div>
+                    <div className="mission-deck-focus">
+                      <span className="mission-deck-focus__label">Current pick</span>
+                      <strong className="mission-deck-focus__name">{selectedDeck?.name ?? "No deck selected"}</strong>
+                      <span className="mission-deck-focus__meta">
+                        {selectedDeckCardCount} cards · {selectedDeckReadyCount} mission-ready · {selectedRouteLabel}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mission-runner-grid">
+                    {deckEvaluations.map((evaluation) => {
+                      const deck = decks.find((entry) => entry.id === evaluation.deckId);
+                      return (
+                        <button
+                          key={evaluation.deckId}
+                          type="button"
+                          className={`mission-runner-card${selectedDeck?.id === evaluation.deckId ? " mission-runner-card--active" : ""}`}
+                          onClick={() => setSelectedDeckId(evaluation.deckId)}
+                        >
+                          <strong>{evaluation.deckName}</strong>
+                          <span className="mission-selector-card__tagline">
+                            {deck?.cards.length ?? 0} cards · {evaluation.eligibleCardCount} mission-ready
+                          </span>
+                          <span
+                            className={`mission-result__badge ${evaluation.eligible ? "mission-result__badge--success" : "mission-result__badge--fail"}`}
+                          >
+                            {evaluation.eligible ? "Can run" : "Blocked"}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className="mission-stage mission-panel">
+                  <div className="mission-stage__header">
+                    <div>
+                      <span className="mission-stage__eyebrow">Run outlook</span>
+                      <h4 className="mission-stage__title">See the outcome before you launch</h4>
+                      <p className="mission-stage__summary">
+                        Confirm access, rewards, and requirements with your selected deck before you commit.
+                      </p>
+                    </div>
+                    <div className="mission-stage__actions">
+                      <button
+                        className="btn-primary"
+                        onClick={handleRunMission}
+                        disabled={
+                          runningMissionId === selectedMission.id ||
+                          selectedMission.status === "completed" ||
+                          !selectedDeck ||
+                          !selectedEvaluation?.eligible
+                        }
+                      >
+                        {selectedMission.status === "completed"
+                          ? "Mission Cleared"
+                          : runningMissionId === selectedMission.id
+                            ? "Running…"
+                            : "Launch Run"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mission-outcome-grid">
+                    <article className="mission-outcome-card">
+                      <div className="mission-result">
+                        <div className="mission-result__hero">
+                          <div className="mission-result__headline">{selectedMission.tagline}</div>
+                          <span className={selectedOutcomeBadgeClass}>{selectedOutcomeLabel}</span>
+                        </div>
+                        <div className="mission-result__rewards">
+                          <div className="mission-result__reward-card">
+                            <span className="mission-result__reward-label">Mission XP</span>
+                            <strong className="mission-result__reward-value">+{selectedRewards.rewardXp}</strong>
+                          </div>
+                          <div className="mission-result__reward-card mission-result__reward-card--ozzies">
+                            <span className="mission-result__reward-label">Ozzies</span>
+                            <strong className="mission-result__reward-value">+{selectedRewards.rewardOzzies}</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={`mission-weather${selectedEvaluation && !selectedEvaluation.eligible ? " mission-weather--blocked" : ""}`}>
+                        <div className="mission-weather__copy">
+                          <span className="mission-weather__eyebrow">District access</span>
+                          <strong className="mission-weather__title">{selectedMission.district}</strong>
+                          <p className="mission-weather__body">
+                            Access now: {getMissionWeatherSummary(selectedMission, weatherByDistrict)}.
+                          </p>
+                        </div>
+                        <span
+                          className={`mission-weather__status${selectedEvaluation && !selectedEvaluation.eligible ? " mission-weather__status--restricted" : ""}`}
+                        >
+                          {selectedEvaluation?.eligible ? "Deck ready" : "Needs work"}
+                        </span>
+                      </div>
+                    </article>
+
+                    <article className="mission-outcome-card">
+                      <div className="mission-stats">
+                        <div className="mission-stat-row">
+                          <span className="mission-stat-label">Selected deck</span>
+                          <span className="mission-stat-value">{selectedDeck?.name ?? "No deck selected"}</span>
+                        </div>
+                        {selectedForkOption && (
+                          <div className="mission-stat-row">
+                            <span className="mission-stat-label">Chosen route</span>
+                            <span className="mission-stat-value">{selectedRouteLabel}</span>
+                          </div>
+                        )}
+                        <div className="mission-stat-row">
+                          <span className="mission-stat-label">Last run</span>
+                          <span className="mission-stat-value">{formatTimestamp(selectedMission.lastRunAt) ?? "Never launched"}</span>
+                        </div>
+                        {selectedMission.status === "completed" && (
+                          <div className="mission-stat-row">
+                            <span className="mission-stat-label">Cleared with</span>
+                            <span className="mission-stat-value">{selectedMission.selectedDeckName ?? "Unknown deck"}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mission-checks">
+                        {(selectedEvaluation?.results ?? getDefaultRequirementResults(selectedMission, selectedForkOptionId)).map((result) => (
+                          <span
+                            key={`${selectedMission.id}-${result.requirement.label}`}
+                            className="mission-selector-card__badge"
+                            title={result.detail}
+                          >
+                            {result.met ? "✅" : "⛔"} {result.requirement.label}
+                          </span>
+                        ))}
+                      </div>
+                    </article>
+                  </div>
+
+                  {selectedEvaluation && !selectedEvaluation.eligible && (
+                    <p className="mission-warning">{selectedEvaluation.summary}</p>
+                  )}
+                  {selectedMission.lastRunSummary && (
+                    <p className="mission-warning">{selectedMission.lastRunSummary}</p>
+                  )}
+                </section>
+              </div>
+
               <div className="mission-intel-grid">
                 <article className="mission-intel-card">
                   <span className="mission-intel-card__label">District dossier</span>
@@ -503,145 +696,6 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
                     Atmosphere: {selectedDistrictLore?.atmosphere ?? selectedMission.tagline}
                   </p>
                 </article>
-              </div>
-
-              <div className="mission-result">
-                <div className="mission-result__hero">
-                  <div className="mission-result__headline">{selectedMission.tagline}</div>
-                  <span
-                    className={`mission-result__badge ${selectedMission.status === "completed" ? "mission-result__badge--success" : "mission-result__badge--fail"}`}
-                  >
-                    {selectedMission.status === "completed" ? "Route Cleared" : "Awaiting Deck"}
-                  </span>
-                </div>
-                <div className="mission-result__rewards">
-                  <div className="mission-result__reward-card">
-                    <span className="mission-result__reward-label">Mission XP</span>
-                    <strong className="mission-result__reward-value">+{selectedRewards.rewardXp}</strong>
-                  </div>
-                  <div className="mission-result__reward-card mission-result__reward-card--ozzies">
-                    <span className="mission-result__reward-label">Ozzies</span>
-                    <strong className="mission-result__reward-value">+{selectedRewards.rewardOzzies}</strong>
-                  </div>
-                </div>
-              </div>
-
-              {selectedMission.fork && (
-                <div className="mission-panel mission-fork">
-                  <div className="mission-fork__header">
-                    <span className="mission-fork__badge">{selectedMission.fork.badge}</span>
-                    <p className="mission-fork__prompt">{selectedMission.fork.prompt}</p>
-                  </div>
-                  <div className="mission-fork__options">
-                    {selectedMission.fork.options.map((option) => (
-                      <button
-                        key={`${selectedMission.id}-${option.id}`}
-                        type="button"
-                        className={`mission-fork__option${selectedForkOption?.id === option.id ? " mission-fork__option--active" : ""}`}
-                        onClick={() => setSelectedForkOptionId(option.id)}
-                        aria-pressed={selectedForkOption?.id === option.id}
-                      >
-                        <span className="mission-fork__option-label">{option.label}</span>
-                        <span className="mission-fork__option-meta">
-                          {option.rewardOzziesDelta && option.rewardXpDelta
-                            ? "Split reward route"
-                            : option.rewardOzziesDelta
-                              ? "Cash pressure route"
-                              : "XP pressure route"}
-                        </span>
-                        <span className="mission-fork__option-desc">{option.description}</span>
-                        {(option.rewardXpDelta || option.rewardOzziesDelta) && (
-                          <span className="mission-fork__option-desc">
-                            {option.rewardXpDelta ? `${formatForkRewardDelta(option.rewardXpDelta)} XP` : null}
-                            {option.rewardXpDelta && option.rewardOzziesDelta ? " · " : null}
-                            {option.rewardOzziesDelta ? `${formatForkRewardDelta(option.rewardOzziesDelta)} Oz` : null}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className={`mission-weather${selectedEvaluation && !selectedEvaluation.eligible ? " mission-weather--blocked" : ""}`}>
-                <div className="mission-weather__copy">
-                  <span className="mission-weather__eyebrow">District access</span>
-                  <strong className="mission-weather__title">{selectedMission.district}</strong>
-                  <p className="mission-weather__body">
-                    Access now: {getMissionWeatherSummary(selectedMission, weatherByDistrict)}.
-                  </p>
-                </div>
-                <span
-                  className={`mission-weather__status${selectedEvaluation && !selectedEvaluation.eligible ? " mission-weather__status--restricted" : ""}`}
-                >
-                  {selectedEvaluation?.eligible ? "Deck ready" : "Needs work"}
-                </span>
-              </div>
-
-              <div className="mission-stats">
-                <div className="mission-stat-row">
-                  <span className="mission-stat-label">Selected deck</span>
-                  <span className="mission-stat-value">{selectedDeck?.name ?? "No deck selected"}</span>
-                </div>
-                {selectedForkOption && (
-                  <div className="mission-stat-row">
-                    <span className="mission-stat-label">Chosen route</span>
-                    <span className="mission-stat-value">{selectedForkOption.label}</span>
-                  </div>
-                )}
-                <div className="mission-stat-row">
-                  <span className="mission-stat-label">Last run</span>
-                  <span className="mission-stat-value">{formatTimestamp(selectedMission.lastRunAt) ?? "Never launched"}</span>
-                </div>
-                {selectedMission.status === "completed" && (
-                  <div className="mission-stat-row">
-                    <span className="mission-stat-label">Cleared with</span>
-                    <span className="mission-stat-value">{selectedMission.selectedDeckName ?? "Unknown deck"}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="mission-checks">
-                {(selectedEvaluation?.results ?? getDefaultRequirementResults(selectedMission, selectedForkOptionId)).map((result) => (
-                  <span
-                    key={`${selectedMission.id}-${result.requirement.label}`}
-                    className="mission-selector-card__badge"
-                    title={result.detail}
-                  >
-                    {result.met ? "✅" : "⛔"} {result.requirement.label}
-                  </span>
-                ))}
-              </div>
-
-              {selectedEvaluation && !selectedEvaluation.eligible && (
-                <p className="mission-warning">{selectedEvaluation.summary}</p>
-              )}
-              {selectedMission.lastRunSummary && (
-                <p className="mission-warning">{selectedMission.lastRunSummary}</p>
-              )}
-
-              <div className="mission-runner-grid">
-                {deckEvaluations.map((evaluation) => {
-                  const deck = decks.find((entry) => entry.id === evaluation.deckId);
-                  return (
-                    <button
-                      key={evaluation.deckId}
-                      type="button"
-                      className={`mission-runner-card${selectedDeck?.id === evaluation.deckId ? " mission-runner-card--active" : ""}`}
-                      onClick={() => setSelectedDeckId(evaluation.deckId)}
-                    >
-                      <strong>{evaluation.deckName}</strong>
-                      <span className="mission-selector-card__tagline">
-                        {deck?.cards.length ?? 0} cards · {evaluation.eligibleCardCount} route-ready
-                      </span>
-                      <span
-                        className={`mission-result__badge ${evaluation.eligible ? "mission-result__badge--success" : "mission-result__badge--fail"}`}
-                      >
-                        {evaluation.eligible ? "Can run" : "Blocked"}
-                      </span>
-                    </button>
-                  );
-                })}
               </div>
             </div>
           )}

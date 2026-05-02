@@ -255,6 +255,13 @@ function getMissionResultLog(result: MissionRunResponse): string[] {
     : result.evaluation.results.filter((entry) => !entry.met).map((entry) => entry.detail);
 }
 
+function getMissionDistrictAccessSummary(
+  mission: MissionBoardEntry,
+  weather: DistrictWeatherSnapshot | null,
+): string {
+  return getMissionWeatherSummary(mission, { [mission.district]: weather });
+}
+
 function isForkRequirement(
   requirement: MissionRequirement,
   selectedForkOptionId: string | null,
@@ -277,7 +284,7 @@ function getRequirementTip(
   mission: MissionBoardEntry,
   weather: DistrictWeatherSnapshot | null,
 ): string {
-  const currentAccessSummary = `${mission.district} currently allows ${getMissionWeatherSummary(mission, { [mission.district]: weather })}.`;
+  const currentAccessSummary = `${mission.district} currently allows ${getMissionDistrictAccessSummary(mission, weather)}.`;
   switch (result.requirement.type) {
     case "min_cards":
       return "Mission decks need all six slots filled before the run can launch.";
@@ -286,7 +293,7 @@ function getRequirementTip(
         ? `${currentAccessSummary} Weather is adding a board-type lock on top of the normal wheel rules.`
         : `${currentAccessSummary} Only couriers whose board setup matches that access rule count here.`;
     case "wheel_type":
-      return `This checks each courier's equipped wheels. Only ${result.requirement.wheelTypes?.join(" / ") ?? "matching wheels"} count.`;
+      return `This checks each courier's equipped wheels. Only ${result.requirement.wheelTypes?.join(" / ") ?? "the required wheel type"} count.`;
     case "stat_total":
       return `This is the combined ${result.requirement.stat} from the whole deck, not a single courier.`;
     case "district_card":
@@ -417,12 +424,12 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
     return [
       "Pick a route first. Fork choices can add new deck requirements before the run will unlock.",
       "Every requirement below must pass at the same time. One red check is enough to block Launch Run.",
-      `${selectedMission.district} access right now: ${getMissionWeatherSummary(selectedMission, weatherByDistrict)}.`,
+      `${selectedMission.district} access right now: ${getMissionDistrictAccessSummary(selectedMission, selectedDistrictWeather)}.`,
       selectedEvaluation?.eligible
         ? "This deck clears the checks, so Launch Run will go live."
         : `Current blocker: ${selectedEvaluation?.summary ?? "Choose a deck to see what is blocking the run."}`,
     ];
-  }, [selectedEvaluation, selectedMission, weatherByDistrict]);
+  }, [selectedDistrictWeather, selectedEvaluation, selectedMission]);
 
   const handleRunMission = useCallback(async () => {
     if (!selectedMission || !selectedDeck) return;

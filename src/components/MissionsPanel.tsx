@@ -3,6 +3,7 @@ import { MissionTransitScene } from "./MissionTransitScene";
 import { useAuth } from "../context/AuthContext";
 import { useDecks } from "../hooks/useDecks";
 import { useDistrictWeather } from "../hooks/useDistrictWeather";
+import type { DistrictWeatherSnapshot } from "../lib/districtWeather";
 import { isEnabled } from "../lib/featureFlags";
 import { DISTRICT_LORE } from "../lib/lore";
 import {
@@ -17,6 +18,7 @@ import {
 import type {
   MissionBoardEntry,
   MissionBoardProgression,
+  MissionRequirement,
   MissionRequirementResult,
   MissionRunResponse,
 } from "../lib/sharedTypes";
@@ -253,6 +255,48 @@ function getMissionResultLog(result: MissionRunResponse): string[] {
     : result.evaluation.results.filter((entry) => !entry.met).map((entry) => entry.detail);
 }
 
+function isForkRequirement(
+  requirement: MissionRequirement,
+  selectedForkOptionId: string | null,
+  mission: MissionBoardEntry,
+): boolean {
+  const selectedForkOption = getMissionForkOption(mission, selectedForkOptionId);
+  return (selectedForkOption?.requirements ?? []).some((entry) => (
+    entry.type === requirement.type
+      && entry.label === requirement.label
+      && entry.count === requirement.count
+      && entry.district === requirement.district
+      && entry.archetype === requirement.archetype
+      && entry.faction === requirement.faction
+      && entry.stat === requirement.stat
+  ));
+}
+
+function getRequirementTip(
+  result: MissionRequirementResult,
+  mission: MissionBoardEntry,
+  weather: DistrictWeatherSnapshot | null,
+): string {
+  switch (result.requirement.type) {
+    case "min_cards":
+      return "Mission decks need all six slots filled before the run can launch.";
+    case "district_access":
+      return weather?.accessRule
+        ? `${mission.district} currently allows ${getMissionWeatherSummary(mission, { [mission.district]: weather })}. Weather is adding a board-type lock on top of the normal wheel rules.`
+        : `${mission.district} currently allows ${getMissionWeatherSummary(mission, { [mission.district]: weather })}. Only couriers whose board setup matches that access rule count here.`;
+    case "wheel_type":
+      return `This checks each courier's equipped wheels. Only ${result.requirement.wheelTypes?.join(" / ") ?? "matching wheels"} count.`;
+    case "stat_total":
+      return `This is the combined ${result.requirement.stat} from the whole deck, not a single courier.`;
+    case "district_card":
+      return `Locals are couriers whose home district is ${result.requirement.district ?? mission.district}.`;
+    case "archetype":
+      return `Any courier with the ${result.requirement.archetype} archetype counts toward this route.`;
+    case "faction":
+      return `Any courier from the ${result.requirement.faction} crew counts toward this route.`;
+  }
+}
+
 export function MissionsPanel({ uid }: MissionsPanelProps) {
   const { user } = useAuth();
   const { decks } = useDecks();
@@ -334,6 +378,10 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
     () => (selectedMission ? getMissionForkOption(selectedMission, selectedForkOptionId) : null),
     [selectedForkOptionId, selectedMission],
   );
+  const selectedDistrictWeather = useMemo(
+    () => (selectedMission ? weatherByDistrict[selectedMission.district] ?? null : null),
+    [selectedMission, weatherByDistrict],
+  );
   const selectedRewards = useMemo(
     () => (selectedMission ? getMissionEffectiveRewards(selectedMission, selectedForkOptionId) : { rewardXp: 0, rewardOzzies: 0 }),
     [selectedForkOptionId, selectedMission],
@@ -363,6 +411,17 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
   const selectedOutcomeBadgeClass = selectedMission?.status === "completed" || selectedEvaluation?.eligible
     ? "mission-result__badge mission-result__badge--success"
     : "mission-result__badge mission-result__badge--fail";
+  const selectedLaunchTips = useMemo(() => {
+    if (!selectedMission) return [];
+    return [
+      "Pick a route first. Fork choices can add new deck requirements before the run will unlock.",
+      "Every requirement below must pass at the same time. One red check is enough to block Launch Run.",
+      `${selectedMission.district} access right now: ${getMissionWeatherSummary(selectedMission, weatherByDistrict)}.`,
+      selectedEvaluation?.eligible
+        ? "This deck clears the checks, so Launch Run will go live."
+        : `Current blocker: ${selectedEvaluation?.summary ?? "Choose a deck to see what is blocking the run."}`,
+    ];
+  }, [selectedEvaluation, selectedMission, weatherByDistrict]);
 
   const handleRunMission = useCallback(async () => {
     if (!selectedMission || !selectedDeck) return;
@@ -675,13 +734,26 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
 
                       <div className="mission-checks">
                         {(selectedEvaluation?.results ?? getDefaultRequirementResults(selectedMission, selectedForkOptionId)).map((result) => (
-                          <span
+                          <article
                             key={`${selectedMission.id}-${result.requirement.label}`}
-                            className="mission-selector-card__badge"
-                            title={result.detail}
+                            className={`mission-check-card${result.met ? " mission-check-card--met" : " mission-check-card--blocked"}`}
                           >
-                            {result.met ? "✅" : "⛔"} {result.requirement.label}
-                          </span>
+                            <div className="mission-check-card__header">
+                              <strong className="mission-check-card__title">
+                                {result.met ? "✅" : "⛔"} {result.requirement.label}
+                              </strong>
+                              <span className="mission-check-card__progress">
+                                {result.current}/{result.needed}
+                              </span>
+                            </div>
+                            <span className="mission-check-card__meta">
+                              {isForkRequirement(result.requirement, selectedForkOptionId, selectedMission) ? "Selected route check" : "Base contract check"}
+                            </span>
+                            <p className="mission-check-card__detail">{result.detail}</p>
+                            <p className="mission-check-card__tip">
+                              Tip: {getRequirementTip(result, selectedMission, selectedDistrictWeather)}
+                            </p>
+                          </article>
                         ))}
                       </div>
                     </article>
@@ -713,6 +785,17 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
                   </ul>
                   <p className="mission-intel-card__quote">
                     Atmosphere: {selectedDistrictLore?.atmosphere ?? selectedMission.tagline}
+                  </p>
+                </article>
+                <article className="mission-intel-card">
+                  <span className="mission-intel-card__label">How to unlock this run</span>
+                  <ul className="mission-intel-list">
+                    {selectedLaunchTips.map((tip) => (
+                      <li key={`${selectedMission.id}-${tip}`}>{tip}</li>
+                    ))}
+                  </ul>
+                  <p className="mission-intel-card__quote">
+                    Launch Run only enables when your selected deck passes every active check.
                   </p>
                 </article>
               </div>

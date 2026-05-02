@@ -15,7 +15,7 @@ security updates.
 
 **Please do not open a public GitHub issue for security vulnerabilities.**
 
-Email **driver727@gmail.com** with the subject line `[Punchskater] Security
+Email **driver727@gmail.com** with the subject line `[Punch Skater] Security
 Vulnerability`. Include:
 
 - A description of the vulnerability and its potential impact

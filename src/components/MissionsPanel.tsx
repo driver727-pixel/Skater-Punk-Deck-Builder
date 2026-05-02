@@ -636,7 +636,7 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
                           <span className="mission-stat-label">Selected deck</span>
                           <span className="mission-stat-value">{selectedDeck?.name ?? "No deck selected"}</span>
                         </div>
-                        {selectedMission.fork && (
+                        {selectedForkOption && (
                           <div className="mission-stat-row">
                             <span className="mission-stat-label">Chosen route</span>
                             <span className="mission-stat-value">{selectedRouteLabel}</span>

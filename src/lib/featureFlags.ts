@@ -22,7 +22,7 @@ export const featureFlags = {
   DAILY_REWARDS: envFlag("VITE_FF_DAILY_REWARDS", false),
 
   /** Mission / quest tracker panel. @owner gamma */
-  MISSIONS: envFlag("VITE_FF_MISSIONS", false),
+  MISSIONS: envFlag("VITE_FF_MISSIONS", true),
 
   /** Battle pass tier progression + premium track. @owner gamma */
   BATTLE_PASS: envFlag("VITE_FF_BATTLE_PASS", false),
@@ -44,9 +44,7 @@ export type FeatureFlagKey = keyof typeof featureFlags;
  * A user whose email appears here can access the feature even when the
  * global build-time flag is off.
  */
-const featureFlagOverrides: Partial<Record<FeatureFlagKey, readonly string[]>> = {
-  MISSIONS: ["driver727@gmail.com"],
-};
+const featureFlagOverrides: Partial<Record<FeatureFlagKey, readonly string[]>> = {};
 
 /**
  * Runtime check — use in components / hooks to gate UI.

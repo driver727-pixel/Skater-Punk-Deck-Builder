@@ -49,9 +49,19 @@ export function remapStyleConnection(style: unknown): string {
 export function normalizeCardPayload(card: CardPayload): CardPayload {
   const rawStyle = typeof card.prompts?.style === "string" ? card.prompts.style : "Street";
   const style = resolveArchetypeStyle(card.prompts?.archetype, rawStyle);
-  if (style === rawStyle) return card;
+  const flavorText = card.front?.flavorText;
+  const flavorTextEnglish = card.front?.flavorTextEnglish;
+  const nextFront =
+    flavorText && !flavorTextEnglish
+      ? { ...card.front, flavorTextEnglish: flavorText }
+      : !flavorText && flavorTextEnglish
+        ? { ...card.front, flavorText: flavorTextEnglish }
+        : card.front;
+  const frontChanged = nextFront !== card.front;
+  if (style === rawStyle && !frontChanged) return card;
   return {
     ...card,
     prompts: { ...card.prompts, style },
+    ...(frontChanged ? { front: nextFront } : {}),
   };
 }

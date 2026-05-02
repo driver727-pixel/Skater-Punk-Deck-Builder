@@ -45,6 +45,7 @@ import { registerImportRoutes } from './routes/import.js';
 import { registerMissionRoutes } from './routes/missions.js';
 import { registerPaymentRoutes } from './routes/payments.js';
 import { registerRewardRoutes } from './routes/rewards.js';
+import { registerCraftlinguaRoutes } from './routes/craftlingua.js';
 import { createDistrictWeatherService, registerWeatherRoutes } from './routes/weather.js';
 
 // Load the shared pricing config — the single source of truth for Stripe
@@ -224,6 +225,13 @@ const rewardRateLimit = buildRateLimiter({
   windowMs: 60 * 1000,
   max: 30,
   message: { error: 'Too many reward requests — please wait a moment and try again.' },
+  store: sharedRateLimitStore,
+});
+
+const craftlinguaRateLimit = buildRateLimiter({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: { error: 'Too many CraftLingua requests — please slow down.' },
   store: sharedRateLimitStore,
 });
 
@@ -735,6 +743,10 @@ const districtWeatherService = createDistrictWeatherService();
 registerWeatherRoutes(app, {
   weatherRateLimit,
   districtWeatherService,
+});
+
+registerCraftlinguaRoutes(app, {
+  craftlinguaRateLimit,
 });
 
 registerMissionRoutes(app, {

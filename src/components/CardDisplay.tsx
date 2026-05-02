@@ -305,7 +305,7 @@ function CardDisplayComponent({
   // ── Inline editable name, age & bio ──────────────────────────────────────
   const [localName, setLocalName] = useState(card.identity.name);
   const [localAge, setLocalAge] = useState(card.identity.age ?? "");
-  const [localBio, setLocalBio] = useState(card.front.flavorText ?? "");
+  const [localBio, setLocalBio] = useState(card.front.flavorTextEnglish ?? card.front.flavorText ?? "");
   const [editingName, setEditingName] = useState(false);
   const [editingAge, setEditingAge] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
@@ -313,11 +313,11 @@ function CardDisplayComponent({
   useEffect(() => {
     setLocalName(card.identity.name);
     setLocalAge(card.identity.age ?? "");
-    setLocalBio(card.front.flavorText ?? "");
+    setLocalBio(card.front.flavorTextEnglish ?? card.front.flavorText ?? "");
     setEditingName(false);
     setEditingAge(false);
     setEditingBio(false);
-  }, [card.id, card.identity.name, card.identity.age, card.front.flavorText]);
+  }, [card.id, card.identity.name, card.identity.age, card.front.flavorText, card.front.flavorTextEnglish]);
 
   const commitName = () => {
     setEditingName(false);
@@ -335,9 +335,9 @@ function CardDisplayComponent({
 
   const commitBio = () => {
     setEditingBio(false);
-    const trimmed = localBio.trim() || (card.front.flavorText ?? "");
+    const trimmed = localBio.trim() || (card.front.flavorTextEnglish ?? card.front.flavorText ?? "");
     setLocalBio(trimmed);
-    if (trimmed !== (card.front.flavorText ?? "")) onUpdate?.({ flavorText: trimmed });
+    if (trimmed !== (card.front.flavorTextEnglish ?? card.front.flavorText ?? "")) onUpdate?.({ flavorText: trimmed });
   };
 
   const openMetadataEditor = () => {
@@ -506,7 +506,7 @@ function CardDisplayComponent({
                   onChange={(e) => setLocalBio(e.target.value)}
                   onBlur={commitBio}
                   onKeyDown={(e) => {
-                    if (e.key === "Escape") { setLocalBio(card.front.flavorText ?? ""); setEditingBio(false); }
+                      if (e.key === "Escape") { setLocalBio(card.front.flavorTextEnglish ?? card.front.flavorText ?? ""); setEditingBio(false); }
                   }}
                   autoFocus
                   rows={3}
@@ -517,11 +517,17 @@ function CardDisplayComponent({
                   className={`card-bio${onUpdate ? " card-bio--editable" : ""}`}
                   onClick={() => { if (onUpdate) setEditingBio(true); }}
                   title={onUpdate ? "Click to edit bio" : undefined}
-                >
-                  {localBio}
-                  {onUpdate && <span className="card-edit-hint">✎</span>}
-                </p>
-              )
+                 >
+                   {localBio}
+                   {onUpdate && <span className="card-edit-hint">✎</span>}
+                 </p>
+               )
+             )}
+
+            {card.front.flavorTextConlang && !editingBio && (
+              <p className="card-bio card-bio--conlang">
+                {card.front.flavorTextConlang}
+              </p>
             )}
 
             <div className="card-subline">
@@ -542,9 +548,26 @@ function CardDisplayComponent({
 
           <div className="stat-flavor">
             {localBio && !onUpdate ? (
-              <em className="stat-flavor-text">
-                &ldquo;{localBio}&rdquo;
-              </em>
+              <div className="stat-flavor-copy">
+                <em className="stat-flavor-text">
+                  &ldquo;{localBio}&rdquo;
+                </em>
+                {card.front.flavorTextConlang && (
+                  <span className="stat-flavor-text stat-flavor-text--conlang">
+                    {card.front.flavorTextConlang}
+                  </span>
+                )}
+                {card.front.craftlingua?.exploreUrl && (
+                  <a
+                    className="card-craftlingua-link"
+                    href={card.front.craftlingua.exploreUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {card.front.craftlingua.languageName ?? "CraftLingua"} ↗
+                  </a>
+                )}
+              </div>
             ) : null}
           </div>
         </div>

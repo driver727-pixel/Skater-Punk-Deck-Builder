@@ -205,6 +205,15 @@ export interface CardPayload {
 
   front: {
     flavorText?: string;
+    flavorTextEnglish?: string;
+    flavorTextConlang?: string;
+    craftlingua?: {
+      shareCode?: string;
+      exploreUrl?: string;
+      languageName?: string;
+      languageCode?: string;
+      source?: "district-default" | "profile-link" | "local-profile";
+    };
   };
 
   back: {
@@ -525,6 +534,31 @@ export interface CraftlinguaWord {
   meaning: string;
   /** Which card field this word is intended to populate (e.g. "name"). */
   cardField?: string;
+}
+
+export interface CraftlinguaDistrictLanguage {
+  district: District;
+  slug: string;
+  shareCode: string;
+  language: {
+    name: string;
+    code: string;
+  };
+  descriptor: string;
+  summary: string;
+  sample: string;
+  phrasebook?: Record<string, string>;
+  vocabulary?: CraftlinguaWord[];
+  exploreUrl?: string;
+}
+
+export interface CraftlinguaLink {
+  shareCode: string;
+  district: District;
+  languageName: string;
+  languageCode: string;
+  exploreUrl: string;
+  linkedAt: string;
 }
 
 export interface CraftlinguaEnvelope {

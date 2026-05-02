@@ -13,6 +13,7 @@ import type {
 } from "../../lib/types";
 import { BoardBuilder } from "../../components/BoardBuilder";
 import { GeoAtlas } from "../../components/GeoAtlas";
+import { LanguageProfilePanel } from "../../components/LanguageProfilePanel";
 import { ReferralPanel } from "../../components/ReferralPanel";
 import type { BoardConfig } from "../../lib/boardBuilder";
 import {
@@ -215,6 +216,8 @@ export function ForgeControlsPanel({
         districtInteractionMode="press"
         section="australia"
       />
+
+      <LanguageProfilePanel />
 
       <div className="form-group">
         <label>Gender</label>

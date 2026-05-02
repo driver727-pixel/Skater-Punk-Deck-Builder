@@ -39,7 +39,7 @@ export function ForgePreviewPanel({
   const handleBioChange = useCallback(
     (flavorText: string) => {
       if (!card) return;
-      patchGeneratedCard({ front: { ...card.front, flavorText } });
+      patchGeneratedCard({ front: { ...card.front, flavorText, flavorTextEnglish: flavorText } });
     },
     [card, patchGeneratedCard],
   );

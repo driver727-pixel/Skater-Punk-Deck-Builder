@@ -14,7 +14,7 @@ export function ShareModal({ card, onClose }: ShareModalProps) {
     `🛹 ${card.identity.name} — ${getDisplayedArchetype(card)} · ${card.class.badgeLabel}`,
     `Faction: ${getDisplayedCrew(card)}`,
     `Speed ${card.stats.speed} | Range ${card.stats.range} | Stealth ${card.stats.stealth} | Grit ${card.stats.grit}`,
-    card.front.flavorText ? `"${card.front.flavorText}"` : "",
+    (card.front.flavorTextEnglish ?? card.front.flavorText) ? `"${card.front.flavorTextEnglish ?? card.front.flavorText}"` : "",
     `\n#SkaterPunkDeckBuilder`,
   ].filter(Boolean).join("\n");
 

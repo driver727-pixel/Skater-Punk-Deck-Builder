@@ -143,7 +143,7 @@ export function Collection() {
           c.identity.serialNumber,
           c.prompts.rarity,
           c.prompts.district,
-          c.front.flavorText ?? "",
+          c.front.flavorTextEnglish ?? c.front.flavorText ?? "",
         ]
           .join(" ")
           .toLowerCase();

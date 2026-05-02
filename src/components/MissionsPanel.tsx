@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { MissionTransitScene } from "./MissionTransitScene";
 import { useAuth } from "../context/AuthContext";
 import { useDecks } from "../hooks/useDecks";
 import { useDistrictWeather } from "../hooks/useDistrictWeather";
@@ -19,7 +20,7 @@ import type {
   MissionRequirementResult,
   MissionRunResponse,
 } from "../lib/sharedTypes";
-import type { District } from "../lib/types";
+import type { District, WorldLocation } from "../lib/types";
 import { getMissionBoard, runMission } from "../services/missions";
 
 interface MissionsPanelProps {
@@ -34,6 +35,8 @@ interface MissionPresentation {
   sceneTags: string[];
   successLabel: string;
   failureLabel: string;
+  locale?: WorldLocation;
+  localeSummary?: string;
 }
 
 const DISTRICT_THEMES: Record<District, { accent: string; accentSoft: string; glow: string; glyph: string }> = {
@@ -83,6 +86,7 @@ const DEFAULT_PRESENTATION: MissionPresentation = {
   sceneTags: ["District intel", "Crew pressure", "Hard choices"],
   successLabel: "Route locked",
   failureLabel: "Route snapped",
+  localeSummary: "A neighborhood-scale courier grid where the route can bend hard before the run goes live.",
 };
 
 const MISSION_PRESENTATIONS: Record<string, MissionPresentation> = {
@@ -94,6 +98,7 @@ const MISSION_PRESENTATIONS: Record<string, MissionPresentation> = {
     sceneTags: ["Scrapyard sirens", "Union pressure", "Axle-breaking lanes"],
     successLabel: "Relay held",
     failureLabel: "Freight dropped",
+    localeSummary: "A made-up breaker-yard neighborhood map with crusher lanes, relay sidings, and a hot fork near the depot.",
   },
   "nightshade-tunnel-run": {
     operation: "Nightshade ghost line",
@@ -103,6 +108,8 @@ const MISSION_PRESENTATIONS: Record<string, MissionPresentation> = {
     sceneTags: ["Neon fog", "Witnessless lanes", "Crew shadows"],
     successLabel: "Tunnel cleared",
     failureLabel: "Shadows closed",
+    locale: "The Roads",
+    localeSummary: "A tunnel-mouth slice of The Roads where service tubes split into quiet dark-lane branches.",
   },
   "airaway-sky-lane": {
     operation: "Airaway checkpoint breach",
@@ -112,6 +119,7 @@ const MISSION_PRESENTATIONS: Record<string, MissionPresentation> = {
     sceneTags: ["Checkpoint glass", "Corp scanners", "Rooftop heat"],
     successLabel: "Lane crossed",
     failureLabel: "Pass burned",
+    localeSummary: "A tight Airaway service quarter where the local sky-lane peels into checkpoint and maintenance forks.",
   },
   "grid-trace": {
     operation: "Cascade trace break",
@@ -121,6 +129,7 @@ const MISSION_PRESENTATIONS: Record<string, MissionPresentation> = {
     sceneTags: ["Sensor glare", "Trace logs", "Blackout windows"],
     successLabel: "Trace broken",
     failureLabel: "Trace caught",
+    localeSummary: "A district-neighborhood circuit under The Grid where every branch glows like a monitored trace line.",
   },
   "forest-rootline": {
     operation: "Root bridge extraction",
@@ -130,6 +139,8 @@ const MISSION_PRESENTATIONS: Record<string, MissionPresentation> = {
     sceneTags: ["Wet timber", "Guide ropes", "Mud pressure"],
     successLabel: "Package lifted",
     failureLabel: "Trail swallowed",
+    locale: "The Roads",
+    localeSummary: "A storm-bitten roadside pocket map where The Roads split into timber bridges and rescue cut-throughs.",
   },
   "glass-city-exchange": {
     operation: "Open territory exchange",
@@ -139,6 +150,7 @@ const MISSION_PRESENTATIONS: Record<string, MissionPresentation> = {
     sceneTags: ["Mirror alleys", "Broker tells", "Rival eyes"],
     successLabel: "Exchange landed",
     failureLabel: "Broker burned",
+    localeSummary: "A broker-block neighborhood in Glass City with mirrored alleys and a public fork under surveillance.",
   },
   "batteryville-switchyard-uprising": {
     operation: "Strike-pay convoy",
@@ -148,6 +160,7 @@ const MISSION_PRESENTATIONS: Record<string, MissionPresentation> = {
     sceneTags: ["Switch levers", "Strike drums", "Proof drives"],
     successLabel: "Strike fund delivered",
     failureLabel: "Yard locked down",
+    localeSummary: "A switchyard pocket map where every branch line doubles as an uprising route or a boss choke point.",
   },
   "nightshade-moonrise-echo": {
     operation: "Moonriser signal run",
@@ -157,6 +170,8 @@ const MISSION_PRESENTATIONS: Record<string, MissionPresentation> = {
     sceneTags: ["Rave strobes", "Basement echo", "Crew handshakes"],
     successLabel: "Signal carried",
     failureLabel: "Broadcast cut",
+    locale: "The Roads",
+    localeSummary: "A rave corridor slice of The Roads where the signal can spill into loud, quiet, or hybrid side loops.",
   },
   "airaway-coldchain-pass": {
     operation: "Coldchain badge breach",
@@ -166,6 +181,8 @@ const MISSION_PRESENTATIONS: Record<string, MissionPresentation> = {
     sceneTags: ["Cold cargo", "Badge clones", "Maintenance chutes"],
     successLabel: "Crate floated through",
     failureLabel: "Badge expired",
+    locale: "The Roads",
+    localeSummary: "A refrigerated neighborhood map off The Roads where cloned-badge lanes branch into coldchain vault access.",
   },
   "grid-parent-trace": {
     operation: "Vanished worker trace",
@@ -175,12 +192,14 @@ const MISSION_PRESENTATIONS: Record<string, MissionPresentation> = {
     sceneTags: ["Missing IDs", "Archive shards", "Cascade ghosts"],
     successLabel: "Trail reopened",
     failureLabel: "Trail purged",
+    localeSummary: "An archive neighborhood in The Grid where the local trace rails break into ghost, vault, and cutout forks.",
   },
 };
 
 const DISTRICT_LORE_BY_NAME = new Map(
   DISTRICT_LORE.filter((entry) => entry.kind === "district").map((entry) => [entry.name, entry]),
 );
+const LOCATION_LORE_BY_NAME = new Map(DISTRICT_LORE.map((entry) => [entry.name, entry]));
 
 function formatTimestamp(value?: string): string | null {
   if (!value) return null;
@@ -324,6 +343,11 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
     () => (selectedMission ? DISTRICT_LORE_BY_NAME.get(selectedMission.district) ?? null : null),
     [selectedMission],
   );
+  const selectedLocale = selectedPresentation.locale ?? selectedMission?.district ?? null;
+  const selectedLocaleLore = useMemo(
+    () => (selectedLocale ? LOCATION_LORE_BY_NAME.get(selectedLocale) ?? null : null),
+    [selectedLocale],
+  );
   const missionResultLog = useMemo(
     () => (missionResult ? getMissionResultLog(missionResult) : []),
     [missionResult],
@@ -452,30 +476,25 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
                 </div>
               </div>
 
-              <div className="mission-cinematic">
-                <div className="mission-cinematic__fx" aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <div className="mission-cinematic__copy">
-                  <span className="mission-cinematic__eyebrow">{selectedPresentation.operation}</span>
-                  <strong className="mission-cinematic__title">{selectedPresentation.patron}</strong>
-                  <p className="mission-cinematic__body">{selectedPresentation.stakes}</p>
-                  <div className="mission-intel-tags">
-                    {selectedPresentation.sceneTags.map((tag) => (
-                      <span key={`${selectedMission.id}-${tag}`} className="mission-intel-tag">{tag}</span>
-                    ))}
-                  </div>
-                </div>
-                <div className="mission-cinematic__aside">
-                  <span className="mission-cinematic__glyph" aria-hidden="true">{DISTRICT_THEMES[selectedMission.district].glyph}</span>
-                  <span className="mission-cinematic__metric-label">Controlled by</span>
-                  <strong>{selectedDistrictLore?.controlledBy ?? "Courier crews"}</strong>
-                  <span className="mission-cinematic__metric-label">Crew pressure</span>
-                  <span>{selectedDistrictLore?.crews.slice(0, 2).join(" · ") ?? selectedMission.district}</span>
-                </div>
-              </div>
+              <MissionTransitScene
+                missionId={selectedMission.id}
+                locale={selectedLocale ?? selectedMission.district}
+                localeSummary={
+                  selectedPresentation.localeSummary
+                  ?? `${selectedLocale ?? selectedMission.district} is running a local courier map with live forks and relay pressure.`
+                }
+                sceneEyebrow={selectedPresentation.operation}
+                sceneTitle={selectedPresentation.patron}
+                sceneBody={selectedPresentation.stakes}
+                sceneTags={selectedPresentation.sceneTags}
+                selectedDeckName={selectedDeck?.name ?? selectedMission.selectedDeckName}
+                routeLabel={selectedRouteLabel}
+                fork={selectedMission.fork}
+                selectedForkOption={selectedForkOption}
+                controlledBy={selectedLocaleLore?.controlledBy ?? selectedDistrictLore?.controlledBy ?? "Courier crews"}
+                crewPressure={selectedLocaleLore?.crews.slice(0, 2).join(" · ") ?? selectedMission.district}
+                glyph={DISTRICT_THEMES[selectedMission.district].glyph}
+              />
 
               <div className="mission-flow">
                 {selectedMission.fork && (

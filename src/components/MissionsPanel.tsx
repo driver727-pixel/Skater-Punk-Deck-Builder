@@ -277,13 +277,14 @@ function getRequirementTip(
   mission: MissionBoardEntry,
   weather: DistrictWeatherSnapshot | null,
 ): string {
+  const currentAccessSummary = `${mission.district} currently allows ${getMissionWeatherSummary(mission, { [mission.district]: weather })}.`;
   switch (result.requirement.type) {
     case "min_cards":
       return "Mission decks need all six slots filled before the run can launch.";
     case "district_access":
       return weather?.accessRule
-        ? `${mission.district} currently allows ${getMissionWeatherSummary(mission, { [mission.district]: weather })}. Weather is adding a board-type lock on top of the normal wheel rules.`
-        : `${mission.district} currently allows ${getMissionWeatherSummary(mission, { [mission.district]: weather })}. Only couriers whose board setup matches that access rule count here.`;
+        ? `${currentAccessSummary} Weather is adding a board-type lock on top of the normal wheel rules.`
+        : `${currentAccessSummary} Only couriers whose board setup matches that access rule count here.`;
     case "wheel_type":
       return `This checks each courier's equipped wheels. Only ${result.requirement.wheelTypes?.join(" / ") ?? "matching wheels"} count.`;
     case "stat_total":
@@ -790,8 +791,8 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
                 <article className="mission-intel-card">
                   <span className="mission-intel-card__label">How to unlock this run</span>
                   <ul className="mission-intel-list">
-                    {selectedLaunchTips.map((tip) => (
-                      <li key={`${selectedMission.id}-${tip}`}>{tip}</li>
+                    {selectedLaunchTips.map((tip, index) => (
+                      <li key={`${selectedMission.id}-tip-${index}`}>{tip}</li>
                     ))}
                   </ul>
                   <p className="mission-intel-card__quote">

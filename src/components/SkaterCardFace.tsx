@@ -383,7 +383,8 @@ function CardBack({
     ["CREW",     getDisplayedCrew(card)],
   ] as [string, string][];
 
-  const flavorText = card.front.flavorText ?? "";
+  const flavorText = card.front.flavorTextEnglish ?? card.front.flavorText ?? "";
+  const conlangFlavorText = card.front.flavorTextConlang ?? "";
 
   const bt = BOARD_TYPE_OPTIONS.find((o) => o.value === card.board.config.boardType);
   const dr = DRIVETRAIN_OPTIONS.find((o) => o.value === card.board.config.drivetrain);
@@ -440,9 +441,14 @@ function CardBack({
             rows={2}
           />
         ) : (
-          flavorText && (
-            <p className="print-back-identity-bio">&ldquo;{flavorText}&rdquo;</p>
-          )
+          <>
+            {flavorText && (
+              <p className="print-back-identity-bio">&ldquo;{flavorText}&rdquo;</p>
+            )}
+            {conlangFlavorText && (
+              <p className="print-back-identity-bio print-back-identity-bio--conlang">{conlangFlavorText}</p>
+            )}
+          </>
         )}
       </div>
 

@@ -14,6 +14,7 @@ import { generateGouacheBoard } from "../../services/boardImageGen";
 import { buildBackgroundPrompt, buildCharacterPrompt, buildFramePrompt } from "../../lib/promptBuilder";
 import { useTier } from "../../context/TierContext";
 import { useAuth } from "../../context/AuthContext";
+import { useLanguage } from "../../context/LanguageContext";
 import { useFactionDiscovery } from "../../hooks/useFactionDiscovery";
 import type {
   Archetype,
@@ -44,6 +45,7 @@ import {
   normalizeCharacterPlacement,
   resolveBoardLayerOrder,
 } from "../../lib/boardPlacement";
+import { buildCraftlinguaFlavorFields } from "../../services/craftlingua";
 
 const ARCHETYPE_VALUES = FORGE_ARCHETYPE_OPTIONS.map((option) => option.value);
 const DEFAULT_CHARACTER_BLEND = 1;
@@ -51,9 +53,11 @@ const DEFAULT_CHARACTER_BLEND = 1;
 export function useForgeGeneration() {
   const { tier, canForge, generateCredits, consumeCredit, openUpgradeModal, freeCardUsed, markFreeCardUsed } = useTier();
   const { user, userProfile } = useAuth();
+  const { linkedLanguage, profile, useCraftlingua } = useLanguage();
   const { hasFaction, unlockFaction } = useFactionDiscovery();
   const sessionOwnerKey = user?.uid ?? "guest";
   const skipNextSessionPersistRef = useRef(false);
+  const craftlinguaSyncKeyRef = useRef("");
   const [prompts, setPrompts] = useState<CardPrompts>({
     archetype: "Qu111s", rarity: "Punch Skater", style: "Corporate",
     district: "Nightshade", accentColor: "#00ff88",
@@ -116,6 +120,20 @@ export function useForgeGeneration() {
     }
   }, [prompts.rarity, selectedForgeRarity]);
 
+  useEffect(() => {
+    if (!generated) return;
+    const syncKey = [
+      generated.id,
+      generated.front.flavorTextEnglish ?? generated.front.flavorText ?? "",
+      linkedLanguage?.shareCode ?? "",
+      profile?.exportedAt ?? "",
+      useCraftlingua ? "enabled" : "disabled",
+    ].join("|");
+    if (craftlinguaSyncKeyRef.current === syncKey) return;
+    craftlinguaSyncKeyRef.current = syncKey;
+    void refreshCraftlinguaFront(generated);
+  }, [generated, linkedLanguage?.shareCode, profile?.exportedAt, useCraftlingua, refreshCraftlinguaFront]);
+
   // Restore the per-user forge session whenever the active auth identity changes.
   useEffect(() => {
     abortGeneration();
@@ -163,6 +181,20 @@ export function useForgeGeneration() {
     }));
   }, []);
 
+  const refreshCraftlinguaFront = useCallback(async (card: CardPayload) => {
+    const nextFront = await buildCraftlinguaFlavorFields({
+      card,
+      linkedLanguage,
+      profile,
+      useCraftlingua,
+    });
+    setGenerated((current) => (
+      current && current.id === card.id
+        ? { ...current, front: nextFront }
+        : current
+    ));
+  }, [linkedLanguage, profile, useCraftlingua]);
+
   const handleForge = useCallback(() => {
     if (!canForge) {
       openUpgradeModal();
@@ -203,6 +235,7 @@ export function useForgeGeneration() {
       },
     };
     setGenerated(cardWithBoard);
+    void refreshCraftlinguaFront(cardWithBoard);
     setForging(true);
     if (secretFaction) {
       const isNew = !hasFaction(secretFaction);
@@ -312,9 +345,10 @@ export function useForgeGeneration() {
      setLayerParams,
      tier,
      unlockFaction,
-     user?.uid,
-     selectedForgeRarity,
-   ]);
+      user?.uid,
+      selectedForgeRarity,
+      refreshCraftlinguaFront,
+    ]);
 
   const handleRandomSkater = useCallback(() => {
     sfxClick();
@@ -322,14 +356,38 @@ export function useForgeGeneration() {
     setBoardConfig((current) => buildRandomizedBoardConfig(current));
   }, [availableForgeRarities]);
 
-  const handlePreviewUpdate = useCallback((updates: { name?: string; age?: string; flavorText?: string }) => {
-    setGenerated((current) => applyPreviewUpdates(current, updates));
-  }, []);
+   const handlePreviewUpdate = useCallback((updates: { name?: string; age?: string; flavorText?: string }) => {
+     setGenerated((current) => {
+       const next = applyPreviewUpdates(current, updates);
+       if (next && updates.flavorText !== undefined) {
+         void refreshCraftlinguaFront(next);
+       }
+       return next;
+     });
+   }, [refreshCraftlinguaFront]);
 
   /** Shallow-merge a partial CardPayload into the generated card. */
   const patchGeneratedCard = useCallback((updates: Partial<CardPayload>) => {
-    setGenerated((prev) => (prev ? { ...prev, ...updates } : prev));
-  }, []);
+    setGenerated((prev) => {
+      const next = prev ? { ...prev, ...updates } : prev;
+      const nextFlavorText = updates.front?.flavorText ?? updates.front?.flavorTextEnglish;
+      if (next && nextFlavorText !== undefined) {
+        void refreshCraftlinguaFront({
+          ...next,
+          front: {
+            ...next.front,
+            flavorText: updates.front?.flavorText ?? next.front.flavorText,
+            flavorTextEnglish:
+              updates.front?.flavorTextEnglish
+              ?? updates.front?.flavorText
+              ?? next.front.flavorTextEnglish
+              ?? next.front.flavorText,
+          },
+        });
+      }
+      return next;
+    });
+  }, [refreshCraftlinguaFront]);
 
   /** Deep-merge a partial identity object into the generated card's identity. */
   const patchIdentity = useCallback((updates: Partial<CardPayload["identity"]>) => {

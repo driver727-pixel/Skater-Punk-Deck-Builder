@@ -3043,6 +3043,26 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   flex-direction: column;
   gap: 0;
 }
+.account-section-copy,
+.account-help-text {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.account-help-text a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.account-help-text a:hover {
+  text-decoration: underline;
+}
+.account-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
 .account-danger-actions {
   display: flex;
   gap: 10px;
@@ -4306,6 +4326,25 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
 .lore-meta-value {
   font-size: 12px;
   color: var(--text-dim);
+}
+
+.lore-card--language {
+  min-height: 100%;
+}
+
+.lore-language-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.lore-world-card--challenge {
+  gap: 14px;
+}
+
+.lore-cipher-form {
+  gap: 12px;
 }
 
 /* Faction list */
@@ -5701,6 +5740,10 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   -webkit-line-clamp: unset;
   display: block;
 }
+.print-back-identity-bio--conlang {
+  color: var(--accent2);
+  font-style: normal;
+}
 
 /* Rarity label displayed inside the stats column */
 .print-back-rarity-row {
@@ -6474,10 +6517,35 @@ button { cursor: pointer; font-family: var(--font); transition: all 0.2s ease; }
   cursor: pointer;
 }
 .card-bio--editable:hover { opacity: 0.8; }
+.card-bio--conlang {
+  color: var(--accent2);
+  font-style: normal;
+}
 
 /* Bio textarea (same dimensions as existing card-edit-textarea) */
 .card-bio-textarea {
   margin-top: 2px;
+}
+
+.stat-flavor-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-flavor-text--conlang {
+  color: var(--accent2);
+  font-style: normal;
+}
+
+.card-craftlingua-link {
+  font-size: 5px;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.card-craftlingua-link:hover {
+  text-decoration: underline;
 }
 
 .card-meta-edit-button {

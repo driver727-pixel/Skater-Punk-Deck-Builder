@@ -54,7 +54,7 @@ export function applyPreviewUpdates(card: CardPayload | null, updates: { name?: 
       : card.identity,
     front: {
       ...card.front,
-      ...(updates.flavorText != null ? { flavorText: updates.flavorText } : {}),
+      ...(updates.flavorText != null ? { flavorText: updates.flavorText, flavorTextEnglish: updates.flavorText } : {}),
     },
   };
 }

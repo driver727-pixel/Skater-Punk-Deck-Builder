@@ -233,6 +233,7 @@ export function buildForgedCard({ prompts, boardConfig, idNonce }: BuildForgedCa
 
     front: {
       flavorText: `Running packages through ${forgePrompts.district}.`,
+      flavorTextEnglish: `Running packages through ${forgePrompts.district}.`,
     },
 
     back: {},

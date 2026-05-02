@@ -41,6 +41,7 @@ See [`docs/PROGRESSION.md`](docs/PROGRESSION.md) for the full progression model.
 - **Missions** — server-authored district contracts, deck checks, route access, and risk/reward stat changes
 - **Trades + Leaderboard** — direct offers, market listings, and public Crew rankings by Deck Power, Crew Ozzies, and Crew XP
 - **Battle Arena** — public scouting summaries, real opponent deck snapshots, persistent results, and stat resolution syncing for both players
+- **CraftLingua Codex** — district language library, account-linked share codes, forge profile uploads, and Rare/Legendary conlang flavor text
 
 ## Environment
 
@@ -55,6 +56,9 @@ Copy `.env.example` to `.env` for local client config.
 - `VITE_ADMIN_API_URL`
 - `VITE_BATTLE_API_URL`
 - `VITE_DISTRICT_WEATHER_API_URL`
+- `VITE_CRAFTLINGUA_DISTRICTS_API_URL`
+- `VITE_CRAFTLINGUA_TRANSLATE_API_URL`
+- `VITE_CRAFTLINGUA_RESOLVE_API_URL`
 
 ### Server-only variables
 
@@ -72,6 +76,7 @@ Copy `.env.example` to `.env` for local client config.
 - `ADMIN_EMAILS`
 - `APP_ORIGINS` (optional; extra CORS / checkout redirect origins)
 - `REDIS_URL` (optional; enables shared Redis-backed rate limiting)
+- `PUNCHSKATER_PARTNER_KEY` (reserved for CraftLingua partner integrations; keep server-only)
 - `FIREBASE_SERVICE_ACCOUNT_JSON` or (`FIREBASE_PROJECT_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, `FIREBASE_ADMIN_PRIVATE_KEY`), or platform-provided application default credentials
 
 Do not commit server secrets.

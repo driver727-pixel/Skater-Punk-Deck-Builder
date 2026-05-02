@@ -335,7 +335,7 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
     ? "Route Cleared"
     : selectedEvaluation?.eligible
       ? "Deck Ready"
-      : "Needs Deck";
+      : "Needs deck";
   const selectedOutcomeBadgeClass = selectedMission?.status === "completed" || selectedEvaluation?.eligible
     ? "mission-result__badge mission-result__badge--success"
     : "mission-result__badge mission-result__badge--fail";
@@ -636,10 +636,12 @@ export function MissionsPanel({ uid }: MissionsPanelProps) {
                           <span className="mission-stat-label">Selected deck</span>
                           <span className="mission-stat-value">{selectedDeck?.name ?? "No deck selected"}</span>
                         </div>
-                        <div className="mission-stat-row">
-                          <span className="mission-stat-label">Chosen route</span>
-                          <span className="mission-stat-value">{selectedRouteLabel}</span>
-                        </div>
+                        {selectedMission.fork && (
+                          <div className="mission-stat-row">
+                            <span className="mission-stat-label">Chosen route</span>
+                            <span className="mission-stat-value">{selectedRouteLabel}</span>
+                          </div>
+                        )}
                         <div className="mission-stat-row">
                           <span className="mission-stat-label">Last run</span>
                           <span className="mission-stat-value">{formatTimestamp(selectedMission.lastRunAt) ?? "Never launched"}</span>
